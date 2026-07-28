@@ -81,25 +81,23 @@ print('👉 Copy a ✅ name into  catalog = "..."  above, then Run All.')
 
 # COMMAND ----------
 
-# Check DAID metric view exists in the configured catalog
-# (catalog is set in databricks.yml → passed as a job parameter)
-_daid_view = None
-for _pfx in [P, "sbr_", ""]:
-    _candidate = f"`{catalog}`.`{GOLD}`.`{_pfx}sm_fact_coffee_sales_genie`"
-    try:
-        _n = spark.sql(f"SELECT count(*) as n FROM {_candidate}").collect()[0]["n"]
-        _daid_view = _candidate
+# Check DAID metric view exists in the configured catalog.
+# NOTE: sm_fact_coffee_sales_genie is a METRIC VIEW — cannot be queried
+# with SELECT count(*). Use spark.catalog.tableExists() instead.
+_daid_pfx = None
+for _pfx in list(dict.fromkeys([P, "sbr_", ""])):   # deduplicated, order preserved
+    _view_name = f"{_pfx}sm_fact_coffee_sales_genie"
+    if spark.catalog.tableExists(f"{catalog}.{GOLD}.{_view_name}"):
+        _daid_pfx = _pfx
         if _pfx != P:
             P = _pfx
             print(f"ℹ️  DAID prefix detected: '{P}' (updating prefix to match)")
         break
-    except Exception:
-        continue
 
 METRIC_VIEW = f"`{catalog}`.`{GOLD}`.`{P}sm_fact_coffee_sales_genie`"
 
-if _daid_view:
-    print(f"✅ DAID verified  -  {_daid_view} ({_n:,} rows)")
+if _daid_pfx is not None:
+    print(f"✅ DAID verified  -  {catalog}.{GOLD}.{P}sm_fact_coffee_sales_genie")
 else:
     print("=" * 65)
     print("⚠️  DAID metric view not found in catalog: " + catalog)
