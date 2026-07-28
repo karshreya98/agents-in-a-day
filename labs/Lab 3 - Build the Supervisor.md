@@ -163,14 +163,15 @@ Which machines across all locations need attention this week?
 - **Descriptions are routing rules** — the more specific you are, the better the routing
 - The Supervisor has a **built-in chat UI** with conversation history — no app needed
   to start using it
-- In Lab 4 you share, test, and harden it — with structured test scenarios and guardrails
+- In Lab 4 you observe it with MLflow traces and collect structured domain-expert
+  feedback through a Review App
 
 ---
 
 ## What Happens Next?
 
 Marc's Supervisor is live. It answers multi-domain questions and keeps conversation
-history in the Agent Bricks UI. In Lab 4 you share it, run structured test scenarios,
-and add guardrails before handing it to Marc.
+history in the Agent Bricks UI. In Lab 4 you inspect its MLflow traces and set up a
+Review App so domain experts can grade its answers before you trust it.
 
-➡️ Continue to **[Lab 4 — Share, Test, and Harden](./Lab%204%20-%20Share%20and%20Test.md)**
+➡️ Continue to **[Lab 4 — Observe and Review](./Lab%204%20-%20Observe%20and%20Review.md)**

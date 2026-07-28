@@ -81,7 +81,7 @@ The job creates:
 | **Lab 1** | Sara | Build a Genie space, drive it from Genie One, enrich with you.com MCP |
 | **Lab 2** | Marc | Document Intelligence — `ai_parse_document()` + `ai_extract()` on fault report PDFs |
 | **Lab 3** | Marc | Build the Supervisor — Agent Bricks multi-source agent |
-| **Lab 4** | Marc | Share, Test, and Harden — test scenarios + guardrails |
+| **Lab 4** | Marc | Observe and Review — MLflow traces + Review App for expert feedback |
 | **Lab 5** | Marc | AI Gateway + write-back — `create_service_order` UC function |
 
 All labs are in the `labs/` folder.
@@ -107,7 +107,7 @@ agents-in-a-day/
 │   ├── Lab 1 - Sara - Genie One.md
 │   ├── Lab 2 - Document Intelligence.md
 │   ├── Lab 3 - Build the Supervisor.md
-│   ├── Lab 4 - Share and Test.md
+│   ├── Lab 4 - Observe and Review.md
 │   └── Lab 5 - AI Gateway and Write-back.md
 │   (artifacts/ holds per-lab screenshots)
 └── README.md
