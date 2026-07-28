@@ -16,11 +16,12 @@ Behind Genie One sits a **Genie space**: a governed, natural-language interface 
 set of Unity Catalog tables. In Genie One these spaces show up as **agents** Sara can
 talk to.
 
-Dashboard in a Day built a *Sales* Genie. In this part you build the **Maintenance
+Dashboard in a Day built a *Sales* Genie. In this lab you build the **Maintenance
 Genie** — the one Sara (and later Marc's Supervisor in Lab 3) needs to ask about
-machine faults — then talk to it in Genie One.
+machine faults — then talk to *both* of them through Genie One, which routes each
+question to the right space.
 
-This part is **facilitator-led with participant follow-along**. No code to write. Just
+This lab is **facilitator-led with participant follow-along**. No code to write. Just
 one Genie space and a few conversations.
 
 ---
@@ -95,33 +96,43 @@ you'll see exactly how in Lab 2). Now you'll put a Genie space in front of them.
 
 ---
 
-### **Step 3: Talk to the Genie space through Genie One (5 min)**
+### **Step 3: Talk to your Genie spaces through Genie One (5 min)**
 
-Genie One is the business-user front door. The Genie space you built appears there
-as an **agent**.
+Genie One is the business-user front door. Every Genie space in the workspace shows
+up here as an **agent** — including the **Sunny Bay Maintenance Genie** you just built
+*and* the **Sunny Bay Sales Genie** from Dashboard in a Day. Sara doesn't pick a
+table or an agent; she just asks, and Genie One routes to the right one.
 
-1. Open your browser and navigate to your workspace URL with `/one` at the end:
+1. Open the **kebab menu** (the ⋮ / grid "waffle" icon in the top navigation bar) and
+   select **Genie One**.
 
-   ```
-   https://<your-workspace>.cloud.databricks.com/one
-   ```
+2. Ask Sara's manager questions — a mix of **maintenance** and **sales**. Genie One
+   routes each to the right Genie space:
 
-2. In Genie One, select the **Sunny Bay Maintenance Genie** agent (the space you just
-   built).
-
-3. Ask Sara's manager questions:
+   **Maintenance** (routes to the Sunny Bay Maintenance Genie you built):
 
    ```
    Which of my machines should I be worried about this week?
    ```
 
    ```
-   Were there more fault events than usual last month?
+   What did the latest fault report for CBM-003 say?
+   ```
+
+   **Sales** (routes to the Sunny Bay Sales Genie from Dashboard in a Day):
+
+   ```
+   How do sales at the Sunny Bay – Mission store compare to the other stores?
+   ```
+
+   ```
+   Which store had the highest coffee sales this year?
    ```
 
 > [!NOTE]
-> Same governed data, same Genie space — now wrapped in the clean Genie One chat
-> that Sara uses. She configured nothing; she just asks.
+> One conversation, two governed Genie spaces — maintenance *and* sales — with no
+> switching. Sara configured nothing; she just asks. Unity Catalog governs what each
+> space can see.
 
 ---
 
