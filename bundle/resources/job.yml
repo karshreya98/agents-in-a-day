@@ -1,0 +1,24 @@
+resources:
+  jobs:
+    agents_in_a_day_setup:
+      name: "Agents in a Day — Setup"
+      description: >
+        Runs Lab 0 - Setup which creates all Agents in a Day tables,
+        volumes, and UC function. Run this once after DAID is complete.
+
+      tasks:
+        - task_key: setup
+          notebook_task:
+            notebook_path: ../labs/Lab 0 - Setup
+            base_parameters:
+              catalog: "${var.catalog}"
+              prefix:  "${var.prefix}"
+          environment_key: default
+
+      environments:
+        - environment_key: default
+          spec:
+            client: "1"
+
+      queue:
+        enabled: true

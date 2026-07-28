@@ -1,0 +1,27 @@
+bundle:
+  name: agents_in_a_day
+
+# ─────────────────────────────────────────────────────────
+# Configure these two variables before you click Deploy.
+# ─────────────────────────────────────────────────────────
+variables:
+  catalog:
+    description: >
+      Unity Catalog catalog name.
+      Free Edition default: sunny_bay_roastery
+      Shared / FEVM: use an existing catalog you own.
+    default: sunny_bay_roastery
+
+  prefix:
+    description: >
+      Table name prefix — use when sharing a catalog with other participants.
+      Leave blank if you are working alone (Free Edition default).
+    default: ""
+
+targets:
+  dev:
+    mode: development
+    default: true
+    variables:
+      catalog: sunny_bay_roastery
+      prefix:  ""
