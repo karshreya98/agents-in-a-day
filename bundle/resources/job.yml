@@ -1,7 +1,7 @@
 resources:
   jobs:
     agents_in_a_day_setup:
-      name: "Agents in a Day — Setup"
+      name: "Agents in a Day - Setup"
 
       parameters:
         - name: catalog
@@ -12,7 +12,7 @@ resources:
       tasks:
         - task_key: setup
           notebook_task:
-            notebook_path: ../labs/Lab 0 - Setup.py
+            notebook_path: "../labs/Lab 0 - Setup.py"
 
       queue:
         enabled: true
