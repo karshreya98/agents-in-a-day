@@ -12,7 +12,7 @@ resources:
       tasks:
         - task_key: setup
           notebook_task:
-            notebook_path: "../labs/Lab 0 - Setup.py"
+            notebook_path: ../src/notebooks/Lab 0 - Setup.py
 
       queue:
         enabled: true
