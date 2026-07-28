@@ -1,0 +1,17 @@
+resources:
+  pipelines:
+    fault_report_pipeline:
+      name: "Agents in a Day - Fault Report Pipeline"
+      serverless: true
+      catalog: ${var.catalog}
+      schema: coffee_maintenance
+
+      # Custom confs read by fault_report_pipeline.py via spark.conf.get(...)
+      configuration:
+        pipeline.catalog: ${var.catalog}
+        pipeline.target_schema: coffee_maintenance
+        pipeline.volume_path: /Volumes/${var.catalog}/coffee_maintenance/fault_reports/
+
+      libraries:
+        - notebook:
+            path: ../src/transformations/fault_report_pipeline.py

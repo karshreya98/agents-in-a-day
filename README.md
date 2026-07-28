@@ -63,11 +63,13 @@ variables:
 
 1. Go to **Workflows** in the left sidebar
 2. Find **"Agents in a Day — Setup"** and click **Run now**
-3. Wait for the green **Succeeded** badge (~2 min)
+3. Wait for the green **Succeeded** badge (~5 min)
 
 The job creates:
 - `coffee_maintenance` schema with `machines`, `fault_events`, `service_orders` tables
 - 5 fault report PDFs in a UC Volume
+- `fault_reports_structured` table — the Lakeflow pipeline runs `ai_parse_document()`
+  + `ai_extract()` across all 5 PDFs (used in Lab 1)
 - `create_service_order` UC function
 
 ---
@@ -77,7 +79,7 @@ The job creates:
 | Lab | Character | What you build |
 |-----|-----------|----------------|
 | **Part 1** | Sara | Genie One + you.com MCP — briefings without touching data |
-| **Lab 1** | Marc | Document Intelligence — `ai_extract()` on fault report PDFs |
+| **Lab 1** | Marc | Document Intelligence — `ai_parse_document()` + `ai_extract()` on fault report PDFs |
 | **Lab 2** | Marc | Build the Supervisor — Agent Bricks multi-source agent |
 | **Lab 3** | Marc | Share, Test, and Harden — test scenarios + guardrails |
 | **Lab 4** | Marc | AI Gateway + write-back — `create_service_order` UC function |
@@ -93,9 +95,14 @@ agents-in-a-day/
 ├── bundle/
 │   ├── databricks.yml          ← Set your catalog here, then Deploy
 │   ├── resources/
-│   │   └── job.yml
-│   └── src/notebooks/
-│       └── Lab 0 - Setup.py    ← Setup notebook (run via the job above)
+│   │   ├── job.yml             ← Setup job (runs the notebook + pipeline)
+│   │   └── pipeline.yml        ← Lakeflow pipeline (parses + extracts all PDFs)
+│   └── src/
+│       ├── data/fault_reports/ ← 5 prebuilt fault report PDFs
+│       ├── notebooks/
+│       │   └── Lab 0 - Setup.py        ← Setup notebook (run via the job above)
+│       └── transformations/
+│           └── fault_report_pipeline.py ← ai_parse_document + ai_extract
 ├── labs/
 │   ├── Part 1 - Sara - Genie One.md
 │   ├── Lab 1 - Document Intelligence.md

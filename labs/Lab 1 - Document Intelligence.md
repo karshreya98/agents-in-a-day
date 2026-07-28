@@ -1,154 +1,247 @@
 # 🔍 Lab 1 — Document Intelligence
 
-## 🎯 Goal
+## 🎯 Learning Objectives
 
-Marc receives fault reports as **unstructured text files** — written by location managers, emailed in, scanned. Before any agent can act on them, the key facts need to be pulled out: which machine, which fault code, what happened.
+By the end of this lab you will be able to:
 
-In this lab you will use **`ai_extract()`** — a built-in Databricks AI Function — to turn one raw fault report into clean, structured data in a single SQL call. No model setup. No embeddings. No glue code. You describe the fields you want in plain English; Databricks handles the rest.
-
-> **Marc's situation:** CBM-003 at the Mission location has thrown a pressure fault three times in 18 days. Sara flagged it in Part 1. Marc needs to read the fault report and understand what the technician wrote — before he can create a service order.
-
----
-
-## 🧪 Try it — extract one fault report
-
-### Step 1 — Open a new notebook
-
-1. In the left sidebar click **New** → **Notebook**
-2. Set the compute to **Serverless**
-3. Set the language to **SQL**
+- Explain how Databricks turns an unstructured **PDF** into structured data with no model setup.
+- Use the **Document Parsing** agent in Agent Bricks to parse a fault report in the UI.
+- Run `ai_parse_document()` and `ai_extract()` yourself in a notebook on **one** fault report.
+- Understand how the same two functions run automatically across **all** fault reports in a Lakeflow pipeline.
 
 ---
 
-### Step 2 — Read the raw fault report
+## 📖 Introduction
 
-In the first cell, paste and run:
+Marc receives fault reports as **unstructured PDF documents** — written by location
+managers, emailed in, scanned. Before any agent can act on them, the key facts need
+to be pulled out: which machine, which fault code, what happened.
 
-```sql
-SELECT read_files(
-  '/Volumes/<catalog>/coffee_maintenance/fault_reports/FR-2026-001.txt',
-  format => 'text'
-) AS raw_text
-```
+Databricks does this with two built-in AI Functions — no model to train, no
+embeddings, no glue code:
 
-> Replace `<catalog>` with the catalog name you used in Lab 0 (e.g. `sunny_bay_roastery`).
+| Function | What it does |
+|---|---|
+| **`ai_parse_document()`** | Reads a PDF (or image, Word doc, slide deck) and returns its text and layout — titles, tables, paragraphs. |
+| **`ai_extract()`** | Takes that text and pulls out the fields you name in plain English, returning a clean struct. |
 
-You will see the raw text Sara wrote about CBM-003 — unstructured, exactly as she typed it.
+You will meet both — first in the **Agent Bricks UI**, then in a **notebook** — on a
+single fault report. The Lab 0 setup job has already run them across all 5 reports
+into a Delta table, and you'll compare your result against it at the end.
 
----
-
-### Step 3 — Extract structured fields with `ai_extract()`
-
-In a new cell, run:
-
-```sql
-WITH raw AS (
-  SELECT read_files(
-    '/Volumes/<catalog>/coffee_maintenance/fault_reports/FR-2026-001.txt',
-    format => 'text'
-  ) AS raw_text
-)
-SELECT
-  ai_extract(
-    raw_text,
-    array(
-      'machine_id',
-      'machine_model',
-      'fault_code',
-      'issue_description',
-      'location_name',
-      'contact_name',
-      'report_date'
-    )
-  ) AS extracted
-FROM raw
-```
-
-You will see a JSON object with every field pulled out automatically.
-
-> **What just happened?** You described the fields you wanted in plain English. `ai_extract()` called the Foundation Model API and mapped them from the free text — no training, no fine-tuning.
+> **Marc's situation:** CBM-003 at the Mission location has thrown a pressure fault
+> three times in 18 days. Sara flagged it in Part 1. Marc needs to read the fault
+> report and understand what the technician wrote — before he can create a service order.
 
 ---
 
-### Step 4 — Flatten the JSON into columns
+## Instructions
 
-In a new cell, run:
+### **Step 1: Parse a fault report in Agent Bricks**
 
-```sql
-WITH raw AS (
-  SELECT read_files(
-    '/Volumes/<catalog>/coffee_maintenance/fault_reports/FR-2026-001.txt',
-    format => 'text'
-  ) AS raw_text
-),
-extracted AS (
-  SELECT ai_extract(
-    raw_text,
-    array(
-      'machine_id', 'machine_model', 'fault_code',
-      'issue_description', 'location_name',
-      'contact_name', 'report_date'
-    )
-  ) AS fields
-  FROM raw
-)
-SELECT
-  fields:machine_id        AS machine_id,
-  fields:machine_model     AS machine_model,
-  fields:fault_code        AS fault_code,
-  fields:issue_description AS issue_description,
-  fields:location_name     AS location_name,
-  fields:contact_name      AS contact_name,
-  fields:report_date       AS report_date
-FROM extracted
-```
+Agent Bricks gives you a no-code way to try document parsing before you write a
+single line of SQL.
 
-> **Tip:** The `:` syntax (`fields:machine_id`) is Spark's inline JSON path accessor — no `json_extract()` needed.
+1. In the workspace left sidebar, click **Agents**.
+
+2. Click **Create Agent** → **Document Parsing**.
+
+3. Under **source document**, choose **Select from a volume** and browse to:
+
+   ```
+   /Volumes/<catalog>/coffee_maintenance/fault_reports/FR-2026-001.pdf
+   ```
+
+   > [!NOTE]
+   > Replace `<catalog>` with the catalog name you used in Lab 0 (e.g. `sunny_bay_roastery`).
+
+4. Click **Parse document** and wait a few moments.
+
+5. The screen splits: the **source PDF** on the left, the **parsed output** on the
+   right. Toggle between **formatted text** and **raw JSON** to see how Databricks
+   broke the document into elements (title, table, paragraphs) with confidence scores.
+
+> [!TIP]
+> This is exactly what `ai_parse_document()` returns — the UI is just a friendly
+> front end over the same function. In the next step you'll run it yourself.
+
+6. When you're done exploring, click **Use Agent** → **Run in Notebook**. This opens
+   a notebook pre-filled with an `ai_parse_document()` query pointed at the volume.
 
 ---
 
-### Step 5 — Compare with the full pipeline output
+### **Step 2: Extract structured fields in a notebook**
 
-The Lab 0 setup job already ran `ai_extract()` across **all 5 fault reports** and saved the results. Query it now:
+Now you'll go from *parsed text* to *structured columns* — the shape an agent can
+actually query.
 
-```sql
-SELECT * FROM <catalog>.coffee_maintenance.fault_reports_structured
-ORDER BY report_date DESC
-```
+1. In the notebook that just opened (or a **New** → **Notebook** set to **Serverless**
+   and **SQL**), you'll build up the query in three cells.
 
-Your single-file extraction from Step 4 matches row 1 exactly. The pipeline did the same thing — at scale, automatically.
+2. **Parse the PDF into text.** In the first cell, paste and run:
+
+   ```sql
+   WITH parsed AS (
+     SELECT ai_parse_document(content) AS doc
+     FROM READ_FILES(
+       '/Volumes/<catalog>/coffee_maintenance/fault_reports/FR-2026-001.pdf',
+       format => 'binaryFile'
+     )
+   )
+   SELECT
+     array_join(
+       transform(
+         try_cast(doc:document:elements AS ARRAY<STRING>),
+         x -> from_json(x, 'STRUCT<content: STRING>').content
+       ),
+       '\n'
+     ) AS raw_text
+   FROM parsed
+   ```
+
+   You'll see the text Sara wrote about CBM-003, stitched together from the parsed
+   elements — the same content the UI showed you in Step 1.
+
+3. **Extract the fields you care about.** In a new cell, wrap that text in
+   `ai_extract()` and name the fields in plain English:
+
+   ```sql
+   WITH parsed AS (
+     SELECT ai_parse_document(content) AS doc
+     FROM READ_FILES(
+       '/Volumes/<catalog>/coffee_maintenance/fault_reports/FR-2026-001.pdf',
+       format => 'binaryFile'
+     )
+   ),
+   raw AS (
+     SELECT array_join(
+       transform(
+         try_cast(doc:document:elements AS ARRAY<STRING>),
+         x -> from_json(x, 'STRUCT<content: STRING>').content
+       ),
+       '\n'
+     ) AS raw_text
+     FROM parsed
+   )
+   SELECT
+     ai_extract(
+       raw_text,
+       array(
+         'machine_id', 'machine_model', 'fault_code',
+         'issue_description', 'location_name',
+         'contact_name', 'report_date'
+       )
+     ) AS fields
+   FROM raw
+   ```
+
+   `ai_extract()` returns a **struct** with one field per name you gave it.
+
+4. **Flatten the struct into columns.** In a new cell, pull each field out with dot
+   notation:
+
+   ```sql
+   WITH parsed AS (
+     SELECT ai_parse_document(content) AS doc
+     FROM READ_FILES(
+       '/Volumes/<catalog>/coffee_maintenance/fault_reports/FR-2026-001.pdf',
+       format => 'binaryFile'
+     )
+   ),
+   raw AS (
+     SELECT array_join(
+       transform(
+         try_cast(doc:document:elements AS ARRAY<STRING>),
+         x -> from_json(x, 'STRUCT<content: STRING>').content
+       ),
+       '\n'
+     ) AS raw_text
+     FROM parsed
+   ),
+   extracted AS (
+     SELECT ai_extract(
+       raw_text,
+       array(
+         'machine_id', 'machine_model', 'fault_code',
+         'issue_description', 'location_name',
+         'contact_name', 'report_date'
+       )
+     ) AS fields
+     FROM raw
+   )
+   SELECT
+     fields.machine_id        AS machine_id,
+     fields.machine_model     AS machine_model,
+     fields.fault_code        AS fault_code,
+     fields.issue_description AS issue_description,
+     fields.location_name     AS location_name,
+     fields.contact_name      AS contact_name,
+     fields.report_date       AS report_date
+   FROM extracted
+   ```
+
+   You should get one clean row: `CBM-003`, `Siemens EQ.9 Plus Connect`, `E-07`, and the rest.
+
+> [!TIP]
+> `ai_extract()` returns a struct, so you read fields with dot notation
+> (`fields.machine_id`) — no `json_extract()` needed.
+
+---
+
+### **Step 3: See it run at scale — the Lakeflow pipeline**
+
+You just did this for **one** PDF. The Lab 0 setup job already ran the *exact same
+two functions* across **all 5** fault reports using a **Lakeflow Spark Declarative
+Pipeline**, and saved the result to a Delta table.
+
+1. Query the pipeline's output table:
+
+   ```sql
+   SELECT * FROM <catalog>.coffee_maintenance.fault_reports_structured
+   ORDER BY report_date DESC
+   ```
+
+2. Find the row for `FR-2026-001.pdf` — it matches the single row you produced in
+   Step 2 exactly. The pipeline did the same work, for every report, automatically.
+
+> [!NOTE]
+> **How the pipeline works.** It's the same two functions you just ran, wired into a
+> streaming medallion flow:
+>
+> ```
+> New PDF dropped into Volume
+>         ↓
+>   fault_reports_raw        (Bronze — Auto Loader + ai_parse_document())
+>         ↓
+>   fault_reports_structured (Gold  — ai_extract() applied automatically)
+> ```
+>
+> Find it in your workspace under **Jobs & Pipelines** → **Agents in a Day - Fault
+> Report Pipeline**. When Sara drops a new fault report PDF into the Volume, it is
+> parsed, extracted, and appended to `fault_reports_structured` on the next run — no
+> notebook needed.
 
 ---
 
 ## 💡 Key takeaways
 
-| | What you did | What the pipeline does |
+| | What you did (Steps 1–2) | What the pipeline does (Step 3) |
 |---|---|---|
-| **Input** | 1 fault report file | Every file dropped into the Volume |
-| **Function** | `ai_extract()` | Same `ai_extract()` |
+| **Input** | 1 fault report PDF | Every PDF dropped into the Volume |
+| **Functions** | `ai_parse_document()` + `ai_extract()` | The same two functions |
 | **Output** | 1 structured row | `fault_reports_structured` Delta table, always up to date |
 | **Trigger** | You ran a cell | Auto-triggered on new file arrival |
 
-Marc's Supervisor (Lab 2) queries `fault_reports_structured` as one of its tools. When Sara drops a new PDF into the Volume, it is extracted automatically and the Supervisor can act on it without any manual step.
+Marc's Supervisor (Lab 2) queries `fault_reports_structured` as one of its tools. When
+Sara drops a new PDF into the Volume, it's extracted automatically and the Supervisor
+can act on it without any manual step.
 
 ---
 
-## ⚙️ How this runs at scale — the SDP pipeline
+## What Happens Next?
 
-> **Facilitator note / for the curious**
-
-The Lab 0 setup job deployed a **Spark Declarative Pipeline** (`fault_report_pipeline.py`) that automates everything you just did manually:
-
-```
-New .txt file dropped into Volume
-        ↓
-  fault_reports_raw        (Bronze — Auto Loader streaming table)
-        ↓
-  fault_reports_structured (Gold  — ai_extract() applied automatically)
-```
-
-You can find it in your workspace under **Delta Live Tables** (search for `Agents in a Day`). In a production scenario you would trigger this pipeline on a schedule or on file arrival — no notebook needed.
-
----
+Marc now has clean, structured fault data flowing out of raw PDFs. In **Lab 2** you'll
+build the **Supervisor Agent** that queries this table — alongside machine telemetry
+and the web — to give Marc a single field-ready briefing.
 
 ➡️ Continue to **[Lab 2 — Build the Supervisor](./Lab%202%20-%20Build%20the%20Supervisor.md)**
