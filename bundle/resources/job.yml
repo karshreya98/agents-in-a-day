@@ -2,9 +2,6 @@ resources:
   jobs:
     agents_in_a_day_setup:
       name: "Agents in a Day — Setup"
-      description: >
-        Creates all Agents in a Day tables, volumes, fault report PDFs,
-        and the create_service_order UC function. Run once after DAID is installed.
 
       parameters:
         - name: catalog
@@ -15,13 +12,7 @@ resources:
       tasks:
         - task_key: setup
           notebook_task:
-            notebook_path: ../labs/Lab 0 - Setup
-          environment_key: default
-
-      environments:
-        - environment_key: default
-          spec:
-            client: "1"
+            notebook_path: ../labs/Lab 0 - Setup.py
 
       queue:
         enabled: true
