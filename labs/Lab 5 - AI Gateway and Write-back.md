@@ -4,33 +4,42 @@
 
 By the end of this lab, you will be able to:
 
-- Explore the **Unity AI Gateway** and understand what it governs.
-- **(Admin)** Create a governed model serving endpoint with a **PII guardrail**, and
-  grant workshop users access to it.
-- Install the **opencode** AI coding agent and point it at the governed endpoint.
-- **Vibe-code** the `create_service_order` write-back function through opencode — and
-  watch a PII prompt get caught by the guardrail.
-- See every call land in the **AI Gateway usage dashboard**.
+- Explore the **Unity AI Gateway** (Beta) and understand what it governs.
+- **(Admin)** Register a governed model service, attach a **PII guardrail** (service
+  policy), and grant workshop users access.
+- Install **`ucode`** — Databricks' launcher that routes coding agents (Claude Code,
+  Codex, Gemini CLI…) through the Unity AI Gateway with no API keys.
+- **Vibe-code** the `create_service_order` write-back function through a governed
+  coding agent — and watch a PII prompt get caught by the guardrail.
+- See every call land in the **Coding Agents usage dashboard**.
 
 ## Introduction
 
-So far every AI call — Genie queries, `ai_extract()`, the Supervisor — has flowed
-through the **AI Gateway** without you thinking about it. In this final lab you put the
-Gateway front and center and answer a question every platform team asks:
+So far every AI call — Genie queries, `ai_extract()`, the Supervisor — has been governed
+by Databricks. In this final lab you meet the **Unity AI Gateway (Beta)** head-on and
+answer a question every platform team asks:
 
 > *"Our developers want to use AI coding assistants. How do we let them — through **our**
 > governed models, with **our** PII rules, and a full audit trail — instead of everyone
 > pasting company code into random public tools?"*
 
-The answer: serve a model behind the AI Gateway with guardrails, then point any
-OpenAI-compatible tool (here, **opencode**) at it. Developers get their AI assistant;
-the platform team gets governance. To make it concrete, you'll use that governed
-assistant to **vibe-code the `create_service_order` write-back function** — the piece
-that lets Marc's Supervisor turn a briefing into a real service order.
+The Unity AI Gateway is Databricks' governance layer for the *runtime* interactions
+between models, agents, MCP servers, and tools — built on Unity Catalog. The answer:
+register a model service, attach guardrails, then route any coding agent through it with
+**`ucode`** (Databricks' Unity AI Gateway coding CLI — [github.com/databricks/ucode](https://github.com/databricks/ucode)).
+Developers get their favorite assistant; the platform team gets governance and no leaked
+API keys. To make it concrete, you'll use that governed assistant to **vibe-code the
+`create_service_order` write-back function** — the piece that lets Marc's Supervisor turn
+a briefing into a real service order.
 
 > [!NOTE]
 > **Roles in this lab.** Steps 1–2 are done by a **workspace admin** (one person /
 > the facilitator). Steps 3–5 are done by **every participant** on their own laptop.
+
+> [!IMPORTANT]
+> Unity AI Gateway is in **Beta**. An account admin must enable it from the account
+> console **Previews** page ("Manage Databricks previews") before this lab. Beta features
+> incur no charges during the preview.
 
 ---
 
@@ -38,137 +47,133 @@ that lets Marc's Supervisor turn a briefing into a real service order.
 
 ### **Step 1: Explore the Unity AI Gateway (5 min)**
 
-1. In the workspace sidebar, open **Serving** (Model Serving). This is where every
-   model endpoint — foundation models, external models, and your agents — lives behind
-   the **AI Gateway**.
+1. In the workspace sidebar, open **Unity AI Gateway** (under **Govern**). Unlike the
+   old per-endpoint model-serving gateway, this is a single **control plane** where AI
+   services — foundation models, MCP servers, tools, and agents — are registered as
+   governed Unity Catalog objects.
 
-2. Open any existing endpoint (for example `databricks-claude-sonnet-5`) and find the
-   **AI Gateway** section. Note the controls the Gateway gives you on *any* endpoint:
+2. Look around. Note the four things the Gateway governs for *any* registered service:
 
-   - **Usage tracking** — token counts, latency, and requester per call.
-   - **Inference tables** — full request/response payload logging to Delta.
-   - **AI Guardrails** — PII detection, safety, topic and keyword filtering.
-   - **Rate limits** — per-user and per-endpoint request caps.
+   - **Access control** — grant/revoke with standard Unity Catalog privileges.
+   - **Service policies (guardrails)** — inspect request/response content; PII detection,
+     safety, allow/deny rules.
+   - **Traffic management** — rate limits, budgets with per-user caps, failover.
+   - **Monitoring** — usage, cost attribution by principal/model/tag, request logging.
 
 > [!NOTE]
-> None of this requires changing model or application code. Governance is a property of
-> the **endpoint**, applied at the Gateway — not something each developer has to wire in.
+> The shift from the old gateway: governance is no longer bolted onto each serving
+> endpoint — it's centralized in Unity Catalog and covers the *runtime interactions*
+> between models, agents, tools, and MCP servers.
 
 ---
 
-### **Step 2: (Admin) Create a governed endpoint with a PII guardrail (10 min)**
+### **Step 2: (Admin) Register a governed model service with a PII guardrail (10 min)**
 
 > [!IMPORTANT]
-> This step is done **once, by a workspace admin**. Participants: watch, then use the
-> endpoint your admin shares with you in Step 3.
+> This step is done **once, by a workspace admin** (with the Beta preview enabled).
+> Participants: watch, then use the model service your admin shares with you in Step 3.
 
-1. In **Serving**, click **Create serving endpoint**.
+1. In **Unity AI Gateway**, open **Models** (model services) → **Register / Create**.
 
-2. **Name it** `workshop-governed-llm`.
+2. **Name it** `workshop-governed-llm` and back it with a Databricks foundation model
+   (e.g. `databricks-claude-sonnet-5`, or a coding-tuned model such as
+   `databricks-gpt-5-3-codex`). Pay-per-token — no external API key needed.
 
-3. **Served entity:** choose **Foundation models** → select a chat model
-   (e.g. `databricks-claude-sonnet-5`, or a coding-tuned model like
-   `databricks-gpt-5-3-codex`). This is pay-per-token — no external API key needed.
+3. Turn on **Usage tracking** and **Inference tables** so calls are logged and auditable.
 
-4. Expand **AI Gateway** and enable:
+4. Attach a **PII guardrail**. Open the service's **Policies** tab → **New policy** →
+   choose the **built-in PII guardrail** and set the mode:
 
-   - **Usage tracking** — ✅ On (so calls appear in the usage dashboard).
-   - **AI Guardrails → PII detection** — set to **Block** (reject any request
-     containing PII) or **Mask** (redact PII before it reaches the model).
+   - **Sanitize / Mask** — redact PII before it reaches the model (recommended for the
+     demo — the coding task still succeeds, the PII just never leaves the Gateway).
+   - **Block** — reject any request containing PII outright.
 
-5. Click **Create**. Wait for the endpoint to reach **Ready**.
+   Pick the recommended evaluator model when prompted.
 
-6. **Grant participants access.** Open the endpoint → **Permissions** → grant your
-   workshop users (or a group) **Can Query**. Share two things with the room:
+   > [!NOTE]
+   > In Beta, use the **built-in** PII guardrail for redaction. Custom service policies
+   > (SQL UDFs) return ALLOW/DENY/ASK decisions but don't rewrite content — great for
+   > access rules, not for sanitization.
 
-   - The endpoint name: `workshop-governed-llm`
-   - The workspace URL: `https://<your-workspace>.cloud.databricks.com`
+5. **Grant participants access.** On the model service, use **Permissions** (Unity
+   Catalog privileges) to grant your workshop users (or a group) query access. Share the
+   workspace URL and the service name (`workshop-governed-llm`) with the room.
 
 > [!NOTE]
-> **Why an admin-only step?** Creating endpoints and setting guardrails is a platform
+> **Why an admin-only step?** Registering services and attaching guardrails is a platform
 > responsibility. Developers don't each configure PII rules — they *consume* a governed
-> endpoint the platform team stands up once. That separation is the whole point.
+> service the platform team stands up once. That separation is the whole point.
 
 ---
 
-### **Step 3: Install opencode and point it at the Gateway (10 min)**
+### **Step 3: Install `ucode` and route a coding agent through the Gateway (10 min)**
 
-Now each participant sets up an AI coding agent on their own laptop, backed by the
-governed endpoint — not a public API.
+Now each participant sets up an AI coding agent on their own laptop — routed through the
+governed Gateway, with **no API keys** to manage. `ucode` is Databricks' launcher: it
+runs Claude Code, Codex, Gemini CLI, and others *through* the Unity AI Gateway using your
+workspace credentials.
 
-1. **Install opencode** (see [opencode.ai](https://opencode.ai) for your OS):
-
-   ```bash
-   # macOS / Linux
-   curl -fsSL https://opencode.ai/install | bash
-   ```
-
-2. **Create a Databricks personal access token (PAT)** to authenticate: in the
-   workspace, **Settings → Developer → Access tokens → Generate new token**. Copy it.
-
-3. **Export it** as an environment variable so it never gets committed:
+1. **Install `ucode`** (requires [`uv`](https://docs.astral.sh/uv/) and Python 3.12+):
 
    ```bash
-   export DATABRICKS_TOKEN="dapi..."   # paste your PAT
+   uv tool install git+https://github.com/databricks/ucode
    ```
 
-4. **Point opencode at the governed endpoint.** Create `~/.config/opencode/opencode.json`:
-
-   ```json
-   {
-     "$schema": "https://opencode.ai/config.json",
-     "model": "databricks/workshop-governed-llm",
-     "provider": {
-       "databricks": {
-         "npm": "@ai-sdk/openai-compatible",
-         "name": "Databricks AI Gateway",
-         "options": {
-           "baseURL": "https://<your-workspace>.cloud.databricks.com/serving-endpoints",
-           "apiKey": "{env:DATABRICKS_TOKEN}"
-         },
-         "models": {
-           "workshop-governed-llm": { "name": "Workshop Governed LLM" }
-         }
-       }
-     }
-   }
-   ```
-
-   > Replace `<your-workspace>` with the URL your admin shared. The model ID
-   > (`workshop-governed-llm`) is the **serving endpoint name** — Databricks exposes it
-   > through an OpenAI-compatible API at `/serving-endpoints`.
-
-5. **Confirm opencode sees it:**
+2. **Configure it** — this handles OAuth and writes each agent's config for you:
 
    ```bash
-   opencode models
+   ucode configure
    ```
 
-   You should see `databricks/workshop-governed-llm` in the list.
+   On first run it prompts for your **workspace URL** (the one your admin shared) and
+   opens a browser to authenticate. No PAT, no API key, no base URL to paste — `ucode`
+   wires the agent to route through the Unity AI Gateway automatically.
+
+3. **Confirm it's connected:**
+
+   ```bash
+   ucode status
+   ```
+
+   You should see your workspace and the configured agent(s). `ucode` auto-discovers the
+   governed models available to you through the Gateway.
+
+> [!TIP]
+> `ucode` can launch several agents — `ucode claude`, `ucode codex`, `ucode gemini`,
+> `ucode copilot`. Configure just the one you want with
+> `ucode configure --agents claude`. All of them route through the Gateway the same way.
 
 ---
 
-### **Step 4: Vibe-code the write-back function with opencode (15 min)**
+### **Step 4: Vibe-code the write-back function through the governed agent (15 min)**
 
 Now use your governed AI assistant to build something real: the **`create_service_order`**
 Unity Catalog function — the write-back that lets Marc's Supervisor turn a briefing into
-an actual service order. You'll *vibe-code* it through opencode instead of writing it by hand.
+an actual service order. You'll *vibe-code* it through a Gateway-routed agent instead of
+writing it by hand.
 
-1. Start opencode in a scratch folder and describe what you need:
+1. Launch a coding agent in a scratch folder (any of the supported ones — Claude Code
+   shown here):
+
+   ```bash
+   ucode claude
+   ```
+
+2. Describe what you need:
 
    ```
    Write a Databricks Unity Catalog SQL function
-   `create_service_order(machine_id STRING, fault_code STRING, part_id STRING,
-   technician_notes STRING)` that returns a STRING order id. It should INSERT a
-   row into `<catalog>.coffee_maintenance.service_orders` with a generated
+   create_service_order(machine_id STRING, fault_code STRING, part_id STRING,
+   technician_notes STRING) that returns a STRING order id. It should INSERT a
+   row into <catalog>.coffee_maintenance.service_orders with a generated
    order_id like 'SO-12345', current_timestamp(), and status 'pending', then
    return the order_id. Give me the CREATE FUNCTION statement.
    ```
 
-   The answer comes back from **your governed Databricks endpoint** — not a public
-   model. Governed, logged, rate-limited.
+   Every token of that request and response is routed through the **Unity AI Gateway** —
+   governed, logged, rate-limited — using your workspace identity, not a personal API key.
 
-2. Iterate with opencode until the function looks right (ask it to add a `COMMENT` so an
+3. Iterate with the agent until the function looks right (ask it to add a `COMMENT` so an
    agent knows when to call it, or to handle quoting). Then run the generated
    `CREATE FUNCTION` in a SQL cell against your catalog and test it:
 
@@ -180,37 +185,45 @@ an actual service order. You'll *vibe-code* it through opencode instead of writi
 
    > [!TIP]
    > **Fallback:** the Lab 0 setup job already registered a working
-   > `create_service_order` function. If opencode's version gives you trouble or you're
-   > short on time, just use the one from setup — it's ready to go.
+   > `create_service_order` function. If the vibe-coded version gives you trouble or
+   > you're short on time, just use the one from setup — it's ready to go.
 
-3. Now trigger the **PII guardrail**. Send opencode a prompt containing obvious PII:
+4. Now trigger the **PII guardrail**. Ask the agent something with obvious PII in it:
 
    ```
    Refactor this: customer John Smith, SSN 123-45-6789,
    email john.smith@example.com — store his record in a dict.
    ```
 
-   - With PII = **Block**, the request is rejected before it reaches the model.
-   - With PII = **Mask**, the PII is redacted before the model ever sees it.
+   - With the guardrail in **Sanitize/Mask** mode, the PII is redacted before the model
+     ever sees it — the Gateway strips it out in flight.
+   - With **Block** mode, the request is rejected outright.
 
 > [!NOTE]
-> The developer didn't configure anything. The guardrail lives on the endpoint, so it
-> protects **every** tool that points at it — opencode today, something else tomorrow.
-> You just built a real write-back function through an AI assistant that *cannot* leak PII.
+> The developer didn't configure anything. The guardrail lives on the governed service,
+> so it protects **every** agent `ucode` routes through it — Claude Code today, Codex or
+> Gemini tomorrow. You just built a real write-back function through an AI assistant that
+> *cannot* leak PII.
 
 ---
 
-### **Step 5: See it in the AI Gateway usage dashboard (5 min)**
+### **Step 5: See it in the Coding Agents usage dashboard (5 min)**
 
-1. Back in the workspace, open **Serving → `workshop-governed-llm` → Usage** (or the
-   Gateway usage view / monitoring tab).
+1. Quickest check — from your terminal:
 
-2. You'll see your opencode calls: request counts, input/output tokens, latency, and
-   the requesting user — including the **blocked** PII request (surfaced as a rejected
-   call).
+   ```bash
+   ucode usage
+   ```
 
-3. **(Admin, optional)** For a workspace-wide view, query the system table directly in a
-   SQL editor:
+   This prints your Unity AI Gateway usage summary for the last 7 days: the coding calls
+   you just made, tokens, and the model behind them.
+
+2. In the workspace UI, open **Govern → Usage Dashboard → Coding Agents** tab. You'll see
+   the calls attributed to you and every other participant — request counts, tokens,
+   latency, and which governed model served them.
+
+3. **(Admin, optional)** For a workspace-wide view, query the usage system table in a SQL
+   editor:
 
    ```sql
    SELECT
@@ -256,8 +269,8 @@ an actual service order. You'll *vibe-code* it through opencode instead of writi
   and watch it appear in `fault_reports_structured` automatically
   (the Lakeflow pipeline from Lab 0).
 
-- Point opencode (or any OpenAI-compatible AI tool) at your governed endpoint for your
-  own projects — same governance, your code.
+- Use `ucode` to route your own coding agent (Claude Code, Codex, Gemini…) through the
+  Unity AI Gateway for your own projects — same governance, your code, no API keys.
 
 > [!TIP]
 > Ask your facilitator about follow-up deep-dive sessions on **Agent Bricks**,

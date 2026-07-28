@@ -2,7 +2,7 @@
 # MAGIC %md
 # MAGIC # 🛠️ Agents in a Day — Setup
 # MAGIC
-# MAGIC **Run this notebook after completing DAID Lab 0.**
+# MAGIC **Run this notebook after installing Dashboard in a Day (DAID) — see the README.**
 # MAGIC
 # MAGIC It creates everything Marc needs for his agent arc:
 # MAGIC - `coffee_maintenance` schema
@@ -11,7 +11,7 @@
 # MAGIC - `create_service_order` UC function (Lab 5)
 # MAGIC
 # MAGIC > ✏️ **Only one thing to configure:** set `catalog` below to match
-# MAGIC > the catalog you used in DAID Lab 0.
+# MAGIC > the catalog you installed DAID into.
 
 # COMMAND ----------
 

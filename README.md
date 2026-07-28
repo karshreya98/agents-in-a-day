@@ -5,12 +5,13 @@ workspace — built on top of **Dashboard in a Day**.
 
 ---
 
-## ⚠️ Prerequisite — Complete Dashboard in a Day first
+## Setup — Install Dashboard in a Day (for its data & artifacts)
 
-Agents in a Day builds on the Unity Catalog, metric view, and Genie Agent
-created by DAID. **You must complete DAID before running this setup.**
+Agents in a Day builds on the Unity Catalog, metric view, and Sales Genie created by
+Dashboard in a Day (DAID). You don't need to *run the DAID workshop* — just install it
+so its data and artifacts exist in your workspace.
 
-### DAID install checklist
+### Install DAID
 
 1. Clone the DAID repo as a Git Folder in your workspace:
    ```
@@ -21,7 +22,7 @@ created by DAID. **You must complete DAID before running this setup.**
 4. Go to **Workflows** → find **"Sunny Bay Roastery Setup"** → click **Run now**
 5. Wait for the green **Succeeded** badge (~5 min)
 
-Once DAID is done, come back here and follow the steps below.
+That's it — the DAID data and Sales Genie are now in your workspace. Continue below.
 
 ---
 
@@ -39,7 +40,7 @@ Once DAID is done, come back here and follow the steps below.
 ### Step 2 — Set your catalog name in `databricks.yml`
 
 1. Open `bundle/databricks.yml` in the workspace
-2. Change the `catalog` default to match what you used in DAID:
+2. Change the `catalog` default to match the catalog you installed DAID into:
 
 ```yaml
 variables:
@@ -82,7 +83,7 @@ The job creates:
 | **Lab 2** | Marc | Document Intelligence — `ai_parse_document()` + `ai_extract()` on fault report PDFs |
 | **Lab 3** | Marc | Build the Supervisor — Agent Bricks multi-source agent |
 | **Lab 4** | Marc | Observe and Review — MLflow traces + Review App for expert feedback |
-| **Lab 5** | Platform | Governed AI coding — AI Gateway + PII guardrail + opencode vibe-codes the write-back |
+| **Lab 5** | Platform | Governed AI coding — Unity AI Gateway + PII guardrail + `ucode` vibe-codes the write-back |
 
 All labs are in the `labs/` folder.
 
