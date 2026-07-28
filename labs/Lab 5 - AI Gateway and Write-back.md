@@ -1,269 +1,252 @@
-# 🔒 Lab 5 — AI Gateway and Write-back
+# 🔒 Lab 5 — Governed AI-Assisted Coding through the AI Gateway
 
 ## 🎯 Learning Objectives
 
 By the end of this lab, you will be able to:
 
-- Inspect the full AI Gateway audit trail from today's session.
-- Understand the `create_service_order` UC function that was registered in Lab 0.
-- Add the UC function as a tool to the Supervisor.
-- Trigger a real write-back: the agent creates a service order in a governed Delta table.
-- Swap the model behind the endpoint without changing any agent code.
-
----
+- Explore the **Unity AI Gateway** and understand what it governs.
+- **(Admin)** Create a governed model serving endpoint with a **PII guardrail**, and
+  grant workshop users access to it.
+- Install the **opencode** AI coding agent and point it at the governed endpoint.
+- **Vibe-code** the `create_service_order` write-back function through opencode — and
+  watch a PII prompt get caught by the guardrail.
+- See every call land in the **AI Gateway usage dashboard**.
 
 ## Introduction
 
-Everything the Supervisor called today — Genie Agent queries, you.com lookups,
-`ai_extract()` from Lab 2 — has been flowing through the **AI Gateway**.
-You were not thinking about governance while you were building. It was tracking
-everything anyway.
+So far every AI call — Genie queries, `ai_extract()`, the Supervisor — has flowed
+through the **AI Gateway** without you thinking about it. In this final lab you put the
+Gateway front and center and answer a question every platform team asks:
 
-In this final lab you:
-1. Open the audit dashboard and see the full trail.
-2. Inspect the `create_service_order` UC function (the code is below).
-3. Wire it into the Supervisor so Marc can create real tickets with two words.
+> *"Our developers want to use AI coding assistants. How do we let them — through **our**
+> governed models, with **our** PII rules, and a full audit trail — instead of everyone
+> pasting company code into random public tools?"*
 
----
-
-## Background: the UC function
-
-The `create_service_order` function was registered in Unity Catalog during Lab 0
-(Step 7). Here is the full Python source so you can understand what the agent
-will call:
-
-```python
-# Unity Catalog function: catalog.coffee_maintenance.create_service_order
-# Language: PYTHON
-# Registered in: Lab 0 - Setup.py, Step 7
-
-import random
-import requests
-import os
-
-def create_service_order(
-    machine_id: str,        # e.g. "CBM-003"
-    fault_code: str,        # e.g. "E-07"
-    part_id: str,           # e.g. "SIE-EQ9-PUMP-003"
-    technician_notes: str,  # free-text summary for the technician
-) -> str:
-    """
-    Creates a service order row in the service_orders Delta table.
-    Returns the new order ID (e.g. "SO-47231").
-    """
-    order_id = f"SO-{random.randint(10000, 99999)}"
-    sql = (
-        f"INSERT INTO `{catalog}`.`coffee_maintenance`.`service_orders` "
-        "(order_id, machine_id, created_ts, fault_code, part_id, technician_notes, status) "
-        f"VALUES ('{order_id}', '{machine_id}', current_timestamp(), "
-        f"'{fault_code}', '{part_id}', '{technician_notes}', 'pending')"
-    )
-    requests.post(
-        f"{os.environ['DATABRICKS_HOST']}/api/2.0/sql/statements",
-        headers={"Authorization": f"Bearer {os.environ['DATABRICKS_TOKEN']}",
-                 "Content-Type": "application/json"},
-        json={"statement": sql, "wait_timeout": "10s"},
-        timeout=15,
-    )
-    return order_id
-```
+The answer: serve a model behind the AI Gateway with guardrails, then point any
+OpenAI-compatible tool (here, **opencode**) at it. Developers get their AI assistant;
+the platform team gets governance. To make it concrete, you'll use that governed
+assistant to **vibe-code the `create_service_order` write-back function** — the piece
+that lets Marc's Supervisor turn a briefing into a real service order.
 
 > [!NOTE]
-> The function uses the Databricks SQL Statements API to execute the INSERT.
-> This is the standard pattern for UC Python functions that need to write back
-> to Delta — they can't use `spark.sql()` directly inside a UC function context.
+> **Roles in this lab.** Steps 1–2 are done by a **workspace admin** (one person /
+> the facilitator). Steps 3–5 are done by **every participant** on their own laptop.
 
 ---
 
 ## Instructions
 
-### **Step 1: Review the AI Gateway audit trail (5 min)**
+### **Step 1: Explore the Unity AI Gateway (5 min)**
 
-1. In the workspace sidebar, navigate to **AI Gateway**
-   (under **AI** or **Machine Learning**).
+1. In the workspace sidebar, open **Serving** (Model Serving). This is where every
+   model endpoint — foundation models, external models, and your agents — lives behind
+   the **AI Gateway**.
 
-2. Open the dashboard for your gateway endpoint.
+2. Open any existing endpoint (for example `databricks-claude-sonnet-5`) and find the
+   **AI Gateway** section. Note the controls the Gateway gives you on *any* endpoint:
 
-3. You should see:
-   - Every Supervisor call from Labs 2–3 (model, tokens, latency, user).
-   - Every `ai_extract()` call from Lab 2.
-   - Timestamps and cost per call.
+   - **Usage tracking** — token counts, latency, and requester per call.
+   - **Inference tables** — full request/response payload logging to Delta.
+   - **AI Guardrails** — PII detection, safety, topic and keyword filtering.
+   - **Rate limits** — per-user and per-endpoint request caps.
 
-4. Filter by **User** to see only your calls.
-
-> *"You were not thinking about governance while you were building.
->  It was tracking everything anyway."*
-
----
-
-### **Step 2: Inspect the UC function in Unity Catalog (3 min)**
-
-Before wiring the function to the Supervisor, confirm it exists and
-understand its signature.
-
-**Option A — UC Explorer (UI):**
-
-1. Go to **Catalog** → navigate to your catalog → `coffee_maintenance` schema.
-2. Click **Functions**.
-3. Open `create_service_order`.
-4. The **Columns** tab shows the 4 input parameters and the return type (`STRING`).
-5. Read the **Comment** field — this is what the Supervisor sees when deciding
-   whether to call the function.
-
-**Option B — SQL (notebook or query editor):**
-
-```sql
-DESCRIBE FUNCTION EXTENDED <your_catalog>.coffee_maintenance.create_service_order;
-```
-
-You should see the 4 parameters: `machine_id`, `fault_code`, `part_id`, `technician_notes`.
+> [!NOTE]
+> None of this requires changing model or application code. Governance is a property of
+> the **endpoint**, applied at the Gateway — not something each developer has to wire in.
 
 ---
 
-### **Step 3: Test the UC function directly (optional, 5 min)**
-
-Before trusting the agent to call it, verify it works with a manual call.
-
-Open a new notebook (Serverless, SQL), then run:
-
-```sql
--- Replace <your_catalog> with your catalog name
-SELECT <your_catalog>.coffee_maintenance.create_service_order(
-  'CBM-TEST',
-  'E-00',
-  'TEST-PART-001',
-  'Manual test call from Lab 5'
-) AS order_id
-```
-
-Then verify the row landed:
-
-```sql
-SELECT * FROM <your_catalog>.coffee_maintenance.service_orders
-ORDER BY created_ts DESC
-LIMIT 5
-```
-
-You should see `CBM-TEST` in the table with status `pending`.
-
-> [!TIP]
-> Delete the test row before running the real demo:
-> ```sql
-> DELETE FROM <your_catalog>.coffee_maintenance.service_orders
-> WHERE machine_id = 'CBM-TEST';
-> ```
-
----
-
-### **Step 4: Add the UC function to the Supervisor (8 min)**
-
-1. In the workspace sidebar, navigate to **Agents → Supervisor Agents**.
-
-2. Open your **Marc Maintenance Supervisor** from Lab 3.
-
-3. Click **Add tool** → **Unity Catalog function**.
-
-4. Search for and select:
-   `<your_catalog>.coffee_maintenance.create_service_order`
-
-5. Set the tool description to:
-
-   ```
-   Creates a service order in the Sunny Bay service_orders Delta table.
-   Use this ONLY when Marc explicitly asks to book, raise, or create a
-   service order for a specific machine. Required: machine_id, fault_code,
-   part_id, technician_notes. Returns a service order ID (e.g. SO-47231).
-   ```
+### **Step 2: (Admin) Create a governed endpoint with a PII guardrail (10 min)**
 
 > [!IMPORTANT]
-> The phrase "ONLY when Marc explicitly asks" prevents the Supervisor from
-> creating orders unprompted during read-only queries.
+> This step is done **once, by a workspace admin**. Participants: watch, then use the
+> endpoint your admin shares with you in Step 3.
 
-6. Update the Supervisor instructions — add this at the end:
+1. In **Serving**, click **Create serving endpoint**.
 
-   ```
-   When the user explicitly says "book it", "raise a service order", or
-   "create a ticket", call create_service_order with the machine_id,
-   fault_code, part_id you identified from the data, and a brief technician
-   note. Confirm the order ID in your response.
-   ```
+2. **Name it** `workshop-governed-llm`.
 
-7. Click **Save** → **Update endpoint**.
+3. **Served entity:** choose **Foundation models** → select a chat model
+   (e.g. `databricks-claude-sonnet-5`, or a coding-tuned model like
+   `databricks-gpt-5-3-codex`). This is pay-per-token — no external API key needed.
 
----
+4. Expand **AI Gateway** and enable:
 
-### **Step 5: Close the loop — Marc creates a service order (10 min)**
+   - **Usage tracking** — ✅ On (so calls appear in the usage dashboard).
+   - **AI Guardrails → PII detection** — set to **Block** (reject any request
+     containing PII) or **Mask** (redact PII before it reaches the model).
 
-Start a new conversation in the Supervisor. Run the full Marc scenario:
+5. Click **Create**. Wait for the endpoint to reach **Ready**.
 
-**Turn 1:**
-```
-I'm visiting CBM-003 tomorrow. What should I bring?
-```
-The Supervisor gives the same multi-source briefing as Lab 3/3.
+6. **Grant participants access.** Open the endpoint → **Permissions** → grant your
+   workshop users (or a group) **Can Query**. Share two things with the room:
 
-**Turn 2:**
-```
-Book it.
-```
+   - The endpoint name: `workshop-governed-llm`
+   - The workspace URL: `https://<your-workspace>.cloud.databricks.com`
 
-The Supervisor calls `create_service_order` and responds:
-
-> *"Service order created: **SO-47231** — Pump assembly + pressure line kit
->  dispatched for CBM-003. Fault: E-07. Status: pending."*
-
-**Verify the write-back:**
-
-```sql
-SELECT order_id, machine_id, fault_code, part_id, status, created_ts
-FROM <your_catalog>.coffee_maintenance.service_orders
-ORDER BY created_ts DESC
-LIMIT 5
-```
-
-**Turn 3 (same conversation or new one):**
-```
-What is the status of CBM-003?
-```
-
-The Genie Agent now sees the pending service order in the Delta table.
-The agent wrote something. Its next answer reflects what it wrote.
-
-> *"One estate, both ends."*
+> [!NOTE]
+> **Why an admin-only step?** Creating endpoints and setting guardrails is a platform
+> responsibility. Developers don't each configure PII rules — they *consume* a governed
+> endpoint the platform team stands up once. That separation is the whole point.
 
 ---
 
-### **Step 6: Swap the model (facilitator demo, 3 min)**
+### **Step 3: Install opencode and point it at the Gateway (10 min)**
 
-1. Ask your facilitator to change the model behind the AI Gateway endpoint —
-   for example from `claude-3-5-haiku` to `llama-3-3-70b-instruct-awq`.
-   This is two fields in the Gateway UI.
+Now each participant sets up an AI coding agent on their own laptop, backed by the
+governed endpoint — not a public API.
 
-2. Ask the same CBM-003 question again.
+1. **Install opencode** (see [opencode.ai](https://opencode.ai) for your OS):
 
-3. Check AI Gateway — same audit trail, different model in the log.
+   ```bash
+   # macOS / Linux
+   curl -fsSL https://opencode.ai/install | bash
+   ```
 
-> *"Your agent does not know what model it is running on.
->  You do. And so does compliance."*
+2. **Create a Databricks personal access token (PAT)** to authenticate: in the
+   workspace, **Settings → Developer → Access tokens → Generate new token**. Copy it.
+
+3. **Export it** as an environment variable so it never gets committed:
+
+   ```bash
+   export DATABRICKS_TOKEN="dapi..."   # paste your PAT
+   ```
+
+4. **Point opencode at the governed endpoint.** Create `~/.config/opencode/opencode.json`:
+
+   ```json
+   {
+     "$schema": "https://opencode.ai/config.json",
+     "model": "databricks/workshop-governed-llm",
+     "provider": {
+       "databricks": {
+         "npm": "@ai-sdk/openai-compatible",
+         "name": "Databricks AI Gateway",
+         "options": {
+           "baseURL": "https://<your-workspace>.cloud.databricks.com/serving-endpoints",
+           "apiKey": "{env:DATABRICKS_TOKEN}"
+         },
+         "models": {
+           "workshop-governed-llm": { "name": "Workshop Governed LLM" }
+         }
+       }
+     }
+   }
+   ```
+
+   > Replace `<your-workspace>` with the URL your admin shared. The model ID
+   > (`workshop-governed-llm`) is the **serving endpoint name** — Databricks exposes it
+   > through an OpenAI-compatible API at `/serving-endpoints`.
+
+5. **Confirm opencode sees it:**
+
+   ```bash
+   opencode models
+   ```
+
+   You should see `databricks/workshop-governed-llm` in the list.
+
+---
+
+### **Step 4: Vibe-code the write-back function with opencode (15 min)**
+
+Now use your governed AI assistant to build something real: the **`create_service_order`**
+Unity Catalog function — the write-back that lets Marc's Supervisor turn a briefing into
+an actual service order. You'll *vibe-code* it through opencode instead of writing it by hand.
+
+1. Start opencode in a scratch folder and describe what you need:
+
+   ```
+   Write a Databricks Unity Catalog SQL function
+   `create_service_order(machine_id STRING, fault_code STRING, part_id STRING,
+   technician_notes STRING)` that returns a STRING order id. It should INSERT a
+   row into `<catalog>.coffee_maintenance.service_orders` with a generated
+   order_id like 'SO-12345', current_timestamp(), and status 'pending', then
+   return the order_id. Give me the CREATE FUNCTION statement.
+   ```
+
+   The answer comes back from **your governed Databricks endpoint** — not a public
+   model. Governed, logged, rate-limited.
+
+2. Iterate with opencode until the function looks right (ask it to add a `COMMENT` so an
+   agent knows when to call it, or to handle quoting). Then run the generated
+   `CREATE FUNCTION` in a SQL cell against your catalog and test it:
+
+   ```sql
+   SELECT <catalog>.coffee_maintenance.create_service_order(
+     'CBM-003', 'E-07', 'SIE-EQ9-PUMP-003', 'Vibe-coded in Lab 5'
+   ) AS order_id;
+   ```
+
+   > [!TIP]
+   > **Fallback:** the Lab 0 setup job already registered a working
+   > `create_service_order` function. If opencode's version gives you trouble or you're
+   > short on time, just use the one from setup — it's ready to go.
+
+3. Now trigger the **PII guardrail**. Send opencode a prompt containing obvious PII:
+
+   ```
+   Refactor this: customer John Smith, SSN 123-45-6789,
+   email john.smith@example.com — store his record in a dict.
+   ```
+
+   - With PII = **Block**, the request is rejected before it reaches the model.
+   - With PII = **Mask**, the PII is redacted before the model ever sees it.
+
+> [!NOTE]
+> The developer didn't configure anything. The guardrail lives on the endpoint, so it
+> protects **every** tool that points at it — opencode today, something else tomorrow.
+> You just built a real write-back function through an AI assistant that *cannot* leak PII.
+
+---
+
+### **Step 5: See it in the AI Gateway usage dashboard (5 min)**
+
+1. Back in the workspace, open **Serving → `workshop-governed-llm` → Usage** (or the
+   Gateway usage view / monitoring tab).
+
+2. You'll see your opencode calls: request counts, input/output tokens, latency, and
+   the requesting user — including the **blocked** PII request (surfaced as a rejected
+   call).
+
+3. **(Admin, optional)** For a workspace-wide view, query the system table directly in a
+   SQL editor:
+
+   ```sql
+   SELECT
+     date_trunc('hour', request_time) AS hour,
+     requester,
+     count(*)                         AS requests,
+     sum(input_token_count)           AS input_tokens,
+     sum(output_token_count)          AS output_tokens
+   FROM system.serving.endpoint_usage
+   WHERE endpoint_name = 'workshop-governed-llm'
+   GROUP BY ALL
+   ORDER BY hour DESC
+   ```
+
+> [!NOTE]
+> This is the platform team's payoff: every AI coding call, from every developer,
+> through governed models, with PII protection and full usage attribution — in one place.
 
 ---
 
 ## 🎉 Workshop Complete
 
-**What you built today, on Free Edition, zero infrastructure to provision:**
+**What you built today, on Databricks, zero infrastructure to provision:**
 
 | | |
 |---|---|
-| **Sara** | Gets a machine-health briefing from Genie One without touching the Lakehouse. |
-| **Marc** | Asks one question, gets a multi-source briefing from SQL + PDFs + web, creates a service order with two words. |
-| **Your workspace** | Has a governed audit trail of every AI call — model-swap-proof. |
+| **Sara** | Built a Genie space and got machine-health + sales answers from Genie One, enriched with live web knowledge — without touching the Lakehouse. |
+| **Marc** | Turned PDF fault reports into structured data, built a multi-source Supervisor agent, and had domain experts review it through a Review App. |
+| **Platform team** | Stood up a governed AI coding endpoint — PII guardrails, per-user usage, full audit — and vibe-coded the `create_service_order` write-back through it. |
 
 **What you take home:**
 
-- The Supervisor shareable URL — live and usable right now.
-- The Agent Bricks config — point it at your own data next week.
-- The UC function pattern — governed write-back, any domain.
-- The DAB in this repo — packaged, reproducible, your architecture to keep.
+- The Genie spaces and Supervisor — point them at your own data next week.
+- The MLflow trace + Review App loop — the way to harden any agent with expert feedback.
+- The governed AI Gateway endpoint pattern — bring AI coding assistants into your
+  enterprise on *your* terms.
 
 ---
 
@@ -271,10 +254,11 @@ The agent wrote something. Its next answer reflects what it wrote.
 
 - Drop a new PDF into `/Volumes/<catalog>/coffee_maintenance/fault_reports/`
   and watch it appear in `fault_reports_structured` automatically
-  (SDP pipeline deployed in Lab 0).
+  (the Lakeflow pipeline from Lab 0).
 
-- Swap Sunny Bay data for your own — same Supervisor, same pattern, your domain.
+- Point opencode (or any OpenAI-compatible AI tool) at your governed endpoint for your
+  own projects — same governance, your code.
 
 > [!TIP]
-> The Dashboard in a Day team runs follow-up deep-dive sessions on **Lakebase**
-> and **Databricks Apps** — ask your facilitator for the schedule.
+> Ask your facilitator about follow-up deep-dive sessions on **Agent Bricks**,
+> **Lakebase**, and **Databricks Apps**.
