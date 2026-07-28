@@ -29,19 +29,14 @@
 # COMMAND ----------
 
 # ── Configuration ──────────────────────────────────────────────────────────
-# Set this to the catalog you used in DAID Lab 0.
-# Free Edition default: "sunny_bay_roastery"
-# Shared catalog:       use your own, e.g. "my_catalog"
-# FEVM / no CREATE:     use an existing catalog you own
+# When run as a job, catalog and prefix are passed in from databricks.yml.
+# When run interactively, change the defaults below.
 
-try:
-    # Running as a Databricks job — catalog and prefix passed in automatically
-    catalog = dbutils.widgets.get("catalog")
-    prefix  = dbutils.widgets.get("prefix")
-except Exception:
-    # Running interactively — edit these defaults
-    catalog = "sunny_bay_roastery"   # ← change if needed
-    prefix  = ""                     # ← optional, e.g. "alice_" if sharing a catalog
+dbutils.widgets.text("catalog", "sunny_bay_roastery")  # ← change if needed
+dbutils.widgets.text("prefix",  "")                    # ← optional, e.g. "sbr_"
+
+catalog = dbutils.widgets.get("catalog")
+prefix  = dbutils.widgets.get("prefix")
 
 # ── Derived names (do not edit) ─────────────────────────────────────────────
 if prefix and not prefix.endswith("_"):

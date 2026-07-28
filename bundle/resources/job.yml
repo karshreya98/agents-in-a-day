@@ -3,19 +3,13 @@ resources:
     agents_in_a_day_setup:
       name: "Agents in a Day - Setup"
 
-      parameters:
-        - name: catalog
-          default: ${var.catalog}
-        - name: prefix
-          default: ${var.prefix}
-
       tasks:
         - task_key: setup
           notebook_task:
             notebook_path: ../src/notebooks/Lab 0 - Setup.py
             base_parameters:
-              catalog: "{{job.parameters.catalog}}"
-              prefix: "{{job.parameters.prefix}}"
+              catalog: ${var.catalog}
+              prefix: ${var.prefix}
 
       queue:
         enabled: true
