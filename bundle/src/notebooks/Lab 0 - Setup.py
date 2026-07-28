@@ -86,69 +86,34 @@ print('👉 Copy a ✅ name into  catalog = "..."  above, then Run All.')
 
 # COMMAND ----------
 
-# Try to find the DAID metric view — scan the specified catalog first,
-# then fall back to searching ALL accessible catalogs automatically.
+# Check DAID metric view exists in the configured catalog
+# (catalog is set in databricks.yml → passed as a job parameter)
 _daid_view = None
-_daid_catalog = None
-
-def _find_daid_in_catalog(cat, prefix_list):
-    for _pfx in prefix_list:
-        _candidate = f"`{cat}`.`gold`.`{_pfx}sm_fact_coffee_sales_genie`"
-        try:
-            _n = spark.sql(f"SELECT count(*) as n FROM {_candidate}").collect()[0]["n"]
-            return _candidate, _pfx, _n
-        except Exception:
-            continue
-    return None, None, None
-
-# 1. Try the configured catalog first
-_candidate, _found_prefix, _n = _find_daid_in_catalog(catalog, [P, "sbr_", ""])
-if _candidate:
-    _daid_view = _candidate
-    _daid_catalog = catalog
-    if _found_prefix != P:
-        P = _found_prefix
-        print(f"ℹ️  DAID prefix detected: '{P}' (updating prefix to match)")
-
-# 2. If not found, scan all catalogs the user can access
-if not _daid_view:
-    print(f"ℹ️  DAID not found in '{catalog}' — scanning other catalogs...")
-    for _row in spark.sql("SHOW CATALOGS").collect():
-        _cat = _row[0]
-        if _cat == catalog:
-            continue
-        _candidate, _found_prefix, _n = _find_daid_in_catalog(_cat, ["sbr_", ""])
-        if _candidate:
-            _daid_view = _candidate
-            _daid_catalog = _cat
-            # Auto-update catalog and prefix to match where DAID actually lives
-            catalog = _cat
-            P = _found_prefix
-            GOLD = "gold"
-            MAINT = "coffee_maintenance"
-            VOLUME_PATH = f"/Volumes/{catalog}/{MAINT}/fault_reports"
-            print(f"✅ DAID found in catalog: '{catalog}' (prefix: '{P}')")
-            print(f"   Updating catalog to '{catalog}' for the rest of setup.")
-            break
+for _pfx in [P, "sbr_", ""]:
+    _candidate = f"`{catalog}`.`{GOLD}`.`{_pfx}sm_fact_coffee_sales_genie`"
+    try:
+        _n = spark.sql(f"SELECT count(*) as n FROM {_candidate}").collect()[0]["n"]
+        _daid_view = _candidate
+        if _pfx != P:
+            P = _pfx
+            print(f"ℹ️  DAID prefix detected: '{P}' (updating prefix to match)")
+        break
+    except Exception:
+        continue
 
 METRIC_VIEW = f"`{catalog}`.`{GOLD}`.`{P}sm_fact_coffee_sales_genie`"
 
 if _daid_view:
-    print(f"✅ DAID verified — metric view found: {_daid_view} ({_n:,} rows)")
-    print("   Continuing to setup...")
+    print(f"✅ DAID verified — {_daid_view} ({_n:,} rows)")
 else:
     print("=" * 65)
-    print("⚠️  DAID metric view not found in any accessible catalog.")
+    print("⚠️  DAID metric view not found in catalog: " + catalog)
     print()
-    print("   Please complete Dashboard in a Day (DAID) Lab 0 first:")
+    print("   Set the correct catalog in bundle/databricks.yml and redeploy,")
+    print("   or complete DAID Lab 0 first:")
     print("   https://github.com/DatabricksDashboardInADay/DatabricksDashboardInADay")
-    print()
-    print("   Steps:")
-    print("   1. Clone the DAID repo as a Git Folder in your workspace")
-    print("   2. Open bundle/databricks.yml → set catalog → Deploy → Run job")
-    print("   3. Once the DAID job finishes, come back and run this job again")
     print("=" * 65)
-    dbutils.notebook.exit("DAID not found — see instructions above")
+    dbutils.notebook.exit("DAID not found — update catalog in databricks.yml")
 
 # COMMAND ----------
 # MAGIC %md
