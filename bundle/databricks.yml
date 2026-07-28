@@ -1,15 +1,20 @@
 bundle:
   name: agents_in_a_day
+  uuid: a1d3f2c4-8e5b-4a7d-9f6c-2b0e1d4c3a8f
 
-# ─────────────────────────────────────────────────────────
-# Configure these two variables before you click Deploy.
-# ─────────────────────────────────────────────────────────
+include:
+  - resources/*.yml
+
+# ─────────────────────────────────────────────────────────────
+# Configure these variables before you click Deploy.
+# ─────────────────────────────────────────────────────────────
 variables:
   catalog:
     description: >
       Unity Catalog catalog name.
       Free Edition default: sunny_bay_roastery
-      Shared / FEVM: use an existing catalog you own.
+      Shared / FEVM: use an existing catalog you own (run the
+      catalog picker cell in Lab 0 to see what's available).
     default: sunny_bay_roastery
 
   prefix:
