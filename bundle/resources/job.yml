@@ -13,6 +13,9 @@ resources:
         - task_key: setup
           notebook_task:
             notebook_path: ../src/notebooks/Lab 0 - Setup.py
+            base_parameters:
+              catalog: "{{job.parameters.catalog}}"
+              prefix: "{{job.parameters.prefix}}"
 
       queue:
         enabled: true
