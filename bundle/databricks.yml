@@ -5,14 +5,18 @@ bundle:
 include:
   - resources/*.yml
 
-# Configure these variables before you click Deploy.
+# ─────────────────────────────────────────────────────────────
+# Set 'catalog' to your Unity Catalog catalog name before Deploy.
+# Free Edition: create a new catalog (e.g. sunny_bay_roastery)
+# Shared / FEVM: use an existing catalog you own
+# ─────────────────────────────────────────────────────────────
 variables:
   catalog:
-    description: The catalog to use (Free Edition default: sunny_bay_roastery)
+    description: The catalog to use
     default: sunny_bay_roastery
 
   prefix:
-    description: Optional prefix for table names when sharing a catalog with others
+    description: Optional prefix for table names when sharing a catalog
     default: ""
 
 targets:
@@ -20,5 +24,5 @@ targets:
     mode: development
     default: true
     variables:
-      catalog: sunny_bay_roastery
-      prefix: ""
+      catalog: serverless_stable_4jxp5j_catalog
+      prefix: "sbr_"
