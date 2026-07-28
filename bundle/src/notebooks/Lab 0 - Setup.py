@@ -99,7 +99,7 @@ for _pfx in [P, "sbr_", ""]:
 METRIC_VIEW = f"`{catalog}`.`{GOLD}`.`{P}sm_fact_coffee_sales_genie`"
 
 if _daid_view:
-    print(f"✅ DAID verified — {_daid_view} ({_n:,} rows)")
+    print(f"✅ DAID verified  -  {_daid_view} ({_n:,} rows)")
 else:
     print("=" * 65)
     print("⚠️  DAID metric view not found in catalog: " + catalog)
@@ -108,7 +108,7 @@ else:
     print("   or complete DAID Lab 0 first:")
     print("   https://github.com/DatabricksDashboardInADay/DatabricksDashboardInADay")
     print("=" * 65)
-    dbutils.notebook.exit("DAID not found — update catalog in databricks.yml")
+    dbutils.notebook.exit("DAID not found  -  update catalog in databricks.yml")
 
 # COMMAND ----------
 # MAGIC %md
@@ -136,7 +136,7 @@ CREATE TABLE IF NOT EXISTS `{catalog}`.`{MAINT}`.`{P}machines` (
   status         STRING  -- 'active', 'degraded', 'offline'
 )
 USING DELTA
-COMMENT 'Sunny Bay Roastery espresso machine registry — 12 locations'
+COMMENT 'Sunny Bay Roastery espresso machine registry  -  12 locations'
 """)
 
 spark.sql(f"""
@@ -184,9 +184,9 @@ spark.sql(f"""
 INSERT OVERWRITE `{catalog}`.`{MAINT}`.`{P}fault_events` VALUES
   ('EVT-001','CBM-003','2026-07-01 08:14:00','E-07','Pressure sensor fault',          'high',    true,  '2026-07-01 14:00:00','TECH-01'),
   ('EVT-002','CBM-003','2026-07-10 09:22:00','E-07','Pressure sensor fault',          'high',    true,  '2026-07-10 16:30:00','TECH-01'),
-  ('EVT-003','CBM-003','2026-07-18 11:05:00','E-07','Pressure sensor fault — repeat', 'critical',false, null,                  null),
+  ('EVT-003','CBM-003','2026-07-18 11:05:00','E-07','Pressure sensor fault  -  repeat', 'critical',false, null,                  null),
   ('EVT-004','CBM-009','2026-06-15 07:00:00','W-12','Grinder motor slow',             'medium',  true,  '2026-06-16 10:00:00','TECH-02'),
-  ('EVT-005','CBM-009','2026-07-05 08:30:00','W-12','Grinder motor slow — repeat',    'medium',  false, null,                  null),
+  ('EVT-005','CBM-009','2026-07-05 08:30:00','W-12','Grinder motor slow  -  repeat',    'medium',  false, null,                  null),
   ('EVT-006','CBM-002','2026-07-12 14:00:00','I-03','Routine descale overdue',        'low',     true,  '2026-07-13 09:00:00','TECH-03'),
   ('EVT-007','CBM-001','2026-06-28 06:45:00','E-11','Steam wand blockage',            'medium',  true,  '2026-06-28 12:00:00','TECH-01'),
   ('EVT-008','CBM-006','2026-07-20 10:10:00','E-07','Pressure sensor fault',          'high',    false, null,                  null)
@@ -212,10 +212,10 @@ CREATE TABLE IF NOT EXISTS `{catalog}`.`{MAINT}`.`{P}service_orders` (
   status            STRING   -- 'pending', 'dispatched', 'completed'
 )
 USING DELTA
-COMMENT 'Service orders created by Marc via the Supervisor agent — populated in Lab 4'
+COMMENT 'Service orders created by Marc via the Supervisor agent  -  populated in Lab 4'
 """)
 
-print(f"✅ Service orders table ready (empty — Lab 4 populates it)")
+print(f"✅ Service orders table ready (empty  -  Lab 4 populates it)")
 print(f"   → {catalog}.{MAINT}.{P}service_orders")
 
 # COMMAND ----------
@@ -239,7 +239,7 @@ class FaultReportPDF(FPDF):
     def header(self):
         self.set_font("Helvetica", "B", 13)
         self.set_text_color(30, 30, 30)
-        self.cell(0, 10, "Sunny Bay Roastery — Fault Report", ln=True)
+        self.cell(0, 10, "Sunny Bay Roastery  -  Fault Report", ln=True)
         self.set_draw_color(200, 200, 200)
         self.line(10, self.get_y(), 200, self.get_y())
         self.ln(4)
@@ -269,12 +269,12 @@ REPORTS = [
         "filename": "FR-2026-001.pdf",
         "meta": {
             "Report ID":   "FR-2026-001",
-            "Location":    "Mission District — 2847 Mission St",
+            "Location":    "Mission District  -  2847 Mission St",
             "Machine":     "CBM-003  |  Siemens EQ.9 Plus Connect",
             "Serial No":   "SIE-EQ9-20191110-003",
             "Date":        "2026-07-18",
             "Reported by": "Sara M. (Location Manager)",
-            "Priority":    "HIGH — Urgent",
+            "Priority":    "HIGH  -  Urgent",
         },
         "fault": (
             "Fault code E-07 (Pressure Sensor Fault) has triggered three times in 18 days.\n"
@@ -295,7 +295,7 @@ REPORTS = [
         "filename": "FR-2026-002.pdf",
         "meta": {
             "Report ID":   "FR-2026-002",
-            "Location":    "North Beach — 585 Columbus Ave",
+            "Location":    "North Beach  -  585 Columbus Ave",
             "Machine":     "CBM-009  |  Siemens EQ.9 Plus Connect",
             "Serial No":   "SIE-EQ9-20190812-009",
             "Date":        "2026-07-05",
@@ -317,19 +317,19 @@ REPORTS = [
         "filename": "FR-2026-003.pdf",
         "meta": {
             "Report ID":   "FR-2026-003",
-            "Location":    "SOMA — 199 5th St",
+            "Location":    "SOMA  -  199 5th St",
             "Machine":     "CBM-008  |  Nespresso Pro 600",
             "Serial No":   "NES-PRO-20210601-008",
             "Date":        "2026-07-22",
             "Reported by": "Auto-generated (telemetry alert)",
-            "Priority":    "LOW — Preventive",
+            "Priority":    "LOW  -  Preventive",
         },
         "fault": (
             "Scheduled descale notification I-03 overdue by 18 days. No active fault code. "
             "Machine operating within normal parameters. Preventive maintenance flag only."
         ),
         "action": (
-            "Perform standard descale service at next available slot. Low priority — "
+            "Perform standard descale service at next available slot. Low priority  -  "
             "no production impact currently."
         ),
     },
@@ -337,12 +337,12 @@ REPORTS = [
         "filename": "FR-2026-004.pdf",
         "meta": {
             "Report ID":   "FR-2026-004",
-            "Location":    "Hayes Valley — 430 Hayes St",
+            "Location":    "Hayes Valley  -  430 Hayes St",
             "Machine":     "CBM-001  |  Siemens EQ.9 Plus Connect",
             "Serial No":   "SIE-EQ9-20210315-001",
             "Date":        "2026-06-28",
             "Reported by": "Priya K. (Location Manager)",
-            "Priority":    "CLOSED — Resolved",
+            "Priority":    "CLOSED  -  Resolved",
         },
         "fault": (
             "Fault code E-11 (Steam Wand Blockage). Milk steaming intermittently failing. "
@@ -357,25 +357,25 @@ REPORTS = [
         "filename": "FR-2026-005.pdf",
         "meta": {
             "Report ID":   "FR-2026-005 (Supplement to FR-2026-001)",
-            "Location":    "Mission District — 2847 Mission St",
+            "Location":    "Mission District  -  2847 Mission St",
             "Machine":     "CBM-003",
             "Serial No":   "SIE-EQ9-20191110-003",
             "Date":        "2026-07-19",
             "Reported by": "TECH-01 (Field Technician)",
-            "Priority":    "HIGH — Escalation",
+            "Priority":    "HIGH  -  Escalation",
         },
         "fault": (
             "Pressure readings log (last 30 days):\n"
-            "  2026-06-19: 9.0 bar — normal\n"
-            "  2026-06-25: 8.8 bar — slightly low\n"
-            "  2026-07-01: 7.9 bar — E-07 triggered\n"
-            "  2026-07-08: 9.1 bar — post-repair\n"
-            "  2026-07-10: 7.8 bar — E-07 triggered\n"
-            "  2026-07-15: 8.9 bar — post-repair\n"
-            "  2026-07-18: 7.5 bar — E-07 triggered (unresolved)"
+            "  2026-06-19: 9.0 bar  -  normal\n"
+            "  2026-06-25: 8.8 bar  -  slightly low\n"
+            "  2026-07-01: 7.9 bar  -  E-07 triggered\n"
+            "  2026-07-08: 9.1 bar  -  post-repair\n"
+            "  2026-07-10: 7.8 bar  -  E-07 triggered\n"
+            "  2026-07-15: 8.9 bar  -  post-repair\n"
+            "  2026-07-18: 7.5 bar  -  E-07 triggered (unresolved)"
         ),
         "action": (
-            "Pressure transducer replaced twice (2 Jul, 11 Jul) — fault persists. "
+            "Pressure transducer replaced twice (2 Jul, 11 Jul)  -  fault persists. "
             "Pattern indicates worn pump or cracked pressure line upstream of transducer.\n\n"
             "Parts to order:\n"
             "  - Pump assembly:     SIE-EQ9-PUMP-003\n"
@@ -458,7 +458,7 @@ print(f"✅ UC function registered: {catalog}.{MAINT}.create_service_order")
 # COMMAND ----------
 
 print("=" * 65)
-print("✅  SETUP COMPLETE — you are ready for Agents in a Day!")
+print("✅  SETUP COMPLETE  -  you are ready for Agents in a Day!")
 print("=" * 65)
 print()
 print("DAID assets (from Lab 0):")
@@ -467,8 +467,8 @@ print()
 print("Agents in a Day assets:")
 print(f"  🔧 Machines      : {catalog}.{MAINT}.{P}machines             (12 rows)")
 print(f"  ⚡ Fault events  : {catalog}.{MAINT}.{P}fault_events         (8 rows)")
-print(f"  📝 Service orders: {catalog}.{MAINT}.{P}service_orders       (empty — Lab 4)")
+print(f"  📝 Service orders: {catalog}.{MAINT}.{P}service_orders       (empty  -  Lab 4)")
 print(f"  📂 Fault reports : /Volumes/{catalog}/{MAINT}/fault_reports   (5 files)")
 print(f"  🔩 UC function   : {catalog}.{MAINT}.create_service_order")
 print()
-print("Next: open  labs/Part 1 — Sara's arc  and follow along!")
+print("Next: open  labs/Part 1  -  Sara's arc  and follow along!")
