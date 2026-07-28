@@ -1,4 +1,4 @@
-# 🔒 Lab 4 — AI Gateway and Write-back
+# 🔒 Lab 5 — AI Gateway and Write-back
 
 ## 🎯 Learning Objectives
 
@@ -15,7 +15,7 @@ By the end of this lab, you will be able to:
 ## Introduction
 
 Everything the Supervisor called today — Genie Agent queries, you.com lookups,
-`ai_extract()` from Lab 1 — has been flowing through the **AI Gateway**.
+`ai_extract()` from Lab 2 — has been flowing through the **AI Gateway**.
 You were not thinking about governance while you were building. It was tracking
 everything anyway.
 
@@ -86,7 +86,7 @@ def create_service_order(
 
 3. You should see:
    - Every Supervisor call from Labs 2–3 (model, tokens, latency, user).
-   - Every `ai_extract()` call from Lab 1.
+   - Every `ai_extract()` call from Lab 2.
    - Timestamps and cost per call.
 
 4. Filter by **User** to see only your calls.
@@ -132,7 +132,7 @@ SELECT <your_catalog>.coffee_maintenance.create_service_order(
   'CBM-TEST',
   'E-00',
   'TEST-PART-001',
-  'Manual test call from Lab 4'
+  'Manual test call from Lab 5'
 ) AS order_id
 ```
 
@@ -159,7 +159,7 @@ You should see `CBM-TEST` in the table with status `pending`.
 
 1. In the workspace sidebar, navigate to **Agents → Supervisor Agents**.
 
-2. Open your **Marc Maintenance Supervisor** from Lab 2.
+2. Open your **Marc Maintenance Supervisor** from Lab 3.
 
 3. Click **Add tool** → **Unity Catalog function**.
 
@@ -200,7 +200,7 @@ Start a new conversation in the Supervisor. Run the full Marc scenario:
 ```
 I'm visiting CBM-003 tomorrow. What should I bring?
 ```
-The Supervisor gives the same multi-source briefing as Lab 2/3.
+The Supervisor gives the same multi-source briefing as Lab 3/3.
 
 **Turn 2:**
 ```

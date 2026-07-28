@@ -1,4 +1,4 @@
-# 🔗 Lab 3 — Share, Test, and Harden the Supervisor
+# 🔗 Lab 4 — Share, Test, and Harden the Supervisor
 
 ## 🎯 Learning Objectives
 
@@ -27,7 +27,7 @@ it without any extra setup.
 
 ### **Step 1: Share the Supervisor (2 min)**
 
-The Supervisor you built in Lab 2 already has a shareable URL — no deployment
+The Supervisor you built in Lab 3 already has a shareable URL — no deployment
 step needed.
 
 1. In the workspace sidebar, navigate to **Agents** → **Supervisor Agents**.
@@ -68,7 +68,7 @@ reports, and what parts I should bring.
 
 > [!TIP]
 > If the answer is missing the PDF data, check that `fault_reports_structured`
-> is wired as a tool in the Supervisor. Go back to Lab 2 Step 2 to verify.
+> is wired as a tool in the Supervisor. Go back to Lab 3 Step 2 to verify.
 
 ---
 
@@ -87,7 +87,7 @@ the Siemens EQ.9 Plus Connect? What do other technicians recommend?
 > [!TIP]
 > Click **Show reasoning** / expand the tool calls in the response. You should
 > see a `you_com_search` tool call. If you don't, the you.com MCP isn't firing —
-> check that the connection has "Always allow" set (Lab 2, Step 3).
+> check that the connection has "Always allow" set (Lab 3, Step 3).
 
 ---
 
@@ -128,13 +128,13 @@ unrelated to Sunny Bay machine maintenance.
 
 ---
 
-## ✅ Lab 3 Done
+## ✅ Lab 4 Done
 
 You now have a Supervisor that:
 - Passes all three test scenarios (multi-source, web, guardrail)
 - Has a shareable URL ready to hand to Marc
 - Remembers conversation history out of the box
 
-In Lab 4 you give Marc the ability to act — not just read.
+In Lab 5 you give Marc the ability to act — not just read.
 
-➡️ Continue to **[Lab 4 — AI Gateway and Write-back](./Lab%204%20-%20AI%20Gateway%20and%20Write-back.md)**
+➡️ Continue to **[Lab 5 — AI Gateway and Write-back](./Lab%205%20-%20AI%20Gateway%20and%20Write-back.md)**

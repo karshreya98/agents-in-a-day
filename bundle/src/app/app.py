@@ -4,7 +4,7 @@ FastAPI app that:
   - Streams the Agent Bricks Multi-Agent Supervisor response token-by-token
     (Responses API, Server-Sent Events) so the UI shows the agent's thinking live.
   - Stores conversations in a Lakebase (Postgres) instance for persistence
-    across sessions (Lab 3+).
+    across sessions (Lab 4+).
   - Exposes a simple REST interface (no approval prompts — all MCP tool calls
     happen server-side inside the Supervisor, covered by the app.yaml resource
     binding which grants CAN_QUERY to the service principal at deploy time).

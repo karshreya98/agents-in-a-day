@@ -69,7 +69,7 @@ The job creates:
 - `coffee_maintenance` schema with `machines`, `fault_events`, `service_orders` tables
 - 5 fault report PDFs in a UC Volume
 - `fault_reports_structured` table — the Lakeflow pipeline runs `ai_parse_document()`
-  + `ai_extract()` across all 5 PDFs (used in Lab 1)
+  + `ai_extract()` across all 5 PDFs (used in Lab 2)
 - `create_service_order` UC function
 
 ---
@@ -78,11 +78,11 @@ The job creates:
 
 | Lab | Character | What you build |
 |-----|-----------|----------------|
-| **Part 1** | Sara | Genie One + you.com MCP — briefings without touching data |
-| **Lab 1** | Marc | Document Intelligence — `ai_parse_document()` + `ai_extract()` on fault report PDFs |
-| **Lab 2** | Marc | Build the Supervisor — Agent Bricks multi-source agent |
-| **Lab 3** | Marc | Share, Test, and Harden — test scenarios + guardrails |
-| **Lab 4** | Marc | AI Gateway + write-back — `create_service_order` UC function |
+| **Lab 1** | Sara | Build a Genie space, drive it from Genie One, enrich with you.com MCP |
+| **Lab 2** | Marc | Document Intelligence — `ai_parse_document()` + `ai_extract()` on fault report PDFs |
+| **Lab 3** | Marc | Build the Supervisor — Agent Bricks multi-source agent |
+| **Lab 4** | Marc | Share, Test, and Harden — test scenarios + guardrails |
+| **Lab 5** | Marc | AI Gateway + write-back — `create_service_order` UC function |
 
 All labs are in the `labs/` folder.
 
@@ -104,10 +104,11 @@ agents-in-a-day/
 │       └── transformations/
 │           └── fault_report_pipeline.py ← ai_parse_document + ai_extract
 ├── labs/
-│   ├── Part 1 - Sara - Genie One.md
-│   ├── Lab 1 - Document Intelligence.md
-│   ├── Lab 2 - Build the Supervisor.md
-│   ├── Lab 3 - Share and Test.md
-│   └── Lab 4 - AI Gateway and Write-back.md
+│   ├── Lab 1 - Sara - Genie One.md
+│   ├── Lab 2 - Document Intelligence.md
+│   ├── Lab 3 - Build the Supervisor.md
+│   ├── Lab 4 - Share and Test.md
+│   └── Lab 5 - AI Gateway and Write-back.md
+│   (artifacts/ holds per-lab screenshots)
 └── README.md
 ```

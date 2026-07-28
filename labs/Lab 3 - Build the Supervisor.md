@@ -1,4 +1,4 @@
-# 🧠 Lab 2 — Build the Supervisor Agent
+# 🧠 Lab 3 — Build the Supervisor Agent
 
 ## 🎯 Goal
 
@@ -21,7 +21,7 @@ decides which to call, in what order, and how to combine the results.
 > [!IMPORTANT]
 > **Prerequisites:**
 > - Lab 0 setup job has run successfully (`fault_reports_structured` exists)
-> - you.com MCP connection is configured (Part 1 — Sara's arc)
+> - you.com MCP connection is configured (Lab 1 — Sara's arc)
 
 ---
 
@@ -163,14 +163,14 @@ Which machines across all locations need attention this week?
 - **Descriptions are routing rules** — the more specific you are, the better the routing
 - The Supervisor has a **built-in chat UI** with conversation history — no app needed
   to start using it
-- Lab 3 packages this into a standalone Databricks App so Marc can access it
-  from any device
+- In Lab 4 you share, test, and harden it — with structured test scenarios and guardrails
 
 ---
 
 ## What Happens Next?
 
 Marc's Supervisor is live. It answers multi-domain questions and keeps conversation
-history in the Agent Bricks UI. Lab 3 deploys it as a standalone App with its own URL.
+history in the Agent Bricks UI. In Lab 4 you share it, run structured test scenarios,
+and add guardrails before handing it to Marc.
 
-➡️ Continue to **[Lab 3 — The App](./Lab%203%20-%20Memory%20and%20the%20App.md)**
+➡️ Continue to **[Lab 4 — Share, Test, and Harden](./Lab%204%20-%20Share%20and%20Test.md)**

@@ -1,4 +1,4 @@
-# 🔍 Lab 1 — Document Intelligence
+# 🔍 Lab 2 — Document Intelligence
 
 ## 🎯 Learning Objectives
 
@@ -30,7 +30,7 @@ single fault report. The Lab 0 setup job has already run them across all 5 repor
 into a Delta table, and you'll compare your result against it at the end.
 
 > **Marc's situation:** CBM-003 at the Mission location has thrown a pressure fault
-> three times in 18 days. Sara flagged it in Part 1. Marc needs to read the fault
+> three times in 18 days. Sara flagged it in Lab 1. Marc needs to read the fault
 > report and understand what the technician wrote — before he can create a service order.
 
 ---
@@ -232,7 +232,7 @@ Pipeline**, and saved the result to a Delta table.
 | **Output** | 1 structured row | `fault_reports_structured` Delta table, always up to date |
 | **Trigger** | You ran a cell | Auto-triggered on new file arrival |
 
-Marc's Supervisor (Lab 2) queries `fault_reports_structured` as one of its tools. When
+Marc's Supervisor (Lab 3) queries `fault_reports_structured` as one of its tools. When
 Sara drops a new PDF into the Volume, it's extracted automatically and the Supervisor
 can act on it without any manual step.
 
@@ -240,8 +240,8 @@ can act on it without any manual step.
 
 ## What Happens Next?
 
-Marc now has clean, structured fault data flowing out of raw PDFs. In **Lab 2** you'll
+Marc now has clean, structured fault data flowing out of raw PDFs. In **Lab 3** you'll
 build the **Supervisor Agent** that queries this table — alongside machine telemetry
 and the web — to give Marc a single field-ready briefing.
 
-➡️ Continue to **[Lab 2 — Build the Supervisor](./Lab%202%20-%20Build%20the%20Supervisor.md)**
+➡️ Continue to **[Lab 3 — Build the Supervisor](./Lab%203%20-%20Build%20the%20Supervisor.md)**

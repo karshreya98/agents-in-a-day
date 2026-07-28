@@ -8,7 +8,7 @@
 # MAGIC - `coffee_maintenance` schema
 # MAGIC - `machines`, `fault_events`, `service_orders` tables
 # MAGIC - Fault report files in a UC Volume
-# MAGIC - `create_service_order` UC function (Lab 4)
+# MAGIC - `create_service_order` UC function (Lab 5)
 # MAGIC
 # MAGIC > ✏️ **Only one thing to configure:** set `catalog` below to match
 # MAGIC > the catalog you used in DAID Lab 0.
@@ -149,7 +149,7 @@ print(f"✅ Fault events: {count} rows → {catalog}.{MAINT}.{P}fault_events")
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## 📝 Step 5 — Service orders table (Lab 4 write-back target)
+# MAGIC ## 📝 Step 5 — Service orders table (Lab 5 write-back target)
 
 # COMMAND ----------
 
@@ -164,10 +164,10 @@ CREATE TABLE IF NOT EXISTS `{catalog}`.`{MAINT}`.`{P}service_orders` (
   status            STRING   -- 'pending', 'dispatched', 'completed'
 )
 USING DELTA
-COMMENT 'Service orders created by Marc via the Supervisor agent  -  populated in Lab 4'
+COMMENT 'Service orders created by Marc via the Supervisor agent  -  populated in Lab 5'
 """)
 
-print(f"✅ Service orders table ready (empty  -  Lab 4 populates it)")
+print(f"✅ Service orders table ready (empty  -  Lab 5 populates it)")
 print(f"   → {catalog}.{MAINT}.{P}service_orders")
 
 # COMMAND ----------
@@ -210,7 +210,7 @@ print(f"\n✅ {len(pdfs)} fault report PDFs → {VOLUME_PATH}")
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## 🔩 Step 7 — Register `create_service_order` UC function (Lab 4)
+# MAGIC ## 🔩 Step 7 — Register `create_service_order` UC function (Lab 5)
 
 # COMMAND ----------
 
@@ -222,7 +222,7 @@ CREATE OR REPLACE FUNCTION `{catalog}`.`{MAINT}`.`create_service_order`(
   technician_notes STRING COMMENT 'Free-text notes for the technician'
 )
 RETURNS STRING
-COMMENT 'Creates a service order and returns the new order ID. Used by Marc\\'s Supervisor agent in Lab 4.'
+COMMENT 'Creates a service order and returns the new order ID. Used by Marc\\'s Supervisor agent in Lab 5.'
 LANGUAGE PYTHON
 AS $$
 import random
@@ -266,8 +266,8 @@ print()
 print("Agents in a Day assets:")
 print(f"  🔧 Machines      : {catalog}.{MAINT}.{P}machines             (12 rows)")
 print(f"  ⚡ Fault events  : {catalog}.{MAINT}.{P}fault_events         (8 rows)")
-print(f"  📝 Service orders: {catalog}.{MAINT}.{P}service_orders       (empty  -  Lab 4)")
+print(f"  📝 Service orders: {catalog}.{MAINT}.{P}service_orders       (empty  -  Lab 5)")
 print(f"  📂 Fault reports : /Volumes/{catalog}/{MAINT}/fault_reports   (5 files)")
 print(f"  🔩 UC function   : {catalog}.{MAINT}.create_service_order")
 print()
-print("Next: open  labs/Part 1  -  Sara's arc  and follow along!")
+print("Next: open  labs/Lab 1  -  Sara's arc  and follow along!")
