@@ -73,40 +73,7 @@ for r in spark.sql("SHOW CATALOGS").collect():
 print()
 print('👉 Copy a ✅ name into  catalog = "..."  above, then Run All.')
 
-# COMMAND ----------
-# MAGIC %md
-# MAGIC ## ✅ Step 1 — Verify DAID is installed
-# MAGIC
-# MAGIC If this cell prints a warning, complete **DAID Lab 0** first, then re-run.
 
-# COMMAND ----------
-
-# Check DAID metric view exists in the configured catalog.
-# NOTE: sm_fact_coffee_sales_genie is a METRIC VIEW — cannot be queried
-# with SELECT count(*). Use spark.catalog.tableExists() instead.
-_daid_pfx = None
-for _pfx in list(dict.fromkeys([P, "sbr_", ""])):   # deduplicated, order preserved
-    _view_name = f"{_pfx}sm_fact_coffee_sales_genie"
-    if spark.catalog.tableExists(f"{catalog}.{GOLD}.{_view_name}"):
-        _daid_pfx = _pfx
-        if _pfx != P:
-            P = _pfx
-            print(f"ℹ️  DAID prefix detected: '{P}' (updating prefix to match)")
-        break
-
-METRIC_VIEW = f"`{catalog}`.`{GOLD}`.`{P}sm_fact_coffee_sales_genie`"
-
-if _daid_pfx is not None:
-    print(f"✅ DAID verified  -  {catalog}.{GOLD}.{P}sm_fact_coffee_sales_genie")
-else:
-    print("=" * 65)
-    print("⚠️  DAID metric view not found in catalog: " + catalog)
-    print()
-    print("   Set the correct catalog in bundle/databricks.yml and redeploy,")
-    print("   or complete DAID Lab 0 first:")
-    print("   https://github.com/DatabricksDashboardInADay/DatabricksDashboardInADay")
-    print("=" * 65)
-    dbutils.notebook.exit("DAID not found  -  update catalog in databricks.yml")
 
 # COMMAND ----------
 # MAGIC %md
@@ -459,8 +426,7 @@ print("=" * 65)
 print("✅  SETUP COMPLETE  -  you are ready for Agents in a Day!")
 print("=" * 65)
 print()
-print("DAID assets (from Lab 0):")
-print(f"  📊 Metric view   : {catalog}.{GOLD}.{P}sm_fact_coffee_sales_genie")
+
 print()
 print("Agents in a Day assets:")
 print(f"  🔧 Machines      : {catalog}.{MAINT}.{P}machines             (12 rows)")

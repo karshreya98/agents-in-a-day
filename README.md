@@ -1,71 +1,74 @@
 # Agents in a Day 🤖
 
 A hands-on 4-hour workshop that adds an **action layer** to your Databricks
-workspace — built on top of **Dashboard in a Day**. Two characters, same Unity
-Catalog, one day.
-
-> **Prerequisite:** Complete **[Dashboard in a Day](https://github.com/DatabricksDashboardInADay/DatabricksDashboardInADay)**
-> and run its setup job before starting here.
+workspace — built on top of **Dashboard in a Day**.
 
 ---
 
-## How to get started
+## ⚠️ Prerequisite — Complete Dashboard in a Day first
+
+Agents in a Day builds on the Unity Catalog, metric view, and Genie Agent
+created by DAID. **You must complete DAID before running this setup.**
+
+### DAID install checklist
+
+1. Clone the DAID repo as a Git Folder in your workspace:
+   ```
+   https://github.com/DatabricksDashboardInADay/DatabricksDashboardInADay
+   ```
+2. Open `bundle/databricks.yml` → set `catalog` to your catalog name
+3. Click **Deploy** in the bundle editor toolbar
+4. Go to **Workflows** → find **"Sunny Bay Roastery Setup"** → click **Run now**
+5. Wait for the green **Succeeded** badge (~5 min)
+
+Once DAID is done, come back here and follow the steps below.
+
+---
+
+## Getting started
 
 ### Step 1 — Clone this repo as a Git Folder
 
-1. In your Databricks workspace, go to **Workspace** (left sidebar).
-2. Click **+ Add** → **Git Folder** (or **Add a Git Folder**).
-3. Paste the repo URL: `https://github.com/<your-org>/agents-in-a-day`
-4. Leave the defaults and click **Create Git Folder**.
-
-The repo appears in your workspace as a folder you can browse like any notebook.
+1. In your Databricks workspace go to **Workspace** (left sidebar)
+2. Click **+ Add** → **Git Folder**
+3. Paste: `https://github.com/karshreya98/agents-in-a-day`
+4. Click **Create Git Folder**
 
 ---
 
 ### Step 2 — Set your catalog name in `databricks.yml`
 
-1. In your workspace, open the repo folder → `bundle/` → `databricks.yml`.
-2. Change the `catalog` variable to match what you used in DAID:
+1. Open `bundle/databricks.yml` in the workspace
+2. Change the `catalog` default to match what you used in DAID:
 
 ```yaml
 variables:
   catalog:
-    default: sunny_bay_roastery   # ← change this if needed
+    default: sunny_bay_roastery   # ← change this to your catalog
 ```
 
-3. Save the file.
-
-> **Not sure which catalog to use?**
-> Open `labs/Lab 0 - Setup`, run the catalog picker cell (cell 3),
-> then come back and update `databricks.yml`.
+> **Not sure?** Open `labs/Lab 0 - Setup`, run the catalog picker cell to see
+> which catalogs you have access to.
 
 ---
 
 ### Step 3 — Deploy the bundle
 
-1. With `databricks.yml` open, click **Deploy** (button in the top-right toolbar).
-2. Databricks validates the bundle and creates the job resource.
-3. You should see a green **"Bundle deployed successfully"** message.
+1. With `bundle/databricks.yml` open, click **Deploy** (top-right toolbar)
+2. You should see a green **"Bundle deployed successfully"** message
 
 ---
 
-### Step 4 — Start the setup job
+### Step 4 — Run the setup job
 
-1. In the left sidebar go to **Workflows**.
-2. Find **"Agents in a Day — Setup"** and click it.
-3. Click **Run now**.
-4. The job runs `Lab 0 - Setup` which creates all tables, the fault report PDFs,
-   and the `create_service_order` UC function.
-5. Wait for the green **Succeeded** badge (~2 min).
+1. Go to **Workflows** in the left sidebar
+2. Find **"Agents in a Day — Setup"** and click **Run now**
+3. Wait for the green **Succeeded** badge (~2 min)
 
----
-
-### Step 5 — Open Lab 0 and Run All
-
-1. Open `labs/Lab 0 - Setup` in the workspace.
-2. Confirm `catalog` in cell 2 matches your catalog.
-3. Click **Run All Below** from cell 2.
-4. The summary at the bottom confirms everything is ready.
+The job creates:
+- `coffee_maintenance` schema with `machines`, `fault_events`, `service_orders` tables
+- 5 fault report PDFs in a UC Volume
+- `create_service_order` UC function
 
 ---
 
@@ -79,7 +82,7 @@ variables:
 | **Lab 3** | Marc | Share, Test, and Harden — test scenarios + guardrails |
 | **Lab 4** | Marc | AI Gateway + write-back — `create_service_order` UC function |
 
-All labs are in the `labs/` folder. Open them as markdown files to follow along.
+All labs are in the `labs/` folder.
 
 ---
 
@@ -89,10 +92,11 @@ All labs are in the `labs/` folder. Open them as markdown files to follow along.
 agents-in-a-day/
 ├── bundle/
 │   ├── databricks.yml          ← Set your catalog here, then Deploy
-│   └── resources/
-│       └── job.yml             ← Setup job definition
+│   ├── resources/
+│   │   └── job.yml
+│   └── src/notebooks/
+│       └── Lab 0 - Setup.py    ← Setup notebook (run via the job above)
 ├── labs/
-│   ├── Lab 0 - Setup.py        ← Notebook: creates all tables + PDFs + UC function
 │   ├── Part 1 - Sara - Genie One.md
 │   ├── Lab 1 - Document Intelligence.md
 │   ├── Lab 2 - Build the Supervisor.md
