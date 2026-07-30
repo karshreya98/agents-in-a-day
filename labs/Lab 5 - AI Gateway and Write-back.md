@@ -250,7 +250,7 @@ writing it by hand.
 
 | | |
 |---|---|
-| **Sara** | Built a Genie space and got machine-health + sales answers from Genie One, enriched with live web knowledge — without touching the Lakehouse. |
+| **Sara** | Built a Genie space and got machine-health + sales answers from Genie One, enriched with live web knowledge — all in plain language, no SQL. |
 | **Marc** | Turned PDF fault reports into structured data, built a multi-source Supervisor agent, and had domain experts review it through a Review App. |
 | **Platform team** | Stood up a governed AI coding endpoint — PII guardrails, per-user usage, full audit — and vibe-coded the `create_service_order` write-back through it. |
 

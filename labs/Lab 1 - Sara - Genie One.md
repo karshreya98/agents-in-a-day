@@ -10,11 +10,14 @@ By the end of Lab 1, you will be able to:
 
 ## Introduction
 
-Sara is the Mission location manager at Sunny Bay Roastery. She never opens the
-Lakehouse. She acts through **Genie One** — the conversational front door to Databricks.
-Behind Genie One sits a **Genie space**: a governed, natural-language interface to a
-set of Unity Catalog tables. In Genie One these spaces show up as **agents** Sara can
-talk to.
+Sara is the Mission location manager at Sunny Bay Roastery. Day to day she doesn't
+write SQL or dig through tables — she just wants answers. She gets them through
+**Genie One**, the conversational front door to Databricks. Behind Genie One sits a
+**Genie space**: a governed, natural-language interface to a set of Unity Catalog
+tables. In Genie One these spaces show up as **agents** Sara can talk to.
+
+In this lab you'll wear two hats: first you set up the Genie space (a quick,
+one-time build), then you step into Sara's shoes and just ask questions.
 
 Dashboard in a Day built a *Sales* Genie. In this lab you build the **Maintenance
 Genie** — the one Sara (and later Marc's Supervisor in Lab 3) needs to ask about
@@ -139,7 +142,8 @@ table or an agent; she just asks, and Genie One routes to the right one.
 ### **Step 4: Connect you.com for live web knowledge (15 min)**
 
 The telemetry tells Sara *what* is happening. It cannot tell her *why*, or what the
-manufacturer recommends. An external **MCP connection** fixes that.
+manufacturer recommends. An external **MCP service** (you.com), registered in the Unity
+AI Gateway, fixes that.
 
 **Step 4a — Get your you.com API key**
 
@@ -155,21 +159,41 @@ manufacturer recommends. An external **MCP connection** fixes that.
 > No credit card required. The free plan gives 100 web-search calls/day — more
 > than enough for this workshop. You keep this key after the session.
 
-**Step 4b — Create the you.com MCP connection**
+**Step 4b — Register you.com as an MCP service in the Unity AI Gateway**
 
-1. Go to **Settings → Preview features** and confirm **Third-party connectors** (MCP)
-   is enabled.
+You register the you.com MCP server once, in the Unity AI Gateway, so it's governed like
+any other Databricks asset. Full reference:
+[Register an MCP service](https://docs.databricks.com/aws/en/ai-gateway/register-mcp-service).
 
-2. Create the connection under **Settings → Connections → Add connection** (or in
-   Genie One's connection settings).
+> [!NOTE]
+> **Prerequisites (admin):** Unity Catalog enabled, and the **Unity AI Gateway** +
+> **Managed MCP Servers** previews turned on. You need `CREATE CONNECTION`, `USE CATALOG`,
+> `USE SCHEMA`, and `CREATE SERVICE` to complete these steps.
 
-3. Choose the **you.com** connector, paste your API key, and **Save**. The connection
-   shows as available ✅.
+1. **Create an HTTP connection to you.com.** Go to **Catalog → Connections → Create
+   connection** and choose type **HTTP**. Enter the you.com MCP server URL and pick an
+   authentication method — for you.com use **Bearer token** and paste the API key from
+   Step 4a. Save.
+
+2. **Register the MCP service.** Go to **AI Gateway → MCPs → Register MCP Server** (or
+   **Catalog → [your schema] → Create → MCP Service**). Set:
+   - the **catalog and schema** to register it in,
+   - a **service name** (e.g. `you_com_search` — this can't be changed later),
+   - the **HTTP connection** you just created,
+   - the **tools** to expose under the **Tools** section (the you.com web search tool).
+
+3. **Grant access.** On the service's **Permissions** tab, click **Grant**, add your
+   workshop users (or a group), and assign the **EXECUTE** privilege.
 
 > [!IMPORTANT]
-> This takes about 2 minutes. If you run short on time, the facilitator will
-> demonstrate on the main screen — you can configure your own key afterward and your
-> Genie One history is preserved.
+> Invoking an MCP service needs **no privilege on the underlying connection** — grant
+> **EXECUTE** on the *service*, and do **not** grant `USE CONNECTION` to end users (that
+> would bypass governance).
+
+> [!TIP]
+> Registering the MCP server is a one-time admin step. If you're short on time, the
+> facilitator can register it once and grant the room EXECUTE — participants then just
+> use it in the next step.
 
 **Step 4c — Ask enriched questions**
 

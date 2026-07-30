@@ -21,7 +21,7 @@ decides which to call, in what order, and how to combine the results.
 > [!IMPORTANT]
 > **Prerequisites:**
 > - Lab 0 setup job has run successfully (`fault_reports_structured` exists)
-> - you.com MCP connection is configured (Lab 1 — Sara's arc)
+> - you.com MCP service is registered in the Unity AI Gateway (Lab 1 — Step 4b)
 
 ---
 
@@ -78,17 +78,17 @@ pressure readings, and technician notes.
 
 ---
 
-**Sub-agent 3 — you.com web search**
+**Sub-agent 3 — you.com web search (MCP service)**
 
-1. Click **Add agent** → **MCP Connection**
-2. Select your **you.com** connection from the list
+1. Click **Add agent** → **MCP Server** and select the **you.com** MCP service you
+   registered in the Unity AI Gateway in Lab 1 (Step 4b).
 
 > [!NOTE]
-> If the connection doesn't appear, confirm that:
-> - The connection is created under **Settings → Connections**
-> - **Third-party connectors** is enabled under **Settings → Preview features**
+> If it doesn't appear, confirm the MCP service is registered under **AI Gateway →
+> MCPs** and that you have **EXECUTE** on it (Lab 1, Step 4b). See
+> [Register an MCP service](https://docs.databricks.com/aws/en/ai-gateway/register-mcp-service).
 
-3. Set the description:
+2. Set the description:
 
 ```
 Live web search. Use this to look up manufacturer service bulletins, fault code
