@@ -67,21 +67,27 @@ a briefing into a real service order.
 
 ---
 
-### **Step 2: (Admin) Register a governed model service with a PII guardrail (10 min)**
+### **Step 2: (Admin) Govern a foundation-model service with a PII guardrail (10 min)**
 
 > [!IMPORTANT]
 > This step is done **once, by a workspace admin** (with the Beta preview enabled).
 > Participants: watch, then use the model service your admin shares with you in Step 3.
 
-1. In **Unity AI Gateway**, open **Models** (model services) → **Register / Create**.
+> [!NOTE]
+> **Why a foundation model (not a custom endpoint)?** `ucode` routes coding agents
+> through **Databricks-hosted model services** registered in the Unity AI Gateway — the
+> foundation models under `system.ai.*`. So we govern *one of those* and point the coding
+> agents at it. (A custom-built serving endpoint wouldn't be reachable by `ucode`.)
 
-2. **Name it** `workshop-governed-llm` and back it with a Databricks foundation model
-   (e.g. `databricks-claude-sonnet-5`, or a coding-tuned model such as
-   `databricks-gpt-5-3-codex`). Pay-per-token — no external API key needed.
+1. In **Unity AI Gateway**, open **Models** and pick a Databricks-hosted foundation model
+   service to standardize on — e.g. `system.ai.databricks-claude-sonnet-5` or a
+   coding-tuned model. Note its **model service name** (like `system.ai.<model>`); you'll
+   share it with the room.
 
-3. Turn on **Usage tracking** and **Inference tables** so calls are logged and auditable.
+2. Confirm **Usage tracking** / **Inference tables** are on for the service so calls are
+   logged and auditable.
 
-4. Attach a **PII guardrail**. Open the service's **Policies** tab → **New policy** →
+3. Attach a **PII guardrail**. Open the service's **Policies** tab → **New policy** →
    choose the **built-in PII guardrail** and set the mode:
 
    - **Sanitize / Mask** — redact PII before it reaches the model (recommended for the
@@ -95,14 +101,14 @@ a briefing into a real service order.
    > (SQL UDFs) return ALLOW/DENY/ASK decisions but don't rewrite content — great for
    > access rules, not for sanitization.
 
-5. **Grant participants access.** On the model service, use **Permissions** (Unity
+4. **Grant participants access.** On the model service, use **Permissions** (Unity
    Catalog privileges) to grant your workshop users (or a group) query access. Share the
-   workspace URL and the service name (`workshop-governed-llm`) with the room.
+   workspace URL and the **model service name** (`system.ai.<model>`) with the room.
 
 > [!NOTE]
-> **Why an admin-only step?** Registering services and attaching guardrails is a platform
-> responsibility. Developers don't each configure PII rules — they *consume* a governed
-> service the platform team stands up once. That separation is the whole point.
+> **Why an admin-only step?** Choosing the model, attaching guardrails, and granting
+> access is a platform responsibility. Developers don't each configure PII rules — they
+> *consume* a governed model the platform team stands up once. That separation is the point.
 
 ---
 
@@ -148,7 +154,8 @@ the Unity AI Gateway using your workspace credentials.
    ```
 
    You should see your workspace and OpenCode configured. `ucode` auto-discovers the
-   governed models available to you through the Gateway.
+   governed model services you've been granted — including the one your admin set the PII
+   guardrail on in Step 2. You'll select it at launch in the next step.
 
 > [!TIP]
 > `ucode` can drive several agents the same way — `ucode codex`, `ucode gemini`,
@@ -164,11 +171,16 @@ Unity Catalog function — the write-back that lets Marc's Supervisor turn a bri
 an actual service order. You'll *vibe-code* it through a Gateway-routed agent instead of
 writing it by hand.
 
-1. Launch OpenCode in a scratch folder — through `ucode`, so it routes via the Gateway:
+1. Launch OpenCode in a scratch folder — through `ucode`, pointed at the governed model
+   service your admin shared, so it routes via the Gateway:
 
    ```bash
-   ucode opencode
+   ucode opencode --model system.ai.<model>
    ```
+
+   > Replace `system.ai.<model>` with the model service name from Step 2 (e.g.
+   > `system.ai.databricks-claude-sonnet-5`). This is the model your admin put the PII
+   > guardrail on — so everything you send flows through that guardrail.
 
 2. Describe what you need:
 
@@ -244,7 +256,7 @@ writing it by hand.
      sum(input_token_count)           AS input_tokens,
      sum(output_token_count)          AS output_tokens
    FROM system.serving.endpoint_usage
-   WHERE endpoint_name = 'workshop-governed-llm'
+   WHERE endpoint_name = 'databricks-claude-sonnet-5'   -- the governed model from Step 2
    GROUP BY ALL
    ORDER BY hour DESC
    ```
