@@ -223,6 +223,41 @@ Pipeline**, and saved the result to a Delta table.
 
 ---
 
+### **Step 4: Add the extracted reports to the Maintenance Genie (5 min)**
+
+In Lab 1 you built the **Sunny Bay Maintenance Genie** over the structured maintenance
+tables. Now that the fault-report *contents* are structured too, add them so the agent
+can answer about what the reports actually say.
+
+1. Open **Genie** → your **Sunny Bay Maintenance Genie** agent → **Settings** (data /
+   tables).
+
+2. **Add** the table you just built:
+
+   ```
+   <catalog>.coffee_maintenance.fault_reports_structured
+   ```
+
+3. Update the agent's description to mention it (so it routes report questions here):
+
+   ```
+   ...also includes fields extracted from fault report PDFs — issue descriptions,
+   pressure readings, recommended parts, and technician notes.
+   ```
+
+4. Save, then ask the agent something only the reports can answer:
+
+   ```
+   What did the latest fault report for CBM-003 say, and what parts were recommended?
+   ```
+
+> [!NOTE]
+> Same Genie agent Sara already uses — it just got smarter. This is also the agent
+> Marc's Supervisor calls in Lab 3, so wiring the reports in here means the Supervisor
+> gets them for free.
+
+---
+
 ## 💡 Key takeaways
 
 | | What you did (Steps 1–2) | What the pipeline does (Step 3) |

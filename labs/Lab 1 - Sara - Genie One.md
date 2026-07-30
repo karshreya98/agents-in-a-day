@@ -36,22 +36,20 @@ one Genie agent and a few conversations.
 
 ### **Step 1: Build the Maintenance Genie agent (10 min)**
 
-The Lab 0 setup job already created the maintenance tables and the
-`fault_reports_structured` table (parsed and extracted from the fault report PDFs —
-you'll see exactly how in Lab 2). Now you'll put a Genie agent in front of them.
+The Lab 0 setup job already created the core maintenance tables. Now you'll put a Genie
+agent in front of them.
 
 1. In the workspace left sidebar, click **Genie**.
 
 2. Click **New** (or **+ New Genie space**).
 
-3. When prompted for data, add these four tables from your catalog's
+3. When prompted for data, add these three tables from your catalog's
    `coffee_maintenance` schema:
 
    ```
    <catalog>.coffee_maintenance.machines
    <catalog>.coffee_maintenance.fault_events
    <catalog>.coffee_maintenance.service_orders
-   <catalog>.coffee_maintenance.fault_reports_structured
    ```
 
    > [!NOTE]
@@ -63,12 +61,16 @@ you'll see exactly how in Lab 2). Now you'll put a Genie agent in front of them.
 
    ```
    Natural-language Q&A over Sunny Bay espresso machine maintenance: machine
-   registry, fault event history, service orders, and fields extracted from
-   fault report PDFs. Use for questions about a machine's faults, pressure
-   readings, parts, and technician notes.
+   registry, fault event history, and service orders. Use for questions about a
+   machine's faults, fault codes, locations, and service history.
    ```
 
 5. Click **Save**.
+
+> [!NOTE]
+> Right now this agent answers from the structured maintenance tables. In **Lab 2**
+> you'll turn the raw PDF fault reports into a `fault_reports_structured` table and add
+> it to *this same agent* — so it can also answer about what's written in the reports.
 
 > [!TIP]
 > You'll reuse this exact Genie agent in **Lab 3** as one of Marc's Supervisor
@@ -81,10 +83,6 @@ you'll see exactly how in Lab 2). Now you'll put a Genie agent in front of them.
 1. In the Genie agent you just built, start a conversation and try:
 
    ```
-   What fault reports do we have for CBM-003?
-   ```
-
-   ```
    Which machines have logged E-07 pressure faults?
    ```
 
@@ -92,13 +90,17 @@ you'll see exactly how in Lab 2). Now you'll put a Genie agent in front of them.
    Show me the fault event history for the Mission District location
    ```
 
+   ```
+   Which machines are due for service?
+   ```
+
 2. Click **Show code** beneath any answer to see the SQL Genie generated — no one
    wrote it by hand.
 
 > [!NOTE]
-> Genie answers from the governed tables only. `fault_reports_structured` holds the
-> fields extracted from the PDF fault reports — so Sara can ask about the *contents*
-> of those reports in plain language. In Lab 2 you'll see exactly how that table is built.
+> Genie answers from the governed tables only — right now, the machine registry, fault
+> events, and service orders. It can't yet read the *fault report PDFs*; that's what
+> Lab 2 adds.
 
 ---
 
@@ -122,7 +124,7 @@ table or an agent; she just asks, and Genie One routes to the right one.
    ```
 
    ```
-   What did the latest fault report for CBM-003 say?
+   How many unresolved faults does CBM-003 have?
    ```
 
    **Sales** (routes to the Sunny Bay Sales Genie from Dashboard in a Day):
