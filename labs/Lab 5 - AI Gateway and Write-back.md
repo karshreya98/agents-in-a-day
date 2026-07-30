@@ -250,13 +250,13 @@ writing it by hand.
 
 | | |
 |---|---|
-| **Sara** | Built a Genie space and got machine-health + sales answers from Genie One, enriched with live web knowledge — all in plain language, no SQL. |
+| **Sara** | Built a Genie agent and got machine-health + sales answers from Genie One, enriched with live web knowledge — all in plain language, no SQL. |
 | **Marc** | Turned PDF fault reports into structured data, built a multi-source Supervisor agent, and had domain experts review it through a Review App. |
 | **Platform team** | Stood up a governed AI coding endpoint — PII guardrails, per-user usage, full audit — and vibe-coded the `create_service_order` write-back through it. |
 
 **What you take home:**
 
-- The Genie spaces and Supervisor — point them at your own data next week.
+- The Genie agents and Supervisor — point them at your own data next week.
 - The MLflow trace + Review App loop — the way to harden any agent with expert feedback.
 - The governed AI Gateway endpoint pattern — bring AI coding assistants into your
   enterprise on *your* terms.

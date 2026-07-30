@@ -4,8 +4,8 @@
 
 By the end of Lab 1, you will be able to:
 
-- Build a **Genie space** over the Sunny Bay maintenance data.
-- Use **Genie One** as a business-user interface, driven by that Genie space (an *agent*).
+- Build a **Genie agent** (formerly *Genie space*) over the Sunny Bay maintenance data.
+- Use **Genie One** as a business-user interface, driven by that Genie agent.
 - Connect an external **MCP tool** (you.com) to enrich Genie One conversations with live web knowledge.
 
 ## Introduction
@@ -13,29 +13,32 @@ By the end of Lab 1, you will be able to:
 Sara is the Mission location manager at Sunny Bay Roastery. Day to day she doesn't
 write SQL or dig through tables — she just wants answers. She gets them through
 **Genie One**, the conversational front door to Databricks. Behind Genie One sits a
-**Genie space**: a governed, natural-language interface to a set of Unity Catalog
-tables. In Genie One these spaces show up as **agents** Sara can talk to.
+**Genie agent**: a governed, natural-language interface to a set of Unity Catalog tables.
 
-In this lab you'll wear two hats: first you set up the Genie space (a quick,
+> [!NOTE]
+> **Naming:** Genie agents were previously called **Genie spaces** — you'll still see
+> "space" in some menus and URLs. They're the same thing; this lab uses **Genie agent**.
+
+In this lab you'll wear two hats: first you set up the Genie agent (a quick,
 one-time build), then you step into Sara's shoes and just ask questions.
 
 Dashboard in a Day built a *Sales* Genie. In this lab you build the **Maintenance
 Genie** — the one Sara (and later Marc's Supervisor in Lab 3) needs to ask about
 machine faults — then talk to *both* of them through Genie One, which routes each
-question to the right space.
+question to the right agent.
 
 This lab is **facilitator-led with participant follow-along**. No code to write. Just
-one Genie space and a few conversations.
+one Genie agent and a few conversations.
 
 ---
 
 ## Instructions
 
-### **Step 1: Build the Maintenance Genie space (10 min)**
+### **Step 1: Build the Maintenance Genie agent (10 min)**
 
 The Lab 0 setup job already created the maintenance tables and the
 `fault_reports_structured` table (parsed and extracted from the fault report PDFs —
-you'll see exactly how in Lab 2). Now you'll put a Genie space in front of them.
+you'll see exactly how in Lab 2). Now you'll put a Genie agent in front of them.
 
 1. In the workspace left sidebar, click **Genie**.
 
@@ -68,14 +71,14 @@ you'll see exactly how in Lab 2). Now you'll put a Genie space in front of them.
 5. Click **Save**.
 
 > [!TIP]
-> You'll reuse this exact Genie space in **Lab 3** as one of Marc's Supervisor
+> You'll reuse this exact Genie agent in **Lab 3** as one of Marc's Supervisor
 > sub-agents — building it once here means it's ready when you get there.
 
 ---
 
-### **Step 2: Ask maintenance questions in the Genie space (5 min)**
+### **Step 2: Ask maintenance questions in the Genie agent (5 min)**
 
-1. In the Genie space you just built, start a conversation and try:
+1. In the Genie agent you just built, start a conversation and try:
 
    ```
    What fault reports do we have for CBM-003?
@@ -99,9 +102,9 @@ you'll see exactly how in Lab 2). Now you'll put a Genie space in front of them.
 
 ---
 
-### **Step 3: Talk to your Genie spaces through Genie One (5 min)**
+### **Step 3: Talk to your Genie agents through Genie One (5 min)**
 
-Genie One is the business-user front door. Every Genie space in the workspace shows
+Genie One is the business-user front door. Every Genie agent in the workspace shows
 up here as an **agent** — including the **Sunny Bay Maintenance Genie** you just built
 *and* the **Sunny Bay Sales Genie** from Dashboard in a Day. Sara doesn't pick a
 table or an agent; she just asks, and Genie One routes to the right one.
@@ -110,7 +113,7 @@ table or an agent; she just asks, and Genie One routes to the right one.
    select **Genie One**.
 
 2. Ask Sara's manager questions — a mix of **maintenance** and **sales**. Genie One
-   routes each to the right Genie space:
+   routes each to the right Genie agent:
 
    **Maintenance** (routes to the Sunny Bay Maintenance Genie you built):
 
@@ -133,9 +136,9 @@ table or an agent; she just asks, and Genie One routes to the right one.
    ```
 
 > [!NOTE]
-> One conversation, two governed Genie spaces — maintenance *and* sales — with no
+> One conversation, two governed Genie agents — maintenance *and* sales — with no
 > switching. Sara configured nothing; she just asks. Unity Catalog governs what each
-> space can see.
+> agent can see.
 
 ---
 
@@ -159,41 +162,26 @@ AI Gateway, fixes that.
 > No credit card required. The free plan gives 100 web-search calls/day — more
 > than enough for this workshop. You keep this key after the session.
 
-**Step 4b — Register you.com as an MCP service in the Unity AI Gateway**
-
-You register the you.com MCP server once, in the Unity AI Gateway, so it's governed like
-any other Databricks asset. Full reference:
-[Register an MCP service](https://docs.databricks.com/aws/en/ai-gateway/register-mcp-service).
-
-> [!NOTE]
-> **Prerequisites (admin):** Unity Catalog enabled, and the **Unity AI Gateway** +
-> **Managed MCP Servers** previews turned on. You need `CREATE CONNECTION`, `USE CATALOG`,
-> `USE SCHEMA`, and `CREATE SERVICE` to complete these steps.
-
-1. **Create an HTTP connection to you.com.** Go to **Catalog → Connections → Create
-   connection** and choose type **HTTP**. Enter the you.com MCP server URL and pick an
-   authentication method — for you.com use **Bearer token** and paste the API key from
-   Step 4a. Save.
-
-2. **Register the MCP service.** Go to **AI Gateway → MCPs → Register MCP Server** (or
-   **Catalog → [your schema] → Create → MCP Service**). Set:
-   - the **catalog and schema** to register it in,
-   - a **service name** (e.g. `you_com_search` — this can't be changed later),
-   - the **HTTP connection** you just created,
-   - the **tools** to expose under the **Tools** section (the you.com web search tool).
-
-3. **Grant access.** On the service's **Permissions** tab, click **Grant**, add your
-   workshop users (or a group), and assign the **EXECUTE** privilege.
+**Step 4b — Connect the you.com MCP service**
 
 > [!IMPORTANT]
-> Invoking an MCP service needs **no privilege on the underlying connection** — grant
-> **EXECUTE** on the *service*, and do **not** grant `USE CONNECTION` to end users (that
-> would bypass governance).
+> **In most workspaces your admin has already registered the you.com MCP service in the
+> Unity AI Gateway** — so you simply *connect* to it here. If it's already available,
+> skip the admin setup below and go straight to Step 4c. The one-time registration
+> (create an HTTP connection → register the MCP service → grant `EXECUTE`) is documented
+> at [Register an MCP service](https://docs.databricks.com/aws/en/ai-gateway/register-mcp-service);
+> your facilitator will have done this ahead of the session.
 
-> [!TIP]
-> Registering the MCP server is a one-time admin step. If you're short on time, the
-> facilitator can register it once and grant the room EXECUTE — participants then just
-> use it in the next step.
+1. In the workspace sidebar, open **Genie** and go to your **Sunny Bay Maintenance
+   Genie** (from Step 1).
+
+2. Open the Genie agent's **settings / tools** and add the **you.com** MCP service as a
+   tool — it appears in the list because your admin registered it in the AI Gateway and
+   granted you access.
+
+> [!NOTE]
+> If you don't see it, ask your facilitator to confirm the you.com MCP service is
+> registered in **AI Gateway → MCPs** and that you have **EXECUTE** on it.
 
 **Step 4c — Ask enriched questions**
 
@@ -249,7 +237,7 @@ that *acts* on it.
 
 ## What Happens Next?
 
-You have built a Genie space, driven it from Genie One as a business user, and enriched
+You have built a Genie agent, driven it from Genie One as a business user, and enriched
 it with live web knowledge — all on governed data that never left Unity Catalog.
 
 ➡️ Continue to **[Lab 2 — Document Intelligence](./Lab%202%20-%20Document%20Intelligence.md)**

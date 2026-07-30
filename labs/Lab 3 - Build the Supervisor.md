@@ -21,6 +21,7 @@ decides which to call, in what order, and how to combine the results.
 > [!IMPORTANT]
 > **Prerequisites:**
 > - Lab 0 setup job has run successfully (`fault_reports_structured` exists)
+> - The **Sunny Bay Maintenance Genie** agent is built (Lab 1 — Step 1)
 > - you.com MCP service is registered in the Unity AI Gateway (Lab 1 — Step 4b)
 
 ---
@@ -51,14 +52,14 @@ Add each sub-agent one at a time using **Add agent**.
 
 **Sub-agent 1 — Sunny Bay Sales Genie (from DAID)**
 
-1. Click **Add agent** → **Genie Space**
-2. Select the **Sunny Bay Sales Genie** space created by DAID
+1. Click **Add agent** → **Genie Space** *(the menu still says "Space" — this is a Genie agent)*
+2. Select the **Sunny Bay Sales Genie** created by DAID
 3. Set the description:
 
 ```
-Answers questions about Sunny Bay machine telemetry, fault history, uptime,
-and sales data using the governed metric view. Use this for all structured
-data questions about machines, locations, and fault events.
+Answers questions about Sunny Bay coffee sales, customers, products, and stores
+using the governed metric view. Use this for all sales and revenue questions
+by store, product, and time period.
 ```
 
 ---
@@ -66,7 +67,7 @@ data questions about machines, locations, and fault events.
 **Sub-agent 2 — Maintenance Genie**
 
 1. Click **Add agent** → **Genie Space**
-2. Select the **Sunny Bay Maintenance** Genie space (created by the Lab 0 setup job)
+2. Select the **Sunny Bay Maintenance Genie** you built in Lab 1
 3. Set the description:
 
 ```
