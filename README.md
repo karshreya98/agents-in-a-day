@@ -3,6 +3,38 @@
 A hands-on 4-hour workshop that adds an **action layer** to your Databricks
 workspace — built on top of **Dashboard in a Day**.
 
+Two personas at a fictional coffee-machine operator, **Sunny Bay Roastery**:
+**Sara** (a location manager who just wants answers) and **Marc** (a field technician
+who needs to act). Across five labs you turn governed data + unstructured PDFs into
+Genie agents, a multi-source Supervisor agent, human-feedback review, and governed
+AI-assisted coding — all on Databricks, no infrastructure to provision.
+
+## What you'll build
+
+| Lab | Persona | What you build |
+|-----|---------|----------------|
+| **Lab 1** | Sara | A Genie agent over maintenance data, driven from Genie One, enriched with a you.com MCP tool |
+| **Lab 2** | Marc | Document intelligence — `ai_parse_document()` + `ai_extract()` turn fault-report PDFs into a table |
+| **Lab 3** | Marc | A **Supervisor Agent** (Agent Bricks) that reasons across Genie + web |
+| **Lab 4** | Marc | Observe it with MLflow traces; collect expert feedback via a Review App |
+| **Lab 5** | Platform | Governed AI-assisted coding — Unity AI Gateway + PII guardrail + `ucode`/OpenCode |
+
+## Prerequisites
+
+- A Databricks workspace with **Unity Catalog** and **serverless compute** enabled, and a
+  running serverless **SQL warehouse**.
+- A region that supports **AI Functions** (`ai_parse_document`, `ai_extract`), **Agent
+  Bricks**, and — for Lab 5 — the **Unity AI Gateway (Beta)**.
+- **Dashboard in a Day** installed in the same catalog (see below) — it provides the
+  sales data and Sales Genie the labs build on.
+- **Lab 5 only:** an account admin must enable the **Unity AI Gateway (Beta)** and
+  **Managed MCP Servers** previews (account console → Previews). Participants install
+  [`ucode`](https://github.com/databricks/ucode) + [OpenCode](https://opencode.ai) locally.
+
+> Running this for a group? See each lab's admin/prerequisite callouts — one admin sets up
+> the shared catalog, registers the you.com MCP service, governs a model for Lab 5, and
+> grants participants access.
+
 ---
 
 ## Setup — Install Dashboard in a Day (for its data & artifacts)
@@ -77,15 +109,9 @@ The job creates:
 
 ## Workshop Labs
 
-| Lab | Character | What you build |
-|-----|-----------|----------------|
-| **Lab 1** | Sara | Build a Genie agent, drive it from Genie One, enrich with you.com MCP |
-| **Lab 2** | Marc | Document Intelligence — `ai_parse_document()` + `ai_extract()` on fault report PDFs |
-| **Lab 3** | Marc | Build the Supervisor — Agent Bricks multi-source agent |
-| **Lab 4** | Marc | Observe and Review — MLflow traces + Review App for expert feedback |
-| **Lab 5** | Platform | Governed AI coding — Unity AI Gateway + PII guardrail + `ucode`/OpenCode vibe-codes the write-back |
-
-All labs are in the `labs/` folder.
+All labs are step-by-step markdown in the **`labs/`** folder — start with
+**Lab 1** and follow the ➡️ links at the bottom of each. (See the *What you'll build*
+table above for the arc.)
 
 ---
 
@@ -99,7 +125,7 @@ agents-in-a-day/
 │   │   ├── job.yml             ← Setup job (runs the notebook + pipeline)
 │   │   └── pipeline.yml        ← Lakeflow pipeline (parses + extracts all PDFs)
 │   └── src/
-│       ├── data/fault_reports/ ← 5 prebuilt fault report PDFs
+│       ├── data/fault_reports/ ← 10 prebuilt fault report PDFs
 │       ├── notebooks/
 │       │   └── Lab 0 - Setup.py        ← Setup notebook (run via the job above)
 │       └── transformations/

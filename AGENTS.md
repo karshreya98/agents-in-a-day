@@ -4,16 +4,19 @@
 
 This repository is a **hands-on workshop** ("Agents in a Day") for Databricks — a
 4-hour sequel to **Dashboard in a Day (DAID)**. It picks up where DAID left off and
-adds the action layer using Agent Bricks, Genie One, and Databricks Apps.
+adds the action layer using Genie agents, Agent Bricks, and the Unity AI Gateway.
 
-- **Target audience:** Semi-technical business users and platform/AI admins who
-  attended (or have the DAID assets deployed), ranging from interns to leadership.
-- Labs guide participants step-by-step through document intelligence, building a
-  Multi-Agent Supervisor, wiring conversation memory via Lakebase, and closing
-  the loop with AI Gateway + write-back.
+- **Target audience:** Semi-technical business users and platform/AI admins who have
+  the DAID assets deployed, ranging from interns to leadership.
+- Labs guide participants step-by-step through: building a Genie agent and driving it
+  from Genie One (Lab 1); document intelligence with `ai_parse_document`/`ai_extract`
+  (Lab 2); building a Multi-Agent Supervisor (Lab 3); observing it with MLflow traces
+  and collecting expert feedback via a Review App (Lab 4); and governed AI-assisted
+  coding through the Unity AI Gateway with `ucode`/OpenCode (Lab 5).
 - Tone should be clear, encouraging, and beginner-friendly. Avoid jargon unless
   it is explained.
-- **Platform:** Databricks Free Edition (no clusters required; all compute is serverless).
+- **Platform:** Databricks with Unity Catalog + serverless compute (no clusters
+  required). Works on Free Edition and standard workspaces.
 
 ## Lab File Structure
 
