@@ -273,6 +273,32 @@ can act on it without any manual step.
 
 ---
 
+## 🔀 The other option — when to just point Genie at the files
+
+Databricks gives you a second, no-pipeline way to get insights from documents: a Genie
+agent can **attach a Unity Catalog volume directly** and, at question time, retrieve and
+parse the most relevant files on the fly — no extraction step, no table. See
+[Genie agents over volumes](https://docs.databricks.com/aws/en/genie-agents/volumes).
+
+So why did we extract to a table instead? It comes down to what you're asking:
+
+| | **Attach the volume to Genie** (query-time) | **Extract to a table** (this lab) |
+|---|---|---|
+| **Setup** | None — just attach the volume | A pipeline + a schema |
+| **Best at** | Ad-hoc "what does *this* report say?" | Precise, repeated, **aggregate** queries |
+| **Across many docs** | Limited — only ~5 files read per question | Full table: `GROUP BY`, joins, counts over *all* reports |
+| **Freshness** | Always reads the live file | As fresh as the last pipeline run |
+| **Cost** | Parses on every question | Parses once per file |
+
+> [!TIP]
+> **Rule of thumb:** attach the volume for exploratory Q&A over a handful of documents;
+> extract to a table when you need reliable answers *across* many documents. Marc's
+> Supervisor has to answer *"which machines across all 12 locations need attention this
+> week?"* — an aggregate over every report — so the extracted table is the right
+> foundation. (You could still attach the volume too, for deep dives into a single report.)
+
+---
+
 ## What Happens Next?
 
 Marc now has clean, structured fault data flowing out of raw PDFs. In **Lab 3** you'll
