@@ -141,7 +141,11 @@ INSERT OVERWRITE `{catalog}`.`{MAINT}`.`{P}fault_events` VALUES
   ('EVT-005','CBM-009','2026-07-05 08:30:00','W-12','Grinder motor slow  -  repeat',    'medium',  false, null,                  null),
   ('EVT-006','CBM-002','2026-07-12 14:00:00','I-03','Routine descale overdue',        'low',     true,  '2026-07-13 09:00:00','TECH-03'),
   ('EVT-007','CBM-001','2026-06-28 06:45:00','E-11','Steam wand blockage',            'medium',  true,  '2026-06-28 12:00:00','TECH-01'),
-  ('EVT-008','CBM-006','2026-07-20 10:10:00','E-07','Pressure sensor fault',          'high',    false, null,                  null)
+  ('EVT-008','CBM-006','2026-07-20 10:10:00','E-07','Pressure sensor fault',          'high',    false, null,                  null),
+  ('EVT-009','CBM-004','2026-07-14 07:30:00','T-05','Boiler temperature instability', 'medium',  false, null,                  null),
+  ('EVT-010','CBM-007','2026-07-16 08:05:00','M-08','Milk system underperformance',   'medium',  false, null,                  null),
+  ('EVT-011','CBM-011','2026-07-09 06:00:00','I-03','Scale buildup - flow decline',   'low',     false, null,                  null),
+  ('EVT-012','CBM-012','2026-07-11 03:20:00','C-01','Connectivity dropout',           'low',     true,  '2026-07-11 09:00:00','TECH-02')
 """)
 
 count = spark.sql(f"SELECT count(*) as n FROM `{catalog}`.`{MAINT}`.`{P}fault_events`").collect()[0]["n"]
@@ -174,7 +178,7 @@ print(f"   → {catalog}.{MAINT}.{P}service_orders")
 # MAGIC %md
 # MAGIC ## 📂 Step 6 — Fault reports Volume + upload PDFs
 # MAGIC
-# MAGIC The 5 fault-report PDFs ship with this repo (`bundle/src/data/fault_reports/`)
+# MAGIC The 10 fault-report PDFs ship with this repo (`bundle/src/data/fault_reports/`)
 # MAGIC and were deployed to your workspace alongside this notebook. This step just
 # MAGIC copies them into the Unity Catalog Volume — no PDF generation, no extra
 # MAGIC libraries, no kernel restart.

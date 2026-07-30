@@ -11,7 +11,7 @@ resources:
               catalog: ${var.catalog}
               prefix: ${var.prefix}
 
-        # Runs ai_parse_document + ai_extract across all 5 fault report PDFs
+        # Runs ai_parse_document + ai_extract across all 10 fault report PDFs
         # so fault_reports_structured exists before attendees start Lab 2.
         - task_key: fault_report_pipeline
           depends_on:

@@ -68,9 +68,9 @@ variables:
 
 The job creates:
 - `coffee_maintenance` schema with `machines`, `fault_events`, `service_orders` tables
-- 5 fault report PDFs in a UC Volume
+- 10 fault report PDFs in a UC Volume
 - `fault_reports_structured` table — the Lakeflow pipeline runs `ai_parse_document()`
-  + `ai_extract()` across all 5 PDFs (used in Lab 2)
+  + `ai_extract()` across all 10 PDFs (used in Lab 2)
 - `create_service_order` UC function
 
 ---

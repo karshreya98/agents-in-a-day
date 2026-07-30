@@ -26,7 +26,7 @@ embeddings, no glue code:
 | **`ai_extract()`** | Takes that text and pulls out the fields you name in plain English, returning a clean struct. |
 
 You will meet both — first in the **Agent Bricks UI**, then in a **notebook** — on a
-single fault report. The Lab 0 setup job has already run them across all 5 reports
+single fault report. The Lab 0 setup job has already run them across all 10 reports
 into a Delta table, and you'll compare your result against it at the end.
 
 > **Marc's situation:** CBM-003 at the Mission location has thrown a pressure fault
@@ -191,7 +191,7 @@ actually query.
 ### **Step 3: See it run at scale — the Lakeflow pipeline**
 
 You just did this for **one** PDF. The Lab 0 setup job already ran the *exact same
-two functions* across **all 5** fault reports using a **Lakeflow Spark Declarative
+two functions* across **all 10** fault reports using a **Lakeflow Spark Declarative
 Pipeline**, and saved the result to a Delta table.
 
 1. Query the pipeline's output table:
@@ -286,16 +286,23 @@ So why did we extract to a table instead? It comes down to what you're asking:
 |---|---|---|
 | **Setup** | None — just attach the volume | A pipeline + a schema |
 | **Best at** | Ad-hoc "what does *this* report say?" | Precise, repeated, **aggregate** queries |
-| **Across many docs** | Limited — only ~5 files read per question | Full table: `GROUP BY`, joins, counts over *all* reports |
+| **Across many docs** | Limited — only **~5 files read per question** | Full table: `GROUP BY`, joins, counts over *all* reports |
 | **Freshness** | Always reads the live file | As fresh as the last pipeline run |
 | **Cost** | Parses on every question | Parses once per file |
 
+> [!IMPORTANT]
+> **We have 10 fault reports — and Genie only reads ~5 files per question.** So if you
+> just attached the volume and asked *"across all our reports, which machines have
+> recurring pressure faults?"*, Genie would answer from at most half the documents and
+> quietly miss the rest. The extracted table has no such limit — it queries all 10 rows
+> at once.
+
 > [!TIP]
-> **Rule of thumb:** attach the volume for exploratory Q&A over a handful of documents;
-> extract to a table when you need reliable answers *across* many documents. Marc's
-> Supervisor has to answer *"which machines across all 12 locations need attention this
-> week?"* — an aggregate over every report — so the extracted table is the right
-> foundation. (You could still attach the volume too, for deep dives into a single report.)
+> **Rule of thumb:** attach the volume for exploratory Q&A over a *handful* of documents;
+> extract to a table when you need reliable answers *across* the whole set. Marc's
+> Supervisor has to reason over every report ("which machines need attention this
+> week?"), so the extracted table is the right foundation. (You could still attach the
+> volume too, for a deep dive into a single report.)
 
 ---
 
