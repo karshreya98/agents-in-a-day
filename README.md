@@ -83,7 +83,7 @@ The job creates:
 | **Lab 2** | Marc | Document Intelligence — `ai_parse_document()` + `ai_extract()` on fault report PDFs |
 | **Lab 3** | Marc | Build the Supervisor — Agent Bricks multi-source agent |
 | **Lab 4** | Marc | Observe and Review — MLflow traces + Review App for expert feedback |
-| **Lab 5** | Platform | Governed AI coding — Unity AI Gateway + PII guardrail + `ucode` vibe-codes the write-back |
+| **Lab 5** | Platform | Governed AI coding — Unity AI Gateway + PII guardrail + `ucode`/OpenCode vibe-codes the write-back |
 
 All labs are in the `labs/` folder.
 

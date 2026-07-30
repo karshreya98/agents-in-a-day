@@ -7,8 +7,8 @@ By the end of this lab, you will be able to:
 - Explore the **Unity AI Gateway** (Beta) and understand what it governs.
 - **(Admin)** Register a governed model service, attach a **PII guardrail** (service
   policy), and grant workshop users access.
-- Install **`ucode`** — Databricks' launcher that routes coding agents (Claude Code,
-  Codex, Gemini CLI…) through the Unity AI Gateway with no API keys.
+- Install **`ucode`** + **OpenCode** — Databricks' launcher that routes coding agents
+  (OpenCode, Codex, Gemini CLI, Claude Code…) through the Unity AI Gateway with no API keys.
 - **Vibe-code** the `create_service_order` write-back function through a governed
   coding agent — and watch a PII prompt get caught by the guardrail.
 - See every call land in the **Coding Agents usage dashboard**.
@@ -110,38 +110,50 @@ a briefing into a real service order.
 
 Now each participant sets up an AI coding agent on their own laptop — routed through the
 governed Gateway, with **no API keys** to manage. `ucode` is Databricks' launcher: it
-runs Claude Code, Codex, Gemini CLI, and others *through* the Unity AI Gateway using your
-workspace credentials.
+runs coding agents (Codex, Gemini CLI, Claude Code, **OpenCode**, and others) *through*
+the Unity AI Gateway using your workspace credentials.
 
-1. **Install `ucode`** (requires [`uv`](https://docs.astral.sh/uv/) and Python 3.12+):
+> [!NOTE]
+> **We'll use OpenCode as the agent** in this workshop — it's free, open source, and
+> anyone can install it (no Claude Code / Copilot subscription needed). `ucode` drives it
+> exactly like the others.
+
+1. **Install [OpenCode](https://opencode.ai)** (the coding agent):
+
+   ```bash
+   curl -fsSL https://opencode.ai/install | bash
+   ```
+
+2. **Install `ucode`** (requires [`uv`](https://docs.astral.sh/uv/) and Python 3.12+):
 
    ```bash
    uv tool install git+https://github.com/databricks/ucode
    ```
 
-2. **Configure it** — this handles OAuth and writes each agent's config for you:
+3. **Configure `ucode` for OpenCode** — this handles OAuth and writes OpenCode's config
+   so it routes through the Gateway:
 
    ```bash
-   ucode configure
+   ucode configure --agents opencode
    ```
 
    On first run it prompts for your **workspace URL** (the one your admin shared) and
    opens a browser to authenticate. No PAT, no API key, no base URL to paste — `ucode`
-   wires the agent to route through the Unity AI Gateway automatically.
+   wires OpenCode to route through the Unity AI Gateway automatically.
 
-3. **Confirm it's connected:**
+4. **Confirm it's connected:**
 
    ```bash
    ucode status
    ```
 
-   You should see your workspace and the configured agent(s). `ucode` auto-discovers the
+   You should see your workspace and OpenCode configured. `ucode` auto-discovers the
    governed models available to you through the Gateway.
 
 > [!TIP]
-> `ucode` can launch several agents — `ucode claude`, `ucode codex`, `ucode gemini`,
-> `ucode copilot`. Configure just the one you want with
-> `ucode configure --agents claude`. All of them route through the Gateway the same way.
+> `ucode` can drive several agents the same way — `ucode codex`, `ucode gemini`,
+> `ucode claude`, `ucode copilot`. If you already have one of those, configure it with
+> `ucode configure --agents <name>`. We use OpenCode here because everyone can install it.
 
 ---
 
@@ -152,11 +164,10 @@ Unity Catalog function — the write-back that lets Marc's Supervisor turn a bri
 an actual service order. You'll *vibe-code* it through a Gateway-routed agent instead of
 writing it by hand.
 
-1. Launch a coding agent in a scratch folder (any of the supported ones — Claude Code
-   shown here):
+1. Launch OpenCode in a scratch folder — through `ucode`, so it routes via the Gateway:
 
    ```bash
-   ucode claude
+   ucode opencode
    ```
 
 2. Describe what you need:
@@ -201,7 +212,7 @@ writing it by hand.
 
 > [!NOTE]
 > The developer didn't configure anything. The guardrail lives on the governed service,
-> so it protects **every** agent `ucode` routes through it — Claude Code today, Codex or
+> so it protects **every** agent `ucode` routes through it — OpenCode today, Codex or
 > Gemini tomorrow. You just built a real write-back function through an AI assistant that
 > *cannot* leak PII.
 
@@ -269,7 +280,7 @@ writing it by hand.
   and watch it appear in `fault_reports_structured` automatically
   (the Lakeflow pipeline from Lab 0).
 
-- Use `ucode` to route your own coding agent (Claude Code, Codex, Gemini…) through the
+- Use `ucode` to route your own coding agent (OpenCode, Codex, Gemini, Claude Code…) through the
   Unity AI Gateway for your own projects — same governance, your code, no API keys.
 
 > [!TIP]
