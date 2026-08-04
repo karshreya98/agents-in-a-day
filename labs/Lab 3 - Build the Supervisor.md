@@ -86,7 +86,8 @@ pressure readings, and technician notes.
 
 > [!NOTE]
 > If it doesn't appear, confirm the MCP service is registered under **AI Gateway →
-> MCPs** and that you have **EXECUTE** on it (Lab 1, Step 4b). See
+> MCPs** and that you have **EXECUTE** on it (Lab 1, Step 4b) — the service sits on top of
+> a Unity Catalog **HTTP connection** the admin created once for the metastore. See
 > [Register an MCP service](https://docs.databricks.com/aws/en/ai-gateway/register-mcp-service).
 
 2. Set the description:
@@ -161,7 +162,8 @@ Which machines across all locations need attention this week?
 
 - The Supervisor **routes automatically** — you describe what each sub-agent knows,
   it decides which to call
-- **Descriptions are routing rules** — the more specific you are, the better the routing
+- **Descriptions are routing rules** — the more specific you are, the better the routing.
+  Same lesson as Genie One in Lab 1: a thin description gets the sub-agent skipped
 - The Supervisor has a **built-in chat UI** with conversation history — no app needed
   to start using it
 - In Lab 4 you observe it with MLflow traces and collect structured domain-expert

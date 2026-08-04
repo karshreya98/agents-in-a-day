@@ -62,8 +62,19 @@ agent in front of them.
    ```
    Natural-language Q&A over Sunny Bay espresso machine maintenance: machine
    registry, fault event history, and service orders. Use for questions about a
-   machine's faults, fault codes, locations, and service history.
+   machine's faults, fault codes, locations, and service history. Covers
+   machines CBM-001 to CBM-012, fault codes such as E-07 pressure faults,
+   the 12 Sunny Bay locations including Mission District, and open or
+   completed service orders.
    ```
+
+   > [!IMPORTANT]
+   > **Be generous and specific in this description.** Genie One uses it to decide
+   > whether *this* agent is the right one to answer a question. Name the actual
+   > entities a user might mention — machine IDs, fault codes, location names,
+   > the words "service order" — so questions phrased in the user's own language
+   > still match. A thin description is the most common reason Genie One skips an
+   > agent (see the callout in Step 3).
 
 5. Click **Save**.
 
@@ -111,6 +122,13 @@ up here as an **agent** — including the **Sunny Bay Maintenance Genie** you ju
 *and* the **Sunny Bay Sales Genie** from Dashboard in a Day. Sara doesn't pick a
 table or an agent; she just asks, and Genie One routes to the right one.
 
+> [!NOTE]
+> **Two ways to use Genie One.** If **chat** is enabled, you just type your question and
+> Genie One picks the agent for you. If it isn't, click **Ask** in the search bar and
+> **select a Genie Agent** yourself. Either way you're talking to the same governed
+> agent — the difference is only whether the routing is automatic or you choose.
+> A Genie agent you have *view* access to opens as a chat inside Genie One.
+
 1. Open the **kebab menu** (the ⋮ / grid "waffle" icon in the top navigation bar) and
    select **Genie One**.
 
@@ -137,10 +155,41 @@ table or an agent; she just asks, and Genie One routes to the right one.
    Which store had the highest coffee sales this year?
    ```
 
+3. **Check *what* answered you.** Click the **citation icons** in a response to see the
+   knowledge sources Genie One used. You want to see your **Genie agent** named there —
+   not just a bare SQL result.
+
 > [!NOTE]
 > One conversation, two governed Genie agents — maintenance *and* sales — with no
 > switching. Sara configured nothing; she just asks. Unity Catalog governs what each
 > agent can see.
+
+> [!IMPORTANT]
+> **If the answer came back as a direct query instead of via your Genie agent.**
+> This is expected behaviour, not a bug. Genie One resolves a question in this order:
+>
+> 1. It searches the available **Genie agents** for one relevant to your question.
+> 2. If it finds a match, it uses that agent to answer.
+> 3. **If it finds no match, it falls back to searching data assets directly** — which
+>    is why you sometimes get a raw query result with no agent listed as the source.
+>
+> So an answer with no agent attribution means step 1 didn't match. Fixes, in order of
+> effectiveness:
+>
+> - **Enrich the agent description** (Step 1, task 4). This is the single biggest lever —
+>   it's the text Genie One matches against. Add the machine IDs, fault codes, and
+>   location names a user would actually say.
+> - **Use vocabulary that only that agent covers.** "How many unresolved *faults* does
+>   *CBM-003* have?" matches far more reliably than "how are my machines doing?".
+> - **Ask it explicitly:** *"Using the Sunny Bay Maintenance Genie, which machines have
+>   logged E-07 faults?"*
+> - **Or select the agent by hand** — click **Ask** in the search bar and pick the agent,
+>   which bypasses routing entirely.
+>
+> **Facilitator tip:** this is worth demoing deliberately. Ask a vague question, show the
+> unattributed query result, then improve the description and ask again. Watching the
+> agent *become* the source teaches why descriptions are routing rules — the same lesson
+> Lab 3 depends on when the Supervisor picks between sub-agents.
 
 ---
 
@@ -173,6 +222,32 @@ AI Gateway, fixes that.
 > (create an HTTP connection → register the MCP service → grant `EXECUTE`) is documented
 > at [Register an MCP service](https://docs.databricks.com/aws/en/ai-gateway/register-mcp-service);
 > your facilitator will have done this ahead of the session.
+
+> [!NOTE]
+> **Admin: you must create a Unity Catalog HTTP connection first.** The MCP service is
+> registered *on top of* a UC **connection** object — a first-class governed asset, not a
+> per-agent setting. Create it under **Catalog → Connections → Create connection**, and
+> choose **HTTP** as the connection type.
+>
+> **Where to create it.** A connection can live either at the **metastore** level or
+> inside a **catalog.schema**. Databricks recommends the **schema** level, so the
+> connection is governed next to the MCP service that uses it — metastore-level
+> connections work but aren't recommended. Either way it is a *metastore-scoped* object
+> in the sense that matters here: **create it once and every workspace on that metastore
+> can use it** — you do not repeat this per workspace or per participant.
+>
+> **Privileges** (see the doc linked above):
+>
+> | Who | Needs |
+> |---|---|
+> | Admin creating the connection | `CREATE CONNECTION` on the schema |
+> | Admin registering the MCP service | `CREATE SERVICE` on the schema + `USE CONNECTION` on the connection |
+> | **Participants** | **`EXECUTE` on the MCP service — nothing on the connection** |
+
+> [!WARNING]
+> Do **not** grant participants `USE CONNECTION`. That would let them call the external
+> server directly, or register their own MCP services, bypassing governance. `EXECUTE`
+> on the MCP service is all they need.
 
 1. In the workspace sidebar, open **Genie** and go to your **Sunny Bay Maintenance
    Genie** (from Step 1).
