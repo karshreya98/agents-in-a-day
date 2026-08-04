@@ -35,75 +35,68 @@ decides which to call, in what order, and how to combine the results.
 
 ---
 
-### Step 2 — Name and describe the Supervisor (1 min)
+### Step 2 — Name and describe the Supervisor (2 min)
 
-| Field | Value |
-|---|---|
-| **Name** | `Marc Maintenance Supervisor` |
-| **Description** | `Field maintenance assistant for Sunny Bay Roastery technicians. Combines machine telemetry, fault reports, and web search into a single field-ready briefing.` |
+Set the **Name**:
+
+```
+Marc Maintenance Supervisor
+```
+
+Then paste this **Description** — one cumulative description covering all three sources,
+so you don't have to write one per sub-agent:
+
+```
+Field maintenance assistant for Sunny Bay Roastery technicians. Combines three
+sources into a single field-ready briefing:
+
+- Maintenance Genie — fault reports, machine registry, and fields extracted from
+  PDF fault report submissions: fault code, issue description, pressure
+  readings, technician notes. Use for what the location manager reported about a
+  specific machine.
+- Sales Genie — Sunny Bay coffee sales, customers, products, and stores from the
+  governed metric view. Use for sales and revenue questions by store, product,
+  and time period.
+- you.com web search — manufacturer service bulletins, fault code definitions,
+  repair procedures, and part numbers for commercial espresso machines. Use for
+  external knowledge only, never for internal Sunny Bay data.
+```
+
+> [!TIP]
+> **Why one description instead of three.** You *can* describe each sub-agent
+> individually, and for a production agent that's the more precise approach — a
+> description sits right next to the thing it describes. But it's also three times the
+> typing, and the Supervisor routes from this description plus your instructions either
+> way. One cumulative description gets you to a working agent faster, which is what you
+> want in a 25-minute lab.
 
 ---
 
-### Step 3 — Add sub-agents (10 min)
+### Step 3 — Add the three sub-agents (5 min)
 
-Add each sub-agent one at a time using **Add agent**.
+Just add them — no descriptions needed, since Step 2 already covers what each one knows.
 
----
+1. Click **Add agent** → **Genie Space** *(the menu still says "Space" — this is a Genie
+   agent)* and select the **Sunny Bay Maintenance Genie** you built in Lab 1.
 
-**Sub-agent 1 — Sunny Bay Sales Genie (from DAID)**
+2. Click **Add agent** → **Genie Space** again and select the **Sunny Bay Sales Genie**
+   created by DAID.
 
-1. Click **Add agent** → **Genie Space** *(the menu still says "Space" — this is a Genie agent)*
-2. Select the **Sunny Bay Sales Genie** created by DAID
-3. Set the description:
-
-```
-Answers questions about Sunny Bay coffee sales, customers, products, and stores
-using the governed metric view. Use this for all sales and revenue questions
-by store, product, and time period.
-```
-
----
-
-**Sub-agent 2 — Maintenance Genie**
-
-1. Click **Add agent** → **Genie Space**
-2. Select the **Sunny Bay Maintenance Genie** you built in Lab 1
-3. Set the description:
-
-```
-Answers questions about fault reports, machine registry, and structured data
-extracted from PDF fault report submissions. Use this to find what the location
-manager reported about a specific machine — fault code, issue description,
-pressure readings, and technician notes.
-```
-
----
-
-**Sub-agent 3 — you.com web search (MCP service)**
-
-1. Click **Add agent** → **MCP Server** and select the **you.com** MCP service you
-   registered in the Unity AI Gateway in Lab 1 (Step 4b).
+3. Click **Add agent** → **MCP Server** and select the **you.com** MCP service from
+   Lab 1 (Step 4b).
 
 > [!NOTE]
-> If it doesn't appear, confirm the MCP service is registered under **AI Gateway →
+> If the MCP service doesn't appear, confirm it's registered under **AI Gateway →
 > MCPs** and that you have **EXECUTE** on it (Lab 1, Step 4b) — the service sits on top of
-> a Unity Catalog **HTTP connection** the admin created once for the metastore. See
+> a Unity Catalog **HTTP connection** created once for the metastore. See
 > [Register an MCP service](https://docs.databricks.com/aws/en/ai-gateway/register-mcp-service).
-
-2. Set the description:
-
-```
-Live web search. Use this to look up manufacturer service bulletins, fault code
-definitions, recommended repair procedures, and part numbers for commercial
-espresso machines. Do not use for internal Sunny Bay data — use the Genie
-agents for that.
-```
 
 ---
 
 ### Step 4 — Set Supervisor instructions (3 min)
 
-In the **Instructions** field paste:
+The description told the Supervisor *what each source knows*. The instructions tell it
+*how to behave*. In the **Instructions** field paste:
 
 ```
 You are Marc's field maintenance assistant at Sunny Bay Roastery.
@@ -160,10 +153,14 @@ Which machines across all locations need attention this week?
 
 ## 💡 Key takeaways
 
-- The Supervisor **routes automatically** — you describe what each sub-agent knows,
+- The Supervisor **routes automatically** — you describe what each source knows,
   it decides which to call
 - **Descriptions are routing rules** — the more specific you are, the better the routing.
   Same lesson as Genie One in Lab 1: a thin description gets the sub-agent skipped
+- **Description vs instructions** — the description says what each source *knows*; the
+  instructions say how the Supervisor should *behave*. You described all three sources in
+  one place here to save time; per-sub-agent descriptions are the tidier choice for
+  something you'll maintain
 - The Supervisor has a **built-in chat UI** with conversation history — no app needed
   to start using it
 - In Lab 4 you observe it with MLflow traces and collect structured domain-expert
