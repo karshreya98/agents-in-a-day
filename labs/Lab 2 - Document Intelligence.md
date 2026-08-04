@@ -44,64 +44,84 @@ against it at the end.
 Agent Bricks gives you a no-code way to go straight from PDF to structured fields. You
 describe what you want in plain English; it builds the schema and runs the extraction.
 
-1. In the workspace left sidebar, click **Agents**.
+**First, get a fault report onto your laptop.** The agent's setup page takes an uploaded
+file, so download one of the PDFs from the volume before you start.
 
-2. Click **Create Agent** → **Information Extraction**.
-
-3. On the **Start with your data** page, click **Select volume** and browse to:
+1. In the workspace sidebar open **Catalog** and browse to:
 
    ```
-   /Volumes/<catalog>/coffee_maintenance/fault_reports/
+   <catalog> → coffee_maintenance → Volumes → fault_reports
    ```
 
    > [!NOTE]
    > Replace `<catalog>` with the catalog name you used in Lab 0 (e.g. `sunny_bay_roastery`).
 
-4. Click **Create Agent**.
+2. Click **`FR-2026-001.pdf`** and **download** it. Open it and skim what Sara wrote about
+   CBM-003 — you'll be checking the extracted fields against it shortly.
 
-5. Under **Configuration**, describe what Marc needs in plain English:
+   > [!TIP]
+   > Grab a second report too (say `FR-2026-004.pdf`) if you want to see the agent handle
+   > more than one document.
+
+3. In the workspace left sidebar, click **Agents**.
+
+4. Click **Create Agent** → **Information Extraction**.
+
+5. On the **Start with your data** page, **drag the PDF you just downloaded into the
+   upload area** (or click to browse for it).
+
+6. Click **Create Agent**.
+
+7. Under **Configuration**, describe what you want in plain English. Start small:
 
    ```
-   From each espresso machine fault report, extract the machine ID, machine model,
-   fault code, a description of the issue, the location name, the contact who
-   reported it, and the report date.
+   Extract the machine ID and the location.
    ```
 
-6. Click **Generate Schema**. Agent Bricks turns that sentence into typed fields —
-   review them, and click **Or, Define manually** if you want to rename a field, change
-   a type, or edit a description.
+8. Click **Generate Schema**. Agent Bricks turns that sentence into typed fields — have a
+   look at what it came up with, and click **Or, Define manually** if you want to rename a
+   field, change a type, or edit a description.
 
-7. Click **Save and run extraction**.
+9. Click **Save and run extraction**.
 
-8. The screen splits: the **source document** on the left, the **extracted JSON** on the
-   right. Click through a few reports and check the values against what the PDF actually
-   says — this is the moment to catch a field the model misread.
+10. The screen splits: the **source document** on the left, the **extracted JSON** on the
+    right. Check the two values against the PDF you skimmed earlier.
 
 > [!TIP]
-> **Iterate here, in the UI.** If a field comes back empty or wrong, sharpen its
-> description and re-run. Field descriptions are instructions — *"the machine ID, in the
-> form CBM-000"* extracts far more reliably than *"machine"*. Getting this right in the UI
-> is much faster than debugging SQL later.
+> **Now add more fields and re-run.** Extend the description to pull out the fault code,
+> the issue description, the contact, and the report date. Building it up one field at a
+> time — rather than asking for everything at once — makes it obvious which description
+> caused a bad extraction.
+>
+> Field descriptions are instructions: *"the machine ID, in the form CBM-000"* extracts far
+> more reliably than *"machine"*. Iterating here in the UI is much faster than debugging
+> SQL later.
 
 ---
 
 ### **Step 2: Turn it into a pipeline — one click**
 
-You've proved the extraction works on real reports. Now make it run continuously, so
-every new PDF Sara drops in the volume gets extracted automatically.
+You've proved the extraction works on one report. Now point it at *all* of them, so every
+PDF Sara drops in the volume gets extracted automatically.
 
 1. Click **Use Agent** (upper-right) and choose **Create a Lakeflow pipeline**.
 
 2. Databricks generates a **Lakeflow Spark Declarative Pipeline** that writes the
    extracted fields into a **streaming table** and keeps it up to date on a schedule.
 
-3. Open the generated pipeline and skim the code. Two things worth noticing:
+3. Point the pipeline's source at the full volume rather than your single uploaded file:
+
+   ```
+   /Volumes/<catalog>/coffee_maintenance/fault_reports/
+   ```
+
+4. Skim the generated code. Two things worth noticing:
 
    - It uses **`ai_extract()`** — the same function the UI was calling for you, now with
      the schema you designed.
    - It reads the volume incrementally, so it only processes files it hasn't seen yet.
 
-4. Run the pipeline, then query its output table to see all 10 reports as rows.
+5. Run the pipeline, then query its output table to see all 10 reports as rows.
 
 > [!TIP]
 > **`Use Agent` also offers `Run in SQL`** — that opens a SQL editor with the equivalent
