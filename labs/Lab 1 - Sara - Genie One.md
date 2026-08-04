@@ -228,54 +228,69 @@ AI Gateway, fixes that.
 > No credit card required. The free plan gives 100 web-search calls/day — more
 > than enough for this workshop. You keep this key after the session.
 
-**Step 4b — Connect the you.com MCP service**
+**Step 4b — Check whether the you.com MCP service already exists**
+
+1. In the workspace sidebar, open **AI Gateway** → **MCPs**.
+
+2. Look for a **you.com** MCP service.
+
+   - **It's there** → skip to **Step 4c**. Someone already registered it.
+   - **It's not there** → do **Step 4b-1** below to create it yourself.
+
+---
+
+**Step 4b-1 — Register the you.com MCP service (only if Step 4b found nothing)**
+
+First create the Unity Catalog **HTTP connection**, then register the MCP service on top of it.
+
+1. Go to **Catalog** → **Connections** → **Create connection**.
+
+2. Select **HTTP** as the connection type.
+
+3. Name it `youcom_http`, enter the **you.com MCP server URL**, and set the
+   authentication type to **Bearer token** — paste the `yk_...` key from Step 4a.
 
 > [!IMPORTANT]
-> **In most workspaces your admin has already registered the you.com MCP service in the
-> Unity AI Gateway** — so you simply *connect* to it here. If it's already available,
-> skip the admin setup below and go straight to Step 4c. The one-time registration
-> (create an HTTP connection → register the MCP service → grant `EXECUTE`) is documented
-> at [Register an MCP service](https://docs.databricks.com/aws/en/ai-gateway/register-mcp-service);
-> your facilitator will have done this ahead of the session.
+> **Create this connection at the metastore level, not inside a catalog or schema.**
+> It is a metastore-scoped object: create it once and every workspace on the metastore
+> can use it. Don't repeat it per workspace or per participant.
+>
+> You need `CREATE CONNECTION` to do this. If the option is greyed out, you don't have
+> the privilege — ask your facilitator or a metastore admin to create it.
 
-> [!NOTE]
-> **Admin: you must create a Unity Catalog HTTP connection first.** The MCP service is
-> registered *on top of* a UC **connection** object — a first-class governed asset, not a
-> per-agent setting. Create it under **Catalog → Connections → Create connection**, and
-> choose **HTTP** as the connection type.
->
-> **Where to create it.** A connection can live either at the **metastore** level or
-> inside a **catalog.schema**. Databricks recommends the **schema** level, so the
-> connection is governed next to the MCP service that uses it — metastore-level
-> connections work but aren't recommended. Either way it is a *metastore-scoped* object
-> in the sense that matters here: **create it once and every workspace on that metastore
-> can use it** — you do not repeat this per workspace or per participant.
->
-> **Privileges** (see the doc linked above):
->
-> | Who | Needs |
-> |---|---|
-> | Admin creating the connection | `CREATE CONNECTION` on the schema |
-> | Admin registering the MCP service | `CREATE SERVICE` on the schema + `USE CONNECTION` on the connection |
-> | **Participants** | **`EXECUTE` on the MCP service — nothing on the connection** |
+4. Click **Create**.
+
+5. Go to **AI Gateway** → **MCPs** → **Register MCP Server**.
+
+6. Give the service a name, select the `youcom_http` connection you just created, pick the
+   **Tools** you want exposed (web search), and click **Create**.
+
+7. Open the new MCP service → **Permissions** tab → **Grant**. Add the workshop users or
+   group and grant **`EXECUTE`**, then click **Grant**.
 
 > [!WARNING]
-> Do **not** grant participants `USE CONNECTION`. That would let them call the external
-> server directly, or register their own MCP services, bypassing governance. `EXECUTE`
-> on the MCP service is all they need.
+> Grant participants **`EXECUTE` on the MCP service only — never `USE CONNECTION`**.
+> `USE CONNECTION` would let them call you.com directly or register their own MCP
+> services, bypassing governance. `EXECUTE` is all they need to use the tool.
+
+Full reference: [Register an MCP service](https://docs.databricks.com/aws/en/ai-gateway/register-mcp-service).
+
+---
+
+**Step 4c — Add the MCP service to your Genie agent**
 
 1. In the workspace sidebar, open **Genie** and go to your **Sunny Bay Maintenance
    Genie** (from Step 1).
 
 2. Open the Genie agent's **settings / tools** and add the **you.com** MCP service as a
-   tool — it appears in the list because your admin registered it in the AI Gateway and
-   granted you access.
+   tool — it appears in the list because it's registered in the AI Gateway and you have
+   `EXECUTE` on it.
 
 > [!NOTE]
-> If you don't see it, ask your facilitator to confirm the you.com MCP service is
-> registered in **AI Gateway → MCPs** and that you have **EXECUTE** on it.
+> If you don't see it in the list, confirm the service is registered under
+> **AI Gateway → MCPs** and that you have **`EXECUTE`** on it (Step 4b-1, task 7).
 
-**Step 4c — Ask enriched questions**
+**Step 4d — Ask enriched questions**
 
 Now in Genie One, ask questions that combine your governed data with the web:
 
