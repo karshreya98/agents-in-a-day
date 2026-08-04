@@ -109,6 +109,26 @@ agent in front of them.
    wrote it by hand.
 
 > [!NOTE]
+> **A Genie agent has two modes — chat and agent.** Look for the mode selector in the
+> conversation box and try the same question in each.
+>
+> | | **Chat mode** | **Agent mode** |
+> |---|---|---|
+> | How it answers | One question → one SQL query → one answer | Plans, then takes several steps, and can chain queries before replying |
+> | Best for | Quick, direct lookups — *"which machines logged E-07 faults?"* | Broader, multi-part questions — *"which machines need attention this week and why?"* |
+> | Speed | Faster | Slower, since it does more work |
+> | Verified answers | A trusted asset (a parameterized query your admin blessed) returns a **verified answer** | Reasons more freely across the data |
+>
+> Same governed tables and same Unity Catalog permissions either way — the difference is
+> how much reasoning Genie does before it answers.
+
+> [!TIP]
+> Ask *"which machines need attention this week and why?"* in **chat mode**, then again in
+> **agent mode**. Chat mode gives you one query's worth of answer; agent mode breaks the
+> question down and works through it. That contrast is exactly what you're building at
+> scale in Lab 3 — the Supervisor is this planning behaviour across *multiple* agents.
+
+> [!NOTE]
 > Genie answers from the governed tables only — right now, the machine registry, fault
 > events, and service orders. It can't yet read the *fault report PDFs*; that's what
 > Lab 2 adds.
@@ -121,13 +141,6 @@ Genie One is the business-user front door. Every Genie agent in the workspace sh
 up here as an **agent** — including the **Sunny Bay Maintenance Genie** you just built
 *and* the **Sunny Bay Sales Genie** from Dashboard in a Day. Sara doesn't pick a
 table or an agent; she just asks, and Genie One routes to the right one.
-
-> [!NOTE]
-> **Two ways to use Genie One.** If **chat** is enabled, you just type your question and
-> Genie One picks the agent for you. If it isn't, click **Ask** in the search bar and
-> **select a Genie Agent** yourself. Either way you're talking to the same governed
-> agent — the difference is only whether the routing is automatic or you choose.
-> A Genie agent you have *view* access to opens as a chat inside Genie One.
 
 1. Open the **kebab menu** (the ⋮ / grid "waffle" icon in the top navigation bar) and
    select **Genie One**.
@@ -183,8 +196,10 @@ table or an agent; she just asks, and Genie One routes to the right one.
 >   *CBM-003* have?" matches far more reliably than "how are my machines doing?".
 > - **Ask it explicitly:** *"Using the Sunny Bay Maintenance Genie, which machines have
 >   logged E-07 faults?"*
-> - **Or select the agent by hand** — click **Ask** in the search bar and pick the agent,
->   which bypasses routing entirely.
+> - **Or pick the agent by hand.** If Genie One's chat doesn't route well, click **Ask** in
+>   the search bar and select the Genie agent yourself — that bypasses routing entirely and
+>   drops you straight into the agent (where you also get the chat/agent mode selector from
+>   Step 2).
 >
 > **Facilitator tip:** this is worth demoing deliberately. Ask a vague question, show the
 > unattributed query result, then improve the description and ask again. Watching the
