@@ -22,13 +22,13 @@ write SQL or dig through tables — she just wants answers. She gets them throug
 In this lab you'll wear two hats: first you set up the Genie agent (a quick,
 one-time build), then you step into Sara's shoes and just ask questions.
 
-Dashboard in a Day built a *Sales* Genie. In this lab you build the **Maintenance
-Genie** — the one Sara (and later Marc's Supervisor in Lab 3) needs to ask about
-machine faults — then talk to *both* of them through Genie One, which routes each
-question to the right agent.
+In this lab you build **two** Genie agents over the data the setup job seeded — a
+**Maintenance Genie** (the one Sara, and later Marc's Supervisor in Lab 3, needs for
+machine faults) and a **Sales Genie** (Sunny Bay coffee sales by store) — then talk to
+*both* through Genie One, which routes each question to the right agent.
 
 This lab is **facilitator-led with participant follow-along**. No code to write. Just
-one Genie agent and a few conversations.
+two Genie agents and a few conversations.
 
 ---
 
@@ -54,8 +54,7 @@ agent in front of them.
 
    > [!NOTE]
    > Replace `<catalog>` with the catalog name you used in Lab 0 (e.g.
-   > `sunny_bay_roastery`). If your tables have a prefix (e.g. `sbr_machines`),
-   > select the prefixed names.
+   > `sunny_bay_roastery`).
 
 4. Name the space **`Sunny Bay Maintenance Genie`** and give it a description:
 
@@ -86,6 +85,44 @@ agent in front of them.
 > [!TIP]
 > You'll reuse this exact Genie agent in **Lab 3** as one of Marc's Supervisor
 > sub-agents — building it once here means it's ready when you get there.
+
+**Now build a second Genie agent — the Sales Genie.** In Step 3 you'll watch Genie One
+route between the two, so you need more than one. Repeat the steps above over the sales
+**metric view** the setup job built:
+
+6. Click **New** again. This time add the sales metric view:
+
+   ```
+   <catalog>.gold.sm_fact_coffee_sales_genie
+   ```
+
+   > This is a governed **metric view** over the Sunny Bay sales star schema — it exposes
+   > ready-made measures like `total_gross_revenue_usd`, `total_profit_usd`, and
+   > `total_quantity_sold`, sliced by store, product, and date. Query measures with
+   > `MEASURE(...)`.
+
+7. Name it **`Sunny Bay Sales Genie`** and describe it:
+
+   ```
+   Natural-language Q&A over Sunny Bay Roastery coffee sales. Governed measures for
+   units sold, gross/net revenue, and profit, sliced by store, product category, and
+   date across the full store network (San Francisco cafés plus the online shop) and
+   the coffee/food/beans catalog. Use for sales, revenue, profit, and store-performance
+   questions. History runs from 2010 to today; treat "the year" as the fiscal year
+   (June 1 – May 31).
+   ```
+
+8. Click **Save**.
+
+> [!NOTE]
+> **The setup job already pre-built a `Sunny Bay Sales Genie`** over this same metric
+> view, so you have a working one even if you skip this. Building it yourself here is
+> the exercise — if you do, use the exact name above so Lab 3 finds it.
+
+> [!NOTE]
+> You now have two Genie agents in the workspace — one for maintenance, one for sales.
+> That's exactly what Genie One needs to demonstrate routing in Step 3, and both become
+> sub-agents of Marc's Supervisor in Lab 3.
 
 ---
 
@@ -138,9 +175,9 @@ agent in front of them.
 ### **Step 3: Talk to your Genie agents through Genie One (5 min)**
 
 Genie One is the business-user front door. Every Genie agent in the workspace shows
-up here as an **agent** — including the **Sunny Bay Maintenance Genie** you just built
-*and* the **Sunny Bay Sales Genie** from Dashboard in a Day. Sara doesn't pick a
-table or an agent; she just asks, and Genie One routes to the right one.
+up here as an **agent** — including the **Sunny Bay Maintenance Genie** *and* the
+**Sunny Bay Sales Genie** you just built. Sara doesn't pick a table or an agent; she
+just asks, and Genie One routes to the right one.
 
 1. Open the **kebab menu** (the ⋮ / grid "waffle" icon in the top navigation bar) and
    select **Genie One**.
@@ -158,14 +195,14 @@ table or an agent; she just asks, and Genie One routes to the right one.
    How many unresolved faults does CBM-003 have?
    ```
 
-   **Sales** (routes to the Sunny Bay Sales Genie from Dashboard in a Day):
+   **Sales** (routes to the Sunny Bay Sales Genie you built in Step 1):
 
    ```
    How do sales at the Sunny Bay – Mission store compare to the other stores?
    ```
 
    ```
-   Which store had the highest coffee sales this year?
+   Which store had the highest coffee revenue in 2024?
    ```
 
 3. **Check *what* answered you.** Click the **citation icons** in a response to see the

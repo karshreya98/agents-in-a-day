@@ -4,12 +4,12 @@ resources:
       name: "Agents in a Day - Setup"
 
       tasks:
+        # ── Maintenance track (this repo) ──────────────────────────────────
         - task_key: setup
           notebook_task:
             notebook_path: ../src/notebooks/Lab 0 - Setup.py
             base_parameters:
               catalog: ${var.catalog}
-              prefix: ${var.prefix}
 
         # Runs ai_parse_document + ai_extract across all 10 fault report PDFs
         # so fault_reports_structured exists before attendees start Lab 2.
@@ -18,6 +18,55 @@ resources:
             - task_key: setup
           pipeline_task:
             pipeline_id: ${resources.pipelines.fault_report_pipeline.id}
+
+        # ── Sales track (vendored from Dashboard in a Day) ─────────────────
+        # generate_data → sales pipeline → metric view → {Genie, dashboard}.
+        # bronze/silver/gold schema names are fixed inside the notebooks and the
+        # transformation SQL, so only `catalog` (and gold_schema/warehouse_id
+        # where needed) are passed in.
+        - task_key: generate_data
+          notebook_task:
+            notebook_path: ../src/notebooks/generate_data.ipynb
+            base_parameters:
+              catalog: ${var.catalog}
+
+        - task_key: run_sales_pipeline
+          depends_on:
+            - task_key: generate_data
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.sunny_bay_roastery_pipeline.id}
+
+        - task_key: deploy_metric_view
+          depends_on:
+            - task_key: run_sales_pipeline
+          notebook_task:
+            notebook_path: ../src/notebooks/deploy_metric_view.ipynb
+            base_parameters:
+              catalog: ${var.catalog}
+              gold_schema: gold
+
+        # Pre-builds the "Sunny Bay Sales Genie" over the metric view so every
+        # participant has a working sales Genie for Labs 1 & 3.
+        - task_key: deploy_genie_space
+          depends_on:
+            - task_key: deploy_metric_view
+          notebook_task:
+            notebook_path: ../src/notebooks/deploy_genie_space.ipynb
+            base_parameters:
+              catalog: ${var.catalog}
+              gold_schema: gold
+              warehouse_id: ${var.warehouse_id}
+
+        # Publishes the [Final] Sunny Bay sales dashboard over the metric view.
+        - task_key: deploy_dashboard
+          depends_on:
+            - task_key: deploy_metric_view
+          notebook_task:
+            notebook_path: ../src/notebooks/deploy_dashboard.py
+            base_parameters:
+              catalog: ${var.catalog}
+              gold_schema: gold
+              warehouse_id: ${var.warehouse_id}
 
       queue:
         enabled: true

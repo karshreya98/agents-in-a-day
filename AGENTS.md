@@ -3,11 +3,18 @@
 ## Project Context and Target Audience
 
 This repository is a **hands-on workshop** ("Agents in a Day") for Databricks — a
-4-hour sequel to **Dashboard in a Day (DAID)**. It picks up where DAID left off and
-adds the action layer using Genie agents, Agent Bricks, and the Unity AI Gateway.
+4-hour workshop that adds an action layer to a Databricks workspace using Genie
+agents, Agent Bricks, and the Unity AI Gateway. It is thematically a sequel to
+**Dashboard in a Day (DAID)**, but it is fully self-contained: DAID's sales data engine,
+medallion transformations, metric view, Sales Genie, and final dashboard are **vendored
+into this bundle** (under `bundle/src/{data,transformations,dashboards,notebooks}`), and
+the "Agents in a Day - Setup" job builds them alongside the maintenance data — so DAID
+does not need to be installed separately. When editing sales assets, treat the vendored
+DAID files as the source of truth here; do not reintroduce a separate DAID install or the
+old flat `gold.sales` seed table.
 
-- **Target audience:** Semi-technical business users and platform/AI admins who have
-  the DAID assets deployed, ranging from interns to leadership.
+- **Target audience:** Semi-technical business users and platform/AI admins,
+  ranging from interns to leadership.
 - Labs guide participants step-by-step through: building a Genie agent and driving it
   from Genie One (Lab 1); document intelligence with `ai_parse_document`/`ai_extract`
   (Lab 2); building a Multi-Agent Supervisor (Lab 3); observing it with MLflow traces

@@ -1,0 +1,22 @@
+resources:
+  pipelines:
+    sunny_bay_roastery_pipeline:
+      name: "Agents in a Day - Sales Pipeline"
+      serverless: true
+      catalog: ${var.catalog}
+      schema: bronze
+
+      # Read by the silver/gold transformation SQL via ${prefix} substitution.
+      # prefix stays empty so tables are gold.fact_coffee_sales, gold.dim_store, etc.
+      configuration:
+        catalog: ${var.catalog}
+        prefix: ""
+
+      # Narrow globs: only the sales medallion transforms. Deliberately NOT
+      # ../src/transformations/** so this pipeline never picks up the maintenance
+      # fault_report_pipeline.py at the transformations root.
+      libraries:
+        - glob:
+            include: ../src/transformations/silver/**
+        - glob:
+            include: ../src/transformations/gold/**
