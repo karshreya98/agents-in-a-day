@@ -4,8 +4,19 @@ resources:
       name: "Agents in a Day - Setup"
 
       tasks:
+        # ── Init: ensure the catalog exists before either branch ───────────
+        # Runs first; both the maintenance and sales branches create their own
+        # schemas inside this catalog, so the catalog must exist for both.
+        - task_key: init
+          notebook_task:
+            notebook_path: ../src/notebooks/init.py
+            base_parameters:
+              catalog: ${var.catalog}
+
         # ── Maintenance track (this repo) ──────────────────────────────────
         - task_key: setup
+          depends_on:
+            - task_key: init
           notebook_task:
             notebook_path: ../src/notebooks/Lab 0 - Setup.py
             base_parameters:
@@ -25,6 +36,8 @@ resources:
         # transformation SQL, so only `catalog` (and gold_schema/warehouse_id
         # where needed) are passed in.
         - task_key: generate_data
+          depends_on:
+            - task_key: init
           notebook_task:
             notebook_path: ../src/notebooks/generate_data.ipynb
             base_parameters:
@@ -35,6 +48,8 @@ resources:
             - task_key: generate_data
           pipeline_task:
             pipeline_id: ${resources.pipelines.sunny_bay_roastery_pipeline.id}
+            # Rebuild streaming tables from scratch each run, else re-runs duplicate the data.
+            full_refresh: true
 
         - task_key: deploy_metric_view
           depends_on:

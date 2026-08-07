@@ -6,12 +6,13 @@ include:
   - resources/*.yml
 
 # ─────────────────────────────────────────────────────────────
-# Set 'catalog' to the Unity Catalog catalog you want to use before Deploy.
-#   - Free Edition: create a new catalog (e.g. sunny_bay_roastery)
-#   - Shared workspace: use an existing catalog you own, or give each
-#     person their own catalog so table names don't collide.
-# Not sure which catalog you can write to? Open the setup notebook
-# (src/notebooks/Lab 0 - Setup.py) and run its first cell.
+# 'catalog' is the only thing you might change. The setup job's `init` task
+# CREATES this catalog for you — you don't need to pre-create it. Edit the
+# `default:` below only to:
+#   - use a different name, or
+#   - point at an existing catalog (if creating catalogs is restricted here).
+# On a shared workspace, give each person their own catalog name so their
+# tables don't collide. (CLI users can skip editing: --var catalog=my_catalog.)
 # ─────────────────────────────────────────────────────────────
 variables:
   catalog:

@@ -27,8 +27,10 @@ AI-assisted coding — all on Databricks, no infrastructure to provision.
   workspace with a different name, update the `warehouse_id` lookup in `bundle/databricks.yml`.
 - A region that supports **AI Functions** (`ai_parse_document`, `ai_extract`), **Agent
   Bricks**, and — for Lab 5 — the **Unity AI Gateway (Beta)**.
-- A Unity Catalog **catalog you can write to**. On Free Edition, create a new one (e.g.
-  `sunny_bay_roastery`). The setup step seeds all the data — no other workshop to install.
+- Permission to **create a Unity Catalog catalog** (or an existing catalog you can write
+  to). The setup job creates the catalog for you — default `sunny_bay_roastery` — and seeds
+  all the data, so there's no other workshop to install. If catalog creation is restricted
+  on your workspace, point `catalog` at one an admin already made.
 - **Lab 5 only:** an account admin must enable the **Unity AI Gateway (Beta)** and
   **Managed MCP Servers** previews (account console → Previews). Participants install
   [`ucode`](https://github.com/databricks/ucode) + [OpenCode](https://opencode.ai) locally.
@@ -41,10 +43,11 @@ AI-assisted coding — all on Databricks, no infrastructure to provision.
 
 ## Getting started
 
-The setup job builds everything the labs need — maintenance data, the full Sunny Bay
-sales star schema + metric view (vendored from Dashboard in a Day), a pre-built Sales
-Genie and sales dashboard, the fault-report PDFs, and the `fault_reports_structured`
-table (via a Lakeflow pipeline).
+**Clone as a Git Folder, click Deploy, click Run — that's it.** Everything happens in the
+workspace; no local CLI, no catalog to pre-create. One setup job builds everything the
+labs need — maintenance data, the full Sunny Bay sales star schema + metric view
+(vendored from Dashboard in a Day), a pre-built Sales Genie and sales dashboard, the
+fault-report PDFs, and the `fault_reports_structured` table (via a Lakeflow pipeline).
 
 ### Step 1 — Clone this repo as a Git Folder
 
@@ -57,22 +60,17 @@ table (via a Lakeflow pipeline).
 
 ### Step 2 — Deploy the bundle and run the setup job
 
-1. Open `bundle/databricks.yml` and set the `catalog` default to the catalog you want to
-   use:
+No local tools and nothing to pre-create — it all runs from the workspace.
 
-   ```yaml
-   variables:
-     catalog:
-       default: sunny_bay_roastery   # ← change this to your catalog
-   ```
+1. Open `bundle/databricks.yml` in the workspace, then click **Deploy** (top-right
+   toolbar). You should see **"Bundle deployed successfully"**.
 
-   > **Not sure which catalog you can write to?** Open `bundle/src/notebooks/Lab 0 - Setup`
-   > and run its **first cell** — it lists every catalog you have access to.
+   > The setup job **creates the catalog for you** (default `sunny_bay_roastery`). To use
+   > a different catalog — e.g. on a shared workspace where everyone needs their own —
+   > change the `catalog` default at the top of `databricks.yml` before you click Deploy.
 
-2. Click **Deploy** (top-right toolbar). You should see **"Bundle deployed successfully"**.
-
-3. Go to **Workflows** in the left sidebar, find **"Agents in a Day - Setup"**, and click
-   **Run now**. Wait for the green **Succeeded** badge (~5 min).
+2. Go to **Workflows** in the left sidebar, find **"Agents in a Day - Setup"**, and click
+   **Run now**. Wait for the green **Succeeded** badge (~10 min).
 
 The job creates:
 - `coffee_maintenance` schema with `machines`, `fault_events`, `service_orders` tables
@@ -87,10 +85,12 @@ The job creates:
 - `create_service_order` UC function
 
 > **Prefer to run it by hand?** Open `bundle/src/notebooks/Lab 0 - Setup`, set the
-> `catalog` widget (its first cell lists your options), and **Run All**. That builds the
-> **maintenance** side only. The **sales** star schema, metric view, Sales Genie, and
-> dashboard — plus `fault_reports_structured` — are built by the other tasks in the
-> **"Agents in a Day - Setup"** job, so run that job to get the full workshop.
+> `catalog` widget (its first cell lists the catalogs you can write to — it must already
+> exist, since the job's `init` task that creates it doesn't run in this path), and
+> **Run All**. That builds the **maintenance** side only. The **sales** star schema,
+> metric view, Sales Genie, and dashboard — plus `fault_reports_structured` — are built
+> by the other tasks in the **"Agents in a Day - Setup"** job, so run that job to get the
+> full workshop.
 
 ---
 
