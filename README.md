@@ -13,7 +13,7 @@ AI-assisted coding — all on Databricks, no infrastructure to provision.
 
 | Lab | Persona | What you build |
 |-----|---------|----------------|
-| **Lab 1** | Sara | Two Genie agents (maintenance + sales) driven from Genie One, enriched with a you.com MCP tool |
+| **Lab 1** | Sara | A **Maintenance Genie** agent, driven from Genie One alongside the pre-built Sales Genie, enriched with a you.com MCP tool |
 | **Lab 2** | Marc | Document intelligence — `ai_parse_document()` + `ai_extract()` turn fault-report PDFs into a table |
 | **Lab 3** | Marc | A **Supervisor Agent** (Agent Bricks) that reasons across Genie + web |
 | **Lab 4** | Marc | Observe it with MLflow traces; collect expert feedback via a Review App |
@@ -43,10 +43,9 @@ AI-assisted coding — all on Databricks, no infrastructure to provision.
 
 ## Getting started
 
-**Clone as a Git Folder, click Deploy, click Run — that's it.** Everything happens in the
-workspace; no local CLI, no catalog to pre-create. One setup job builds everything the
-labs need — maintenance data, the full Sunny Bay sales star schema + metric view
-(vendored from Dashboard in a Day), a pre-built Sales Genie and sales dashboard, the
+**Clone as a Git Folder, Deploy the bundle, then Run the setup job from Workflows — that's
+it.** No local CLI, no catalog to pre-create. One setup job builds everything the labs need: the maintenance tables, the
+Sunny Bay sales star schema and metric view, a pre-built Sales Genie and dashboard, the
 fault-report PDFs, and the `fault_reports_structured` table (via a Lakeflow pipeline).
 
 ### Step 1 — Clone this repo as a Git Folder

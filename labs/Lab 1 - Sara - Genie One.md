@@ -22,13 +22,14 @@ write SQL or dig through tables — she just wants answers. She gets them throug
 In this lab you'll wear two hats: first you set up the Genie agent (a quick,
 one-time build), then you step into Sara's shoes and just ask questions.
 
-In this lab you build **two** Genie agents over the data the setup job seeded — a
-**Maintenance Genie** (the one Sara, and later Marc's Supervisor in Lab 3, needs for
-machine faults) and a **Sales Genie** (Sunny Bay coffee sales by store) — then talk to
-*both* through Genie One, which routes each question to the right agent.
+You build **one** Genie agent here — a **Maintenance Genie** (the one Sara, and later
+Marc's Supervisor in Lab 3, needs for machine faults) — over the maintenance tables the
+setup job seeded. The setup job also **pre-built a Sales Genie** (Sunny Bay coffee sales
+by store), so you end up with two agents in the workspace and talk to *both* through
+Genie One, which routes each question to the right agent.
 
-This lab is **facilitator-led with participant follow-along**. No code to write. Just
-two Genie agents and a few conversations.
+This lab is **facilitator-led with participant follow-along**. No code to write. Just one
+Genie agent and a few conversations.
 
 ---
 
@@ -86,43 +87,16 @@ agent in front of them.
 > You'll reuse this exact Genie agent in **Lab 3** as one of Marc's Supervisor
 > sub-agents — building it once here means it's ready when you get there.
 
-**Now build a second Genie agent — the Sales Genie.** In Step 3 you'll watch Genie One
-route between the two, so you need more than one. Repeat the steps above over the sales
-**metric view** the setup job built:
-
-6. Click **New** again. This time add the sales metric view:
-
-   ```
-   <catalog>.gold.sm_fact_coffee_sales_genie
-   ```
-
-   > This is a governed **metric view** over the Sunny Bay sales star schema — it exposes
-   > ready-made measures like `total_gross_revenue_usd`, `total_profit_usd`, and
-   > `total_quantity_sold`, sliced by store, product, and date. Query measures with
-   > `MEASURE(...)`.
-
-7. Name it **`Sunny Bay Sales Genie`** and describe it:
-
-   ```
-   Natural-language Q&A over Sunny Bay Roastery coffee sales. Governed measures for
-   units sold, gross/net revenue, and profit, sliced by store, product category, and
-   date across the full store network (San Francisco cafés plus the online shop) and
-   the coffee/food/beans catalog. Use for sales, revenue, profit, and store-performance
-   questions. History runs from 2010 to today; treat "the year" as the fiscal year
-   (June 1 – May 31).
-   ```
-
-8. Click **Save**.
+> [!NOTE]
+> **You already have a second agent — the setup job pre-built a `Sunny Bay Sales Genie`**
+> over the governed sales **metric view** (`<catalog>.gold.sm_fact_coffee_sales_genie`),
+> exposing measures like gross revenue, profit, and units sold sliced by store, product,
+> and date. You don't build it — you'll just talk to it through Genie One in Step 3.
 
 > [!NOTE]
-> **The setup job already pre-built a `Sunny Bay Sales Genie`** over this same metric
-> view, so you have a working one even if you skip this. Building it yourself here is
-> the exercise — if you do, use the exact name above so Lab 3 finds it.
-
-> [!NOTE]
-> You now have two Genie agents in the workspace — one for maintenance, one for sales.
-> That's exactly what Genie One needs to demonstrate routing in Step 3, and both become
-> sub-agents of Marc's Supervisor in Lab 3.
+> You now have two Genie agents in the workspace — the maintenance one you just built and
+> the pre-built sales one. That's exactly what Genie One needs to demonstrate routing in
+> Step 3, and both become sub-agents of Marc's Supervisor in Lab 3.
 
 ---
 
@@ -175,8 +149,8 @@ route between the two, so you need more than one. Repeat the steps above over th
 ### **Step 3: Talk to your Genie agents through Genie One (5 min)**
 
 Genie One is the business-user front door. Every Genie agent in the workspace shows
-up here as an **agent** — including the **Sunny Bay Maintenance Genie** *and* the
-**Sunny Bay Sales Genie** you just built. Sara doesn't pick a table or an agent; she
+up here as an **agent** — including the **Sunny Bay Maintenance Genie** you just built
+*and* the pre-built **Sunny Bay Sales Genie**. Sara doesn't pick a table or an agent; she
 just asks, and Genie One routes to the right one.
 
 1. Open the **kebab menu** (the ⋮ / grid "waffle" icon in the top navigation bar) and
@@ -195,7 +169,7 @@ just asks, and Genie One routes to the right one.
    How many unresolved faults does CBM-003 have?
    ```
 
-   **Sales** (routes to the Sunny Bay Sales Genie you built in Step 1):
+   **Sales** (routes to the pre-built Sunny Bay Sales Genie):
 
    ```
    How do sales at the Sunny Bay – Mission store compare to the other stores?
