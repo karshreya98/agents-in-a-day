@@ -28,9 +28,10 @@ AI-assisted coding — all on Databricks, no infrastructure to provision.
 - A region that supports **AI Functions** (`ai_parse_document`, `ai_extract`), **Agent
   Bricks**, and — for Lab 5 — the **Unity AI Gateway (Beta)**.
 - Permission to **create a Unity Catalog catalog** (or an existing catalog you can write
-  to). The setup job creates the catalog for you — default `sunny_bay_roastery` — and seeds
-  all the data, so there's no other workshop to install. If catalog creation is restricted
-  on your workspace, point `catalog` at one an admin already made.
+  to). The bootstrap notebook creates the catalog for you — default `sunny_bay_roastery` —
+  and seeds all the data, so there's no other workshop to install. If catalog creation is
+  restricted on your workspace, set the notebook's `catalog` widget to one an admin already
+  made (it falls back to using the existing catalog).
 - **Lab 5 only:** an account admin must enable the **Unity AI Gateway (Beta)** and
   **Managed MCP Servers** previews (account console → Previews). Participants install
   [`ucode`](https://github.com/databricks/ucode) + [OpenCode](https://opencode.ai) locally.
@@ -43,10 +44,12 @@ AI-assisted coding — all on Databricks, no infrastructure to provision.
 
 ## Getting started
 
-**Clone as a Git Folder, Deploy the bundle, then Run the setup job from Workflows — that's
-it.** No local CLI, no catalog to pre-create. One setup job builds everything the labs need: the maintenance tables, the
-Sunny Bay sales star schema and metric view, a pre-built Sales Genie and dashboard, the
-fault-report PDFs, and the `fault_reports_structured` table (via a Lakeflow pipeline).
+**Clone as a Git Folder, then open the bootstrap notebook and Run All — that's it.**
+No local CLI, no catalog to pre-create, nothing to click in Workflows. The bootstrap
+notebook creates the catalog, deploys the bundle, and runs the setup job for you — one
+run builds everything the labs need: the maintenance tables, the Sunny Bay sales star
+schema and metric view, a pre-built Sales Genie and dashboard, the fault-report PDFs, and
+the `fault_reports_structured` table (via a Lakeflow pipeline).
 
 ### Step 1 — Clone this repo as a Git Folder
 
@@ -57,21 +60,28 @@ fault-report PDFs, and the `fault_reports_structured` table (via a Lakeflow pipe
 
 ---
 
-### Step 2 — Deploy the bundle and run the setup job
+### Step 2 — Run the bootstrap notebook
 
-No local tools and nothing to pre-create — it all runs from the workspace.
+1. Open `bundle/src/notebooks/bootstrap` in the workspace.
 
-1. Open `bundle/databricks.yml` in the workspace, then click **Deploy** (top-right
-   toolbar). You should see **"Bundle deployed successfully"**.
+   > To use a different catalog — e.g. on a shared workshop where everyone needs their
+   > own — set the **`catalog`** widget at the top before running (default
+   > `sunny_bay_roastery`). Nothing to pre-create: the notebook makes the catalog for you.
 
-   > The setup job **creates the catalog for you** (default `sunny_bay_roastery`). To use
-   > a different catalog — e.g. on a shared workspace where everyone needs their own —
-   > change the `catalog` default at the top of `databricks.yml` before you click Deploy.
+2. Click **Run all** (serverless — no cluster to pick). It creates the catalog, deploys
+   the bundle, then runs the **"Agents in a Day - Setup"** job end-to-end. Wait for the
+   final cell to finish (~15–20 min); the last line prints **"🎉 All set."**
 
-2. Go to **Workflows** in the left sidebar, find **"Agents in a Day - Setup"**, and click
-   **Run now**. Wait for the green **Succeeded** badge (~10 min).
+> **Why a bootstrap notebook and not just "Deploy the bundle"?** A Lakeflow pipeline's
+> target `catalog` is validated by Unity Catalog **at bundle-deploy time**, which is
+> earlier than any job task could create it — so the catalog must exist *before* deploy.
+> On Free Edition / Default-Storage workspaces the catalog can only be made with SQL
+> `CREATE CATALOG` (the catalog REST API needs a storage root that isn't there). The
+> bootstrap notebook runs the SQL create first, then deploys — one ordered, one-click,
+> Free-Edition-safe path. It installs the Databricks CLI on the serverless notebook and
+> deploys/runs the bundle using your own workspace credentials.
 
-The job creates:
+The bootstrap creates:
 - `coffee_maintenance` schema with `machines`, `fault_events`, `service_orders` tables
 - `gold` sales star schema — `fact_coffee_sales` + `dim_store`/`dim_product`/`dim_customer`/`dim_date`
   (generated + transformed by the sales pipeline, history from 2010)
@@ -83,13 +93,11 @@ The job creates:
   + `ai_extract()` across all 10 PDFs (used in Lab 2)
 - `create_service_order` UC function
 
-> **Prefer to run it by hand?** Open `bundle/src/notebooks/Lab 0 - Setup`, set the
-> `catalog` widget (its first cell lists the catalogs you can write to — it must already
-> exist, since the job's `init` task that creates it doesn't run in this path), and
-> **Run All**. That builds the **maintenance** side only. The **sales** star schema,
-> metric view, Sales Genie, and dashboard — plus `fault_reports_structured` — are built
-> by the other tasks in the **"Agents in a Day - Setup"** job, so run that job to get the
-> full workshop.
+> **Just want the maintenance tables?** Open `bundle/src/notebooks/Lab 0 - Setup`, set the
+> `catalog` widget to a catalog you can write to (it must already exist), and **Run All**.
+> That builds the **maintenance** side only. The **sales** star schema, metric view, Sales
+> Genie, and dashboard — plus `fault_reports_structured` — are built by the rest of the
+> **"Agents in a Day - Setup"** job, so run the bootstrap notebook to get the full workshop.
 
 ---
 
@@ -106,7 +114,7 @@ table above for the arc.)
 ```
 agents-in-a-day/
 ├── bundle/
-│   ├── databricks.yml          ← Set your catalog here, then Deploy
+│   ├── databricks.yml          ← Default catalog name (bootstrap can override it)
 │   ├── resources/
 │   │   ├── job.yml             ← Setup job (maintenance + sales tasks)
 │   │   ├── pipeline.yml        ← Lakeflow pipeline (parses + extracts all PDFs)
@@ -115,7 +123,8 @@ agents-in-a-day/
 │       ├── data/               ← fault_reports/ PDFs + sales data-gen modules
 │       ├── dashboards/         ← [Final] Sunny Bay sales dashboard (.lvdash.json)
 │       ├── notebooks/
-│       │   ├── Lab 0 - Setup.py         ← Maintenance setup (run via the job above)
+│       │   ├── bootstrap.py             ← ⭐ Run this: creates catalog, deploys, runs setup
+│       │   ├── Lab 0 - Setup.py         ← Maintenance setup (run by the setup job)
 │       │   ├── generate_data.ipynb      ← Generates the sales star schema
 │       │   ├── deploy_metric_view.ipynb ← Builds the sales metric view
 │       │   ├── deploy_genie_space.ipynb ← Pre-builds the Sales Genie

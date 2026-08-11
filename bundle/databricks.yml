@@ -6,13 +6,14 @@ include:
   - resources/*.yml
 
 # ─────────────────────────────────────────────────────────────
-# 'catalog' is the only thing you might change. The setup job's `init` task
-# CREATES this catalog for you — you don't need to pre-create it. Edit the
-# `default:` below only to:
+# 'catalog' is the only thing you might change. The bootstrap notebook
+# (bundle/src/notebooks/bootstrap) CREATES this catalog for you — you don't need
+# to pre-create it. The cleanest way to override it is the bootstrap notebook's
+# `catalog` widget; editing the `default:` below is the alternative. Change it to:
 #   - use a different name, or
 #   - point at an existing catalog (if creating catalogs is restricted here).
 # On a shared workspace, give each person their own catalog name so their
-# tables don't collide. (CLI users can skip editing: --var catalog=my_catalog.)
+# tables don't collide. (CLI users can pass --var catalog=my_catalog.)
 # ─────────────────────────────────────────────────────────────
 variables:
   catalog:

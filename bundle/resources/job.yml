@@ -4,19 +4,13 @@ resources:
       name: "Agents in a Day - Setup"
 
       tasks:
-        # ── Init: ensure the catalog exists before either branch ───────────
-        # Runs first; both the maintenance and sales branches create their own
-        # schemas inside this catalog, so the catalog must exist for both.
-        - task_key: init
-          notebook_task:
-            notebook_path: ../src/notebooks/init.py
-            base_parameters:
-              catalog: ${var.catalog}
+        # The catalog is created by bootstrap.py *before* this job is deployed
+        # (a Lakeflow pipeline's `catalog` is validated at bundle-deploy time,
+        # which is earlier than any job task can run — so catalog creation can't
+        # live here). See bundle/src/notebooks/bootstrap.py and the README.
 
         # ── Maintenance track (this repo) ──────────────────────────────────
         - task_key: setup
-          depends_on:
-            - task_key: init
           notebook_task:
             notebook_path: ../src/notebooks/Lab 0 - Setup.py
             base_parameters:
@@ -36,8 +30,6 @@ resources:
         # transformation SQL, so only `catalog` (and gold_schema/warehouse_id
         # where needed) are passed in.
         - task_key: generate_data
-          depends_on:
-            - task_key: init
           notebook_task:
             notebook_path: ../src/notebooks/generate_data.ipynb
             base_parameters:
