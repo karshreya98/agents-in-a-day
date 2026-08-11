@@ -44,13 +44,6 @@ AI-assisted coding — all on Databricks, no infrastructure to provision.
 
 ## Getting started
 
-**Clone as a Git Folder, then open the bootstrap notebook and Run All — that's it.**
-No local CLI, no catalog to pre-create, nothing to click in Workflows. The bootstrap
-notebook creates the catalog, deploys the bundle, and runs the setup job for you — one
-run builds everything the labs need: the maintenance tables, the Sunny Bay sales star
-schema and metric view, a pre-built Sales Genie and dashboard, the fault-report PDFs, and
-the `fault_reports_structured` table (via a Lakeflow pipeline).
-
 ### Step 1 — Clone this repo as a Git Folder
 
 1. In your Databricks workspace go to **Workspace** (left sidebar)
@@ -72,14 +65,6 @@ the `fault_reports_structured` table (via a Lakeflow pipeline).
    the bundle, then runs the **"Agents in a Day - Setup"** job end-to-end. Wait for the
    final cell to finish (~15–20 min); the last line prints **"🎉 All set."**
 
-> **Why a bootstrap notebook and not just "Deploy the bundle"?** A Lakeflow pipeline's
-> target `catalog` is validated by Unity Catalog **at bundle-deploy time**, which is
-> earlier than any job task could create it — so the catalog must exist *before* deploy.
-> On Free Edition / Default-Storage workspaces the catalog can only be made with SQL
-> `CREATE CATALOG` (the catalog REST API needs a storage root that isn't there). The
-> bootstrap notebook runs the SQL create first, then deploys — one ordered, one-click,
-> Free-Edition-safe path. It installs the Databricks CLI on the serverless notebook and
-> deploys/runs the bundle using your own workspace credentials.
 
 The bootstrap creates:
 - `coffee_maintenance` schema with `machines`, `fault_events`, `service_orders` tables
@@ -92,12 +77,6 @@ The bootstrap creates:
 - `fault_reports_structured` table — the Lakeflow pipeline runs `ai_parse_document()`
   + `ai_extract()` across all 10 PDFs (used in Lab 2)
 - `create_service_order` UC function
-
-> **Just want the maintenance tables?** Open `bundle/src/notebooks/Lab 0 - Setup`, set the
-> `catalog` widget to a catalog you can write to (it must already exist), and **Run All**.
-> That builds the **maintenance** side only. The **sales** star schema, metric view, Sales
-> Genie, and dashboard — plus `fault_reports_structured` — are built by the rest of the
-> **"Agents in a Day - Setup"** job, so run the bootstrap notebook to get the full workshop.
 
 ---
 
