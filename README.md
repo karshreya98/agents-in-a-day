@@ -36,7 +36,7 @@ AI-assisted coding — all on Databricks, no infrastructure to provision.
   **Managed MCP Servers** previews (account console → Previews). Participants install
   [`ucode`](https://github.com/databricks/ucode) + [OpenCode](https://opencode.ai) locally.
 
-> Running this for a group? See each lab's admin/prerequisite callouts — one admin
+> Not using Free Edition or have not admin rights on your environment? See each lab's admin/prerequisite callouts — one admin
 > registers the you.com MCP service, governs a model for Lab 5, and grants participants
 > access. Give each participant their own catalog so their tables don't collide.
 
