@@ -1,7 +1,7 @@
 # Agents in a Day 🤖
 
 A hands-on 4-hour workshop that adds an **action layer** to your Databricks
-workspace — built on top of **Dashboard in a Day**.
+workspace.
 
 Two personas at a fictional coffee-machine operator, **Sunny Bay Roastery**:
 **Sara** (a location manager who just wants answers) and **Marc** (a field technician
@@ -13,7 +13,7 @@ AI-assisted coding — all on Databricks, no infrastructure to provision.
 
 | Lab | Persona | What you build |
 |-----|---------|----------------|
-| **Lab 1** | Sara | A Genie agent over maintenance data, driven from Genie One, enriched with a you.com MCP tool |
+| **Lab 1** | Sara | A **Maintenance Genie** agent, driven from Genie One alongside the pre-built Sales Genie, enriched with a you.com MCP tool |
 | **Lab 2** | Marc | Document intelligence — `ai_parse_document()` + `ai_extract()` turn fault-report PDFs into a table |
 | **Lab 3** | Marc | A **Supervisor Agent** (Agent Bricks) that reasons across Genie + web |
 | **Lab 4** | Marc | Observe it with MLflow traces; collect expert feedback via a Review App |
@@ -22,39 +22,23 @@ AI-assisted coding — all on Databricks, no infrastructure to provision.
 ## Prerequisites
 
 - A Databricks workspace with **Unity Catalog** and **serverless compute** enabled, and a
-  running serverless **SQL warehouse**.
+  running serverless **SQL warehouse**. The bundle looks this warehouse up by name —
+  it defaults to **"Serverless Starter Warehouse"** (present on Free Edition). On a shared
+  workspace with a different name, update the `warehouse_id` lookup in `bundle/databricks.yml`.
 - A region that supports **AI Functions** (`ai_parse_document`, `ai_extract`), **Agent
   Bricks**, and — for Lab 5 — the **Unity AI Gateway (Beta)**.
-- **Dashboard in a Day** installed in the same catalog (see below) — it provides the
-  sales data and Sales Genie the labs build on.
+- Permission to **create a Unity Catalog catalog** (or an existing catalog you can write
+  to). The bootstrap notebook creates the catalog for you — default `sunny_bay_roastery` —
+  and seeds all the data, so there's no other workshop to install. If catalog creation is
+  restricted on your workspace, set the notebook's `catalog` widget to one an admin already
+  made (it falls back to using the existing catalog).
 - **Lab 5 only:** an account admin must enable the **Unity AI Gateway (Beta)** and
   **Managed MCP Servers** previews (account console → Previews). Participants install
   [`ucode`](https://github.com/databricks/ucode) + [OpenCode](https://opencode.ai) locally.
 
-> Running this for a group? See each lab's admin/prerequisite callouts — one admin sets up
-> the shared catalog, registers the you.com MCP service, governs a model for Lab 5, and
-> grants participants access.
-
----
-
-## Setup — Install Dashboard in a Day (for its data & artifacts)
-
-Agents in a Day builds on the Unity Catalog, metric view, and Sales Genie created by
-Dashboard in a Day (DAID). You don't need to *run the DAID workshop* — just install it
-so its data and artifacts exist in your workspace.
-
-### Install DAID
-
-1. Clone the DAID repo as a Git Folder in your workspace:
-   ```
-   https://github.com/DatabricksDashboardInADay/DatabricksDashboardInADay
-   ```
-2. Open `bundle/databricks.yml` → set `catalog` to your catalog name
-3. Click **Deploy** in the bundle editor toolbar
-4. Go to **Workflows** → find **"Sunny Bay Roastery Setup"** → click **Run now**
-5. Wait for the green **Succeeded** badge (~5 min)
-
-That's it — the DAID data and Sales Genie are now in your workspace. Continue below.
+> Not using Free Edition or have not admin rights on your environment? See each lab's admin/prerequisite callouts — one admin
+> registers the you.com MCP service, governs a model for Lab 5, and grants participants
+> access. Give each participant their own catalog so their tables don't collide.
 
 ---
 
@@ -69,37 +53,26 @@ That's it — the DAID data and Sales Genie are now in your workspace. Continue 
 
 ---
 
-### Step 2 — Set your catalog name in `databricks.yml`
+### Step 2 — Run the bootstrap notebook
 
-1. Open `bundle/databricks.yml` in the workspace
-2. Change the `catalog` default to match the catalog you installed DAID into:
+1. Open `bundle/src/notebooks/bootstrap` in the workspace.
 
-```yaml
-variables:
-  catalog:
-    default: sunny_bay_roastery   # ← change this to your catalog
-```
+   > To use a different catalog — e.g. on a shared workshop where everyone needs their
+   > own — set the **`catalog`** widget at the top before running (default
+   > `sunny_bay_roastery`). Nothing to pre-create: the notebook makes the catalog for you.
 
-> **Not sure?** Open `labs/Lab 0 - Setup`, run the catalog picker cell to see
-> which catalogs you have access to.
+2. Click **Run all** (serverless — no cluster to pick). It creates the catalog, deploys
+   the bundle, then runs the **"Agents in a Day - Setup"** job end-to-end. Wait for the
+   final cell to finish (~15–20 min); the last line prints **"🎉 All set."**
 
----
 
-### Step 3 — Deploy the bundle
-
-1. With `bundle/databricks.yml` open, click **Deploy** (top-right toolbar)
-2. You should see a green **"Bundle deployed successfully"** message
-
----
-
-### Step 4 — Run the setup job
-
-1. Go to **Workflows** in the left sidebar
-2. Find **"Agents in a Day — Setup"** and click **Run now**
-3. Wait for the green **Succeeded** badge (~5 min)
-
-The job creates:
+The bootstrap creates:
 - `coffee_maintenance` schema with `machines`, `fault_events`, `service_orders` tables
+- `gold` sales star schema — `fact_coffee_sales` + `dim_store`/`dim_product`/`dim_customer`/`dim_date`
+  (generated + transformed by the sales pipeline, history from 2010)
+- `gold.sm_fact_coffee_sales_genie` — a governed **metric view** over the star schema
+- **Sunny Bay Sales Genie** — pre-built over the metric view (Labs 1 & 3)
+- **[Final] Sunny Bay Roastery - Sales Report** — an AI/BI dashboard over the metric view
 - 10 fault report PDFs in a UC Volume
 - `fault_reports_structured` table — the Lakeflow pipeline runs `ai_parse_document()`
   + `ai_extract()` across all 10 PDFs (used in Lab 2)
@@ -120,16 +93,25 @@ table above for the arc.)
 ```
 agents-in-a-day/
 ├── bundle/
-│   ├── databricks.yml          ← Set your catalog here, then Deploy
+│   ├── databricks.yml          ← Default catalog name (bootstrap can override it)
 │   ├── resources/
-│   │   ├── job.yml             ← Setup job (runs the notebook + pipeline)
-│   │   └── pipeline.yml        ← Lakeflow pipeline (parses + extracts all PDFs)
+│   │   ├── job.yml             ← Setup job (maintenance + sales tasks)
+│   │   ├── pipeline.yml        ← Lakeflow pipeline (parses + extracts all PDFs)
+│   │   └── sales_pipeline.pipeline.yml ← Sales medallion pipeline (silver + gold)
 │   └── src/
-│       ├── data/fault_reports/ ← 10 prebuilt fault report PDFs
+│       ├── data/               ← fault_reports/ PDFs + sales data-gen modules
+│       ├── dashboards/         ← [Final] Sunny Bay sales dashboard (.lvdash.json)
 │       ├── notebooks/
-│       │   └── Lab 0 - Setup.py        ← Setup notebook (run via the job above)
+│       │   ├── bootstrap.py             ← ⭐ Run this: creates catalog, deploys, runs setup
+│       │   ├── Lab 0 - Setup.py         ← Maintenance setup (run by the setup job)
+│       │   ├── generate_data.ipynb      ← Generates the sales star schema
+│       │   ├── deploy_metric_view.ipynb ← Builds the sales metric view
+│       │   ├── deploy_genie_space.ipynb ← Pre-builds the Sales Genie
+│       │   └── deploy_dashboard.py      ← Publishes the sales dashboard
 │       └── transformations/
-│           └── fault_report_pipeline.py ← ai_parse_document + ai_extract
+│           ├── fault_report_pipeline.py ← ai_parse_document + ai_extract
+│           ├── silver/         ← sales silver transforms (dims + fact)
+│           └── gold/           ← sales gold transforms (dims + fact)
 ├── labs/
 │   ├── Lab 1 - Sara - Genie One.md
 │   ├── Lab 2 - Document Intelligence.md

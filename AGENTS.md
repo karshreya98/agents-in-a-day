@@ -2,12 +2,8 @@
 
 ## Project Context and Target Audience
 
-This repository is a **hands-on workshop** ("Agents in a Day") for Databricks — a
-4-hour sequel to **Dashboard in a Day (DAID)**. It picks up where DAID left off and
-adds the action layer using Genie agents, Agent Bricks, and the Unity AI Gateway.
-
-- **Target audience:** Semi-technical business users and platform/AI admins who have
-  the DAID assets deployed, ranging from interns to leadership.
+- **Target audience:** Semi-technical business users and platform/AI admins,
+  ranging from interns to leadership.
 - Labs guide participants step-by-step through: building a Genie agent and driving it
   from Genie One (Lab 1); document intelligence with `ai_parse_document`/`ai_extract`
   (Lab 2); building a Multi-Agent Supervisor (Lab 3); observing it with MLflow traces

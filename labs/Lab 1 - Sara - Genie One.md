@@ -22,13 +22,14 @@ write SQL or dig through tables — she just wants answers. She gets them throug
 In this lab you'll wear two hats: first you set up the Genie agent (a quick,
 one-time build), then you step into Sara's shoes and just ask questions.
 
-Dashboard in a Day built a *Sales* Genie. In this lab you build the **Maintenance
-Genie** — the one Sara (and later Marc's Supervisor in Lab 3) needs to ask about
-machine faults — then talk to *both* of them through Genie One, which routes each
-question to the right agent.
+You build **one** Genie agent here — a **Maintenance Genie** (the one Sara, and later
+Marc's Supervisor in Lab 3, needs for machine faults) — over the maintenance tables the
+setup job seeded. The setup job also **pre-built a Sales Genie** (Sunny Bay coffee sales
+by store), so you end up with two agents in the workspace and talk to *both* through
+Genie One, which routes each question to the right agent.
 
-This lab is **facilitator-led with participant follow-along**. No code to write. Just
-one Genie agent and a few conversations.
+This lab is **facilitator-led with participant follow-along**. No code to write. Just one
+Genie agent and a few conversations.
 
 ---
 
@@ -54,8 +55,7 @@ agent in front of them.
 
    > [!NOTE]
    > Replace `<catalog>` with the catalog name you used in Lab 0 (e.g.
-   > `sunny_bay_roastery`). If your tables have a prefix (e.g. `sbr_machines`),
-   > select the prefixed names.
+   > `sunny_bay_roastery`).
 
 4. Name the space **`Sunny Bay Maintenance Genie`** and give it a description:
 
@@ -86,6 +86,17 @@ agent in front of them.
 > [!TIP]
 > You'll reuse this exact Genie agent in **Lab 3** as one of Marc's Supervisor
 > sub-agents — building it once here means it's ready when you get there.
+
+> [!NOTE]
+> **You already have a second agent — the setup job pre-built a `Sunny Bay Sales Genie`**
+> over the governed sales **metric view** (`<catalog>.gold.sm_fact_coffee_sales_genie`),
+> exposing measures like gross revenue, profit, and units sold sliced by store, product,
+> and date. You don't build it — you'll just talk to it through Genie One in Step 3.
+
+> [!NOTE]
+> You now have two Genie agents in the workspace — the maintenance one you just built and
+> the pre-built sales one. That's exactly what Genie One needs to demonstrate routing in
+> Step 3, and both become sub-agents of Marc's Supervisor in Lab 3.
 
 ---
 
@@ -139,8 +150,8 @@ agent in front of them.
 
 Genie One is the business-user front door. Every Genie agent in the workspace shows
 up here as an **agent** — including the **Sunny Bay Maintenance Genie** you just built
-*and* the **Sunny Bay Sales Genie** from Dashboard in a Day. Sara doesn't pick a
-table or an agent; she just asks, and Genie One routes to the right one.
+*and* the pre-built **Sunny Bay Sales Genie**. Sara doesn't pick a table or an agent; she
+just asks, and Genie One routes to the right one.
 
 1. Open the **kebab menu** (the ⋮ / grid "waffle" icon in the top navigation bar) and
    select **Genie One**.
@@ -158,14 +169,14 @@ table or an agent; she just asks, and Genie One routes to the right one.
    How many unresolved faults does CBM-003 have?
    ```
 
-   **Sales** (routes to the Sunny Bay Sales Genie from Dashboard in a Day):
+   **Sales** (routes to the pre-built Sunny Bay Sales Genie):
 
    ```
    How do sales at the Sunny Bay – Mission store compare to the other stores?
    ```
 
    ```
-   Which store had the highest coffee sales this year?
+   Which store had the highest coffee revenue in 2024?
    ```
 
 3. **Check *what* answered you.** Click the **citation icons** in a response to see the

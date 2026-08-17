@@ -92,8 +92,8 @@ the reasoning and every tool call.
 4. Click the CBM-003 trace to open it. Explore:
    - **Summary** — the top-level request and final response.
    - **Details / Timeline** — the span waterfall showing each sub-agent call
-     (Maintenance Genie → Sales Genie → you.com), how long each took, and the exact
-     inputs and outputs at every step.
+     (Maintenance Genie → you.com for the CBM-003 question), how long each took, and the
+     exact inputs and outputs at every step.
 
 > [!NOTE]
 > This is how you debug an agent. If a briefing missed the PDF pressure readings, the

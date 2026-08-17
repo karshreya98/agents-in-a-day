@@ -2,54 +2,31 @@
 # MAGIC %md
 # MAGIC # 🛠️ Agents in a Day — Setup
 # MAGIC
-# MAGIC **Run this notebook after installing Dashboard in a Day (DAID) — see the README.**
+# MAGIC This notebook builds the **maintenance** side of the workshop. It runs as one
+# MAGIC task in the **"Agents in a Day - Setup"** job; sibling tasks in the same job
+# MAGIC generate the **sales** star schema, the metric view, the pre-built Sales Genie,
+# MAGIC and the sales dashboard. No other workshop to install first.
 # MAGIC
-# MAGIC It creates everything Marc needs for his agent arc:
-# MAGIC - `coffee_maintenance` schema
-# MAGIC - `machines`, `fault_events`, `service_orders` tables
-# MAGIC - Fault report files in a UC Volume
+# MAGIC This notebook creates:
+# MAGIC - `coffee_maintenance` schema — `machines`, `fault_events`, `service_orders` tables
+# MAGIC - Fault report PDFs in a UC Volume
 # MAGIC - `create_service_order` UC function (Lab 5)
 # MAGIC
-# MAGIC > ✏️ **Only one thing to configure:** set `catalog` below to match
-# MAGIC > the catalog you installed DAID into.
-
-# COMMAND ----------
-
-# ── Configuration ──────────────────────────────────────────────────────────
-# When run as a job, catalog and prefix are passed in from databricks.yml.
-# When run interactively, change the defaults below.
-
-dbutils.widgets.text("catalog", "sunny_bay_roastery")  # ← change if needed
-dbutils.widgets.text("prefix",  "")                    # ← optional, e.g. "sbr_"
-
-catalog = dbutils.widgets.get("catalog")
-prefix  = dbutils.widgets.get("prefix")
-
-# ── Derived names (do not edit) ─────────────────────────────────────────────
-if prefix and not prefix.endswith("_"):
-    prefix += "_"
-
-GOLD  = "gold"
-MAINT = "coffee_maintenance"
-P     = prefix
-
-print(f"catalog : {catalog}")
-print(f"prefix  : '{P}' (blank = none)")
-print(f"gold    : {catalog}.{GOLD}")
-print(f"maint   : {catalog}.{MAINT}")
+# MAGIC > ✏️ **Only one thing to configure:** the `catalog` widget. Don't know which
+# MAGIC > catalog to use? The first cell lists the ones you can write to.
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## 🔍 Don't know which catalog to use? Run this cell first
+# MAGIC ## 🔍 Step 1 — Which catalog can I use?
 # MAGIC
-# MAGIC *(Skip this cell if you already know your catalog name)*
+# MAGIC Run this cell to list every catalog you can write to, then set the `catalog`
+# MAGIC widget at the top of the notebook to one of the ✅ names.
+# MAGIC
+# MAGIC *(Already know your catalog? Set the widget and skip straight to Run All.)*
 
 # COMMAND ----------
 
-# Run this cell to list every catalog you can USE.
-# Copy the name into the catalog = "..." variable above, then Run All from the top.
-print("Catalogs you can access:")
-print()
+print("Catalogs you can access:\n")
 for r in spark.sql("SHOW CATALOGS").collect():
     name = r[0]
     try:
@@ -57,10 +34,34 @@ for r in spark.sql("SHOW CATALOGS").collect():
         print(f"  ✅  {name}")
     except Exception:
         print(f"  ❌  {name}  (no access)")
-print()
-print('👉 Copy a ✅ name into  catalog = "..."  above, then Run All.')
+print('\n👉 Put a ✅ name in the "catalog" widget at the top, then Run All.')
 
+# COMMAND ----------
+# MAGIC %md
+# MAGIC ## ⚙️ Configuration
+# MAGIC
+# MAGIC When run as a job, `catalog` is passed in from `databricks.yml`. When run
+# MAGIC interactively, set the `catalog` widget above (or edit the default below).
 
+# COMMAND ----------
+
+dbutils.widgets.text("catalog", "")  # ← set this (or pass --var catalog=... via the bundle)
+
+catalog = dbutils.widgets.get("catalog").strip()
+
+if not catalog:
+    raise ValueError(
+        "No catalog set. Run Step 1 above to see the catalogs you can write to, "
+        'then type one into the "catalog" widget at the top of the notebook.'
+    )
+
+# ── Derived names (do not edit) ─────────────────────────────────────────────
+GOLD  = "gold"
+MAINT = "coffee_maintenance"
+
+print(f"catalog : {catalog}")
+print(f"gold    : {catalog}.{GOLD}")
+print(f"maint   : {catalog}.{MAINT}")
 
 # COMMAND ----------
 # MAGIC %md
@@ -78,7 +79,7 @@ print(f"✅ Schema ready: {catalog}.{MAINT}")
 # COMMAND ----------
 
 spark.sql(f"""
-CREATE TABLE IF NOT EXISTS `{catalog}`.`{MAINT}`.`{P}machines` (
+CREATE TABLE IF NOT EXISTS `{catalog}`.`{MAINT}`.`machines` (
   machine_id     STRING NOT NULL,
   location_name  STRING,
   machine_model  STRING,
@@ -92,7 +93,7 @@ COMMENT 'Sunny Bay Roastery espresso machine registry  -  12 locations'
 """)
 
 spark.sql(f"""
-INSERT OVERWRITE `{catalog}`.`{MAINT}`.`{P}machines` VALUES
+INSERT OVERWRITE `{catalog}`.`{MAINT}`.`machines` VALUES
   ('CBM-001', 'Hayes Valley',       'Siemens EQ.9',       'Siemens',   '2021-03-15', '2025-11-01', 'active'),
   ('CBM-002', 'Castro',             'Nespresso Pro 600',  'Nespresso', '2020-07-22', '2025-09-15', 'active'),
   ('CBM-003', 'Mission',            'Siemens EQ.9',       'Siemens',   '2019-11-10', '2025-06-01', 'degraded'),
@@ -107,8 +108,8 @@ INSERT OVERWRITE `{catalog}`.`{MAINT}`.`{P}machines` VALUES
   ('CBM-012', 'South Bay (Online)', 'Siemens EQ.9',       'Siemens',   '2021-05-10', '2025-11-30', 'active')
 """)
 
-count = spark.sql(f"SELECT count(*) as n FROM `{catalog}`.`{MAINT}`.`{P}machines`").collect()[0]["n"]
-print(f"✅ Machines: {count} rows → {catalog}.{MAINT}.{P}machines")
+count = spark.sql(f"SELECT count(*) as n FROM `{catalog}`.`{MAINT}`.`machines`").collect()[0]["n"]
+print(f"✅ Machines: {count} rows → {catalog}.{MAINT}.machines")
 
 # COMMAND ----------
 # MAGIC %md
@@ -117,7 +118,7 @@ print(f"✅ Machines: {count} rows → {catalog}.{MAINT}.{P}machines")
 # COMMAND ----------
 
 spark.sql(f"""
-CREATE TABLE IF NOT EXISTS `{catalog}`.`{MAINT}`.`{P}fault_events` (
+CREATE TABLE IF NOT EXISTS `{catalog}`.`{MAINT}`.`fault_events` (
   event_id       STRING,
   machine_id     STRING,
   event_ts       TIMESTAMP,
@@ -133,7 +134,7 @@ COMMENT 'Fault event log for all 12 Sunny Bay machines'
 """)
 
 spark.sql(f"""
-INSERT OVERWRITE `{catalog}`.`{MAINT}`.`{P}fault_events` VALUES
+INSERT OVERWRITE `{catalog}`.`{MAINT}`.`fault_events` VALUES
   ('EVT-001','CBM-003','2026-07-01 08:14:00','E-07','Pressure sensor fault',          'high',    true,  '2026-07-01 14:00:00','TECH-01'),
   ('EVT-002','CBM-003','2026-07-10 09:22:00','E-07','Pressure sensor fault',          'high',    true,  '2026-07-10 16:30:00','TECH-01'),
   ('EVT-003','CBM-003','2026-07-18 11:05:00','E-07','Pressure sensor fault  -  repeat', 'critical',false, null,                  null),
@@ -148,8 +149,8 @@ INSERT OVERWRITE `{catalog}`.`{MAINT}`.`{P}fault_events` VALUES
   ('EVT-012','CBM-012','2026-07-11 03:20:00','C-01','Connectivity dropout',           'low',     true,  '2026-07-11 09:00:00','TECH-02')
 """)
 
-count = spark.sql(f"SELECT count(*) as n FROM `{catalog}`.`{MAINT}`.`{P}fault_events`").collect()[0]["n"]
-print(f"✅ Fault events: {count} rows → {catalog}.{MAINT}.{P}fault_events")
+count = spark.sql(f"SELECT count(*) as n FROM `{catalog}`.`{MAINT}`.`fault_events`").collect()[0]["n"]
+print(f"✅ Fault events: {count} rows → {catalog}.{MAINT}.fault_events")
 
 # COMMAND ----------
 # MAGIC %md
@@ -158,7 +159,7 @@ print(f"✅ Fault events: {count} rows → {catalog}.{MAINT}.{P}fault_events")
 # COMMAND ----------
 
 spark.sql(f"""
-CREATE TABLE IF NOT EXISTS `{catalog}`.`{MAINT}`.`{P}service_orders` (
+CREATE TABLE IF NOT EXISTS `{catalog}`.`{MAINT}`.`service_orders` (
   order_id          STRING,
   machine_id        STRING,
   created_ts        TIMESTAMP,
@@ -172,7 +173,7 @@ COMMENT 'Service orders created by Marc via the Supervisor agent  -  populated i
 """)
 
 print(f"✅ Service orders table ready (empty  -  Lab 5 populates it)")
-print(f"   → {catalog}.{MAINT}.{P}service_orders")
+print(f"   → {catalog}.{MAINT}.service_orders")
 
 # COMMAND ----------
 # MAGIC %md
@@ -237,7 +238,7 @@ try:
     token = os.environ.get("DATABRICKS_TOKEN", "")
     if host and token:
         sql = (
-            f"INSERT INTO `{catalog}`.`{MAINT}`.`{P}service_orders` "
+            f"INSERT INTO `{catalog}`.`{MAINT}`.`service_orders` "
             "(order_id, machine_id, created_ts, fault_code, part_id, technician_notes, status) VALUES "
             f"('{{order_id}}', '{{machine_id}}', current_timestamp(), '{{fault_code}}', '{{part_id}}', '{{technician_notes}}', 'pending')"
         )
@@ -265,13 +266,18 @@ print("=" * 65)
 print("✅  SETUP COMPLETE  -  you are ready for Agents in a Day!")
 print("=" * 65)
 print()
-
-print()
-print("Agents in a Day assets:")
-print(f"  🔧 Machines      : {catalog}.{MAINT}.{P}machines             (12 rows)")
-print(f"  ⚡ Fault events  : {catalog}.{MAINT}.{P}fault_events         (8 rows)")
-print(f"  📝 Service orders: {catalog}.{MAINT}.{P}service_orders       (empty  -  Lab 5)")
-print(f"  📂 Fault reports : /Volumes/{catalog}/{MAINT}/fault_reports   (5 files)")
+print("Maintenance assets (this notebook):")
+print(f"  🔧 Machines      : {catalog}.{MAINT}.machines             (12 rows)")
+print(f"  ⚡ Fault events  : {catalog}.{MAINT}.fault_events         (12 rows)")
+print(f"  📝 Service orders: {catalog}.{MAINT}.service_orders       (empty  -  Lab 5)")
+print(f"  📂 Fault reports : /Volumes/{catalog}/{MAINT}/fault_reports   (10 files)")
 print(f"  🔩 UC function   : {catalog}.{MAINT}.create_service_order")
+print()
+print("Built by sibling tasks in the same setup job:")
+print(f"  💰 Sales schema  : {catalog}.{GOLD}.fact_coffee_sales + dim_* (generate_data + sales pipeline)")
+print(f"  📐 Metric view   : {catalog}.{GOLD}.sm_fact_coffee_sales_genie")
+print(f"  🧞 Sales Genie   : \"Sunny Bay Sales Genie\" (over the metric view)")
+print(f"  📊 Dashboard     : \"[Final] Sunny Bay Roastery - Sales Report\"")
+print(f"  🗂️  fault_reports_structured : built by the Lakeflow pipeline task (used from Lab 2)")
 print()
 print("Next: open  labs/Lab 1  -  Sara's arc  and follow along!")
