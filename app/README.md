@@ -2,8 +2,7 @@
 
 A **custom agent** deployed as a Databricks App: a React chat cockpit + FastAPI backend
 with a **LangGraph** agent (wrapped in an MLflow `ResponsesAgent`) running inside it. This
-is the Lab 3 deliverable and the replacement for the deprecated Agent Bricks Supervisor.
-It follows the official
+is the Lab 3 deliverable. It follows the official
 [`agent-langgraph`](https://github.com/databricks/app-templates/tree/main/agent-langgraph)
 pattern (LangGraph + `ResponsesAgent` + `mlflow.langchain.autolog`), with our own cockpit UI.
 

@@ -22,10 +22,12 @@ from langgraph.types import Command, interrupt
 
 from . import tools
 
-# Deterministic priority weights — Marc's policy as code, not a prompt.
-FAULT_WEIGHT = 4.0
-REVENUE_WEIGHT = 1.0
-DISPATCH_THRESHOLD = 10.0  # only stage the machines clearly worth a technician this week
+# --- LAB 3 · TASK 2: Marc's scoring policy — deterministic, not a prompt. ---
+# Try changing a value here, then re-run the plan and watch the ranking move. E.g. bump
+# REVENUE_WEIGHT to 2.0 so a busy store outranks a fault-heavy quiet one.
+FAULT_WEIGHT = 4.0          # points per unresolved fault
+REVENUE_WEIGHT = 1.0        # points per $1,000/wk of revenue at risk
+DISPATCH_THRESHOLD = 10.0   # a machine must score at least this to make the plan
 
 
 class PlanState(TypedDict, total=False):
