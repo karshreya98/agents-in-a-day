@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.pytest_cache/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Built frontend — rebuilt by `npm run build` in the Lab 3 deploy step, not committed
+frontend/dist/
+
+# MLflow local runs / tracking store (created when running the app locally)
+mlruns/
+mlflow.db
+*.db
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Databricks / IDE / OS
+.databricks/
+.idea/
+.vscode/
+*.swp
+.DS_Store

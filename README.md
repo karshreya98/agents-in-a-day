@@ -4,20 +4,20 @@ A hands-on 4-hour workshop that adds an **action layer** to your Databricks
 workspace.
 
 Two personas at a fictional coffee-machine operator, **Sunny Bay Roastery**:
-**Sara** (a location manager who just wants answers) and **Marc** (a field technician
-who needs to act). Across five labs you turn governed data + unstructured PDFs into
-Genie agents, a multi-source Supervisor agent, human-feedback review, and governed
-AI-assisted coding — all on Databricks, no infrastructure to provision.
+**Sara** (a location manager who just wants answers) and **Marc** (the operations manager
+over all 12 locations, who has to decide and act). Across four labs you turn governed data
++ unstructured PDFs into Genie agents, a **custom agent deployed as a Databricks App** with
+human-feedback review, and governed AI-assisted coding — all on Databricks, no
+infrastructure to provision.
 
 ## What you'll build
 
 | Lab | Persona | What you build |
 |-----|---------|----------------|
 | **Lab 1** | Sara | A **Maintenance Genie** agent, driven from Genie One alongside the pre-built Sales Genie, enriched with a you.com MCP tool |
-| **Lab 2** | Marc | Document intelligence — `ai_parse_document()` + `ai_extract()` turn fault-report PDFs into a table |
-| **Lab 3** | Marc | A **Supervisor Agent** (Agent Bricks) that reasons across Genie + web |
-| **Lab 4** | Marc | Observe it with MLflow traces; collect expert feedback via a Review App |
-| **Lab 5** | Platform | Governed AI-assisted coding — Unity AI Gateway + PII guardrail + `ucode`/OpenCode |
+| **Lab 2** | Marc | Manager analysis — `ai_parse_document()` + `ai_extract()` turn technicians' fault-report PDFs into a table |
+| **Lab 3** | Marc | A **custom agent** deployed as a **Databricks App** (control-flow pipeline over Genie + web + a UC write-back), then observe it with **MLflow traces** and review it via a **Review App** |
+| **Lab 4** | Platform | Governed AI-assisted coding — Unity AI Gateway + PII guardrail + `ucode`/OpenCode |
 
 ## Prerequisites
 
@@ -26,18 +26,19 @@ AI-assisted coding — all on Databricks, no infrastructure to provision.
   it defaults to **"Serverless Starter Warehouse"** (present on Free Edition). On a shared
   workspace with a different name, update the `warehouse_id` lookup in `bundle/databricks.yml`.
 - A region that supports **AI Functions** (`ai_parse_document`, `ai_extract`), **Agent
-  Bricks**, and — for Lab 5 — the **Unity AI Gateway (Beta)**.
+  Bricks** (Lab 2), **Databricks Apps** + a **Foundation Model serving endpoint** (Lab 3),
+  and — for Lab 4 — the **Unity AI Gateway (Beta)**.
 - Permission to **create a Unity Catalog catalog** (or an existing catalog you can write
   to). The bootstrap notebook creates the catalog for you — default `sunny_bay_roastery` —
   and seeds all the data, so there's no other workshop to install. If catalog creation is
   restricted on your workspace, set the notebook's `catalog` widget to one an admin already
   made (it falls back to using the existing catalog).
-- **Lab 5 only:** an account admin must enable the **Unity AI Gateway (Beta)** and
+- **Lab 4 only:** an account admin must enable the **Unity AI Gateway (Beta)** and
   **Managed MCP Servers** previews (account console → Previews). Participants install
   [`ucode`](https://github.com/databricks/ucode) + [OpenCode](https://opencode.ai) locally.
 
 > Not using Free Edition or have not admin rights on your environment? See each lab's admin/prerequisite callouts — one admin
-> registers the you.com MCP service, governs a model for Lab 5, and grants participants
+> registers the you.com MCP service, governs a model for Lab 4, and grants participants
 > access. Give each participant their own catalog so their tables don't collide.
 
 ---
@@ -67,7 +68,8 @@ AI-assisted coding — all on Databricks, no infrastructure to provision.
 
 
 The bootstrap creates:
-- `coffee_maintenance` schema with `machines`, `fault_events`, `service_orders` tables
+- `coffee_maintenance` schema with `machines`, `fault_events`, `service_orders`, and
+  `location_managers` tables (the roster maps each location to its manager, used by Lab 3)
 - `gold` sales star schema — `fact_coffee_sales` + `dim_store`/`dim_product`/`dim_customer`/`dim_date`
   (generated + transformed by the sales pipeline, history from 2010)
 - `gold.sm_fact_coffee_sales_genie` — a governed **metric view** over the star schema
@@ -112,12 +114,22 @@ agents-in-a-day/
 │           ├── fault_report_pipeline.py ← ai_parse_document + ai_extract
 │           ├── silver/         ← sales silver transforms (dims + fact)
 │           └── gold/           ← sales gold transforms (dims + fact)
+├── app/                        ← Lab 3: Marc's custom agent, deployed as a Databricks App
+│   ├── app.py                  ← FastAPI entry (serves the React UI + /api)
+│   ├── app.yaml                ← Databricks App config (Genie space IDs, serving endpoint)
+│   ├── server/
+│   │   ├── graph.py            ← LangGraph StateGraph: the control flow + approval interrupt
+│   │   ├── responses_agent.py  ← graph wrapped in an MLflow ResponsesAgent (deployable)
+│   │   ├── agent.py            ← chat router + session handling
+│   │   ├── tools.py            ← Genie spaces, you.com MCP, create_service_order, roster
+│   │   └── routes/chat.py      ← /api/chat, /api/dispatch-plan, /api/approve
+│   ├── frontend/               ← React chat UI (Vite + TS)
+│   └── tests/                  ← offline dry-run smoke tests (AGENT_DRY_RUN=1)
 ├── labs/
 │   ├── Lab 1 - Sara - Genie One.md
 │   ├── Lab 2 - Document Intelligence.md
-│   ├── Lab 3 - Build the Supervisor.md
-│   ├── Lab 4 - Observe and Review.md
-│   └── Lab 5 - AI Gateway and Write-back.md
+│   ├── Lab 3 - Build the Custom Agent.md      ← build the agent + MLflow traces + Review App
+│   └── Lab 4 - AI Gateway and Write-back.md
 │   (artifacts/ holds per-lab screenshots)
 └── README.md
 ```

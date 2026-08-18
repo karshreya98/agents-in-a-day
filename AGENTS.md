@@ -5,10 +5,15 @@
 - **Target audience:** Semi-technical business users and platform/AI admins,
   ranging from interns to leadership.
 - Labs guide participants step-by-step through: building a Genie agent and driving it
-  from Genie One (Lab 1); document intelligence with `ai_parse_document`/`ai_extract`
-  (Lab 2); building a Multi-Agent Supervisor (Lab 3); observing it with MLflow traces
-  and collecting expert feedback via a Review App (Lab 4); and governed AI-assisted
-  coding through the Unity AI Gateway with `ucode`/OpenCode (Lab 5).
+  from Genie One (Lab 1); document intelligence / manager analysis with
+  `ai_parse_document`/`ai_extract` (Lab 2); building a **custom agent** — a control-flow
+  pipeline over Genie + web + a UC write-back — deploying it as a **Databricks App**, then
+  observing it with MLflow traces and collecting expert feedback via a Review App (Lab 3);
+  and governed AI-assisted coding through the Unity AI Gateway with `ucode`/OpenCode (Lab 4).
+- **Personas:** **Sara** is a location manager (Mission); **Marc** is the operations
+  manager over all 12 locations. Field technicians (generic, unnamed) fill out the fault
+  reports. The old "Supervisor Agent" (Agent Bricks) is deprecated — Lab 3 now teaches a
+  custom code agent instead.
 - Tone should be clear, encouraging, and beginner-friendly. Avoid jargon unless
   it is explained.
 - **Platform:** Databricks with Unity Catalog + serverless compute (no clusters

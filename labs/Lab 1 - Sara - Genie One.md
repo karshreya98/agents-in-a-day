@@ -23,7 +23,7 @@ In this lab you'll wear two hats: first you set up the Genie agent (a quick,
 one-time build), then you step into Sara's shoes and just ask questions.
 
 You build **one** Genie agent here — a **Maintenance Genie** (the one Sara, and later
-Marc's Supervisor in Lab 3, needs for machine faults) — over the maintenance tables the
+Marc's custom agent in Lab 3, needs for machine faults) — over the maintenance tables the
 setup job seeded. The setup job also **pre-built a Sales Genie** (Sunny Bay coffee sales
 by store), so you end up with two agents in the workspace and talk to *both* through
 Genie One, which routes each question to the right agent.
@@ -84,8 +84,8 @@ agent in front of them.
 > it to *this same agent* — so it can also answer about what's written in the reports.
 
 > [!TIP]
-> You'll reuse this exact Genie agent in **Lab 3** as one of Marc's Supervisor
-> sub-agents — building it once here means it's ready when you get there.
+> You'll reuse this exact Genie agent in **Lab 3** as one of the tools Marc's custom
+> agent composes — building it once here means it's ready when you get there.
 
 > [!NOTE]
 > **You already have a second agent — the setup job pre-built a `Sunny Bay Sales Genie`**
@@ -96,7 +96,7 @@ agent in front of them.
 > [!NOTE]
 > You now have two Genie agents in the workspace — the maintenance one you just built and
 > the pre-built sales one. That's exactly what Genie One needs to demonstrate routing in
-> Step 3, and both become sub-agents of Marc's Supervisor in Lab 3.
+> Step 3, and both become tools of Marc's custom agent in Lab 3.
 
 ---
 
@@ -137,7 +137,7 @@ agent in front of them.
 > Ask *"which machines need attention this week and why?"* in **chat mode**, then again in
 > **agent mode**. Chat mode gives you one query's worth of answer; agent mode breaks the
 > question down and works through it. That contrast is exactly what you're building at
-> scale in Lab 3 — the Supervisor is this planning behaviour across *multiple* agents.
+> scale in Lab 3 — the custom agent runs this kind of planning across *multiple* tools.
 
 > [!NOTE]
 > Genie answers from the governed tables only — right now, the machine registry, fault
@@ -215,7 +215,7 @@ just asks, and Genie One routes to the right one.
 > **Facilitator tip:** this is worth demoing deliberately. Ask a vague question, show the
 > unattributed query result, then improve the description and ask again. Watching the
 > agent *become* the source teaches why descriptions are routing rules — the same lesson
-> Lab 3 depends on when the Supervisor picks between sub-agents.
+> Lab 3 builds on when the custom agent picks between its tools.
 
 ---
 
@@ -342,14 +342,15 @@ The point stands either way: Sara defines the *question*. Genie does the *work*.
 Sara's machine check just flagged **CBM-003: pressure anomaly, repeated E-07 fault
 codes**.
 
-She can *see* it. But who *acts* on it?
+She can *see* it. But who decides what to *do* about it — across all 12 locations at once?
 
-Marc drives between all 12 locations every day without knowing what he is walking into.
-The fault history is already in Unity Catalog — the same Maintenance Genie Sara queried
-knows it. The question is not whether the data exists. It is whether Marc has something
-that *acts* on it.
+That's **Marc**, the operations manager. He runs the 12 location managers (Sara among
+them) and has to prioritise: which machines threaten which stores, who to dispatch, and
+who to tell. The fault history is already in Unity Catalog — the same Maintenance Genie
+Sara queried knows it. The question is whether Marc has something that turns it into a
+*decision and an action*.
 
-**Today you build that.**
+**Over Labs 2–3 you build that.**
 
 ---
 

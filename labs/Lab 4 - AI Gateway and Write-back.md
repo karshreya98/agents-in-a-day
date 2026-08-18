@@ -1,4 +1,4 @@
-# 🔒 Lab 5 — Governed AI-Assisted Coding through the AI Gateway
+# 🔒 Lab 4 — Governed AI-Assisted Coding through the AI Gateway
 
 ## 🎯 Learning Objectives
 
@@ -15,7 +15,7 @@ By the end of this lab, you will be able to:
 
 ## Introduction
 
-So far every AI call — Genie queries, `ai_extract()`, the Supervisor — has been governed
+So far every AI call — Genie queries, `ai_extract()`, Marc's custom agent — has been governed
 by Databricks. In this final lab you meet the **Unity AI Gateway (Beta)** head-on and
 answer a question every platform team asks:
 
@@ -29,8 +29,9 @@ register a model service, attach guardrails, then route any coding agent through
 **`ucode`** (Databricks' Unity AI Gateway coding CLI — [github.com/databricks/ucode](https://github.com/databricks/ucode)).
 Developers get their favorite assistant; the platform team gets governance and no leaked
 API keys. To make it concrete, you'll use that governed assistant to **vibe-code the
-`create_service_order` write-back function** — the piece that lets Marc's Supervisor turn
-a briefing into a real service order.
+`create_service_order` write-back function** — the piece that lets Marc's custom agent turn
+a dispatch recommendation into a real service order (it's the UC function the agent calls
+in Lab 3, gated behind Marc's approval).
 
 > [!NOTE]
 > **Roles in this lab.** Steps 1–2 are done by a **workspace admin** (one person /
@@ -167,8 +168,8 @@ the Unity AI Gateway using your workspace credentials.
 ### **Step 4: Vibe-code the write-back function through the governed agent (15 min)**
 
 Now use your governed AI assistant to build something real: the **`create_service_order`**
-Unity Catalog function — the write-back that lets Marc's Supervisor turn a briefing into
-an actual service order. You'll *vibe-code* it through a Gateway-routed agent instead of
+Unity Catalog function — the write-back that lets Marc's custom agent turn a dispatch
+recommendation into an actual service order. You'll *vibe-code* it through a Gateway-routed agent instead of
 writing it by hand.
 
 1. Launch OpenCode in a scratch folder — through `ucode`, pointed at the governed model
@@ -202,7 +203,7 @@ writing it by hand.
 
    ```sql
    SELECT <catalog>.coffee_maintenance.create_service_order(
-     'CBM-003', 'E-07', 'SIE-EQ9-PUMP-003', 'Vibe-coded in Lab 5'
+     'CBM-003', 'E-07', 'SIE-EQ9-PUMP-003', 'Vibe-coded in Lab 4'
    ) AS order_id;
    ```
 
@@ -274,12 +275,12 @@ writing it by hand.
 | | |
 |---|---|
 | **Sara** | Built a Genie agent and got machine-health + sales answers from Genie One, enriched with live web knowledge — all in plain language, no SQL. |
-| **Marc** | Turned PDF fault reports into structured data, built a multi-source Supervisor agent, and had domain experts review it through a Review App. |
+| **Marc** | Ran a manager analysis over structured fault reports, built a custom agent deployed as a Databricks App, and had domain experts review it through a Review App. |
 | **Platform team** | Stood up a governed AI coding endpoint — PII guardrails, per-user usage, full audit — and vibe-coded the `create_service_order` write-back through it. |
 
 **What you take home:**
 
-- The Genie agents and Supervisor — point them at your own data next week.
+- The Genie agents and your custom agent — point them at your own data next week.
 - The MLflow trace + Review App loop — the way to harden any agent with expert feedback.
 - The governed AI Gateway endpoint pattern — bring AI coding assistants into your
   enterprise on *your* terms.

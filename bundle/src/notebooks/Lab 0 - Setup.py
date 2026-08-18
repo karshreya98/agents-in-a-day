@@ -113,6 +113,45 @@ print(f"✅ Machines: {count} rows → {catalog}.{MAINT}.machines")
 
 # COMMAND ----------
 # MAGIC %md
+# MAGIC ## 👥 Step 3b — Location managers roster
+# MAGIC
+# MAGIC Marc is a **manager** over 12 location managers. His custom agent (Lab 3) maps a
+# MAGIC flagged machine → its location → the manager to notify, so it can draft an addressed
+# MAGIC message. Sara (from Lab 1) manages **Mission**.
+
+# COMMAND ----------
+
+spark.sql(f"""
+CREATE TABLE IF NOT EXISTS `{catalog}`.`{MAINT}`.`location_managers` (
+  location       STRING NOT NULL,
+  manager_name   STRING,
+  manager_email  STRING
+)
+USING DELTA
+COMMENT 'Location manager for each of the 12 Sunny Bay locations (Lab 3 people-coordination)'
+""")
+
+spark.sql(f"""
+INSERT OVERWRITE `{catalog}`.`{MAINT}`.`location_managers` VALUES
+  ('Hayes Valley',       'Priya Shah',    'priya@sunnybay.example'),
+  ('Castro',             'Marcus Lin',    'marcus@sunnybay.example'),
+  ('Mission',            'Sara Nguyen',   'sara@sunnybay.example'),
+  ('Haight',             'Amara Okafor',  'amara@sunnybay.example'),
+  ('Nob Hill',           'Ben Carter',    'ben@sunnybay.example'),
+  ('SOMA',               'Wei Chen',      'wei@sunnybay.example'),
+  ('Richmond',           'Tom Becker',    'tom@sunnybay.example'),
+  ('Sunset',             'Nadia Farooq',  'nadia@sunnybay.example'),
+  ('North Beach',        'Diego Alvarez', 'diego@sunnybay.example'),
+  ('Tenderloin',         'Grace Kim',     'grace@sunnybay.example'),
+  ('Pacific Heights',    'Lena Novak',    'lena@sunnybay.example'),
+  ('South Bay (Online)', 'Omar Haddad',   'omar@sunnybay.example')
+""")
+
+count = spark.sql(f"SELECT count(*) as n FROM `{catalog}`.`{MAINT}`.`location_managers`").collect()[0]["n"]
+print(f"✅ Location managers: {count} rows → {catalog}.{MAINT}.location_managers")
+
+# COMMAND ----------
+# MAGIC %md
 # MAGIC ## ⚡ Step 4 — Fault events table (telemetry history)
 
 # COMMAND ----------

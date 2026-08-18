@@ -1,0 +1,25 @@
+command:
+  - "python"
+  - "-m"
+  - "uvicorn"
+  - "app:app"
+  - "--host"
+  - "0.0.0.0"
+  - "--port"
+  - "8000"
+
+env:
+  # Catalog seeded by the bootstrap notebook.
+  - name: CATALOG
+    value: "sunny_bay_roastery"
+  # Genie space IDs — fill these in from Genie → your space → URL/settings.
+  - name: MAINTENANCE_GENIE_SPACE_ID
+    value: ""
+  - name: SALES_GENIE_SPACE_ID
+    value: ""
+  # Serving endpoint for drafting/synthesis (add as a "Model serving" app resource).
+  - name: SERVING_ENDPOINT
+    value: "databricks-claude-sonnet-4-5"
+  # MLflow experiment traces are logged to (Pattern B).
+  - name: MLFLOW_EXPERIMENT
+    value: "/Shared/marc-manager-agent"
