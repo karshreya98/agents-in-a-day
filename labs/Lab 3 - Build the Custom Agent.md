@@ -50,21 +50,18 @@ The plan is the output of an explicit **LangGraph** pipeline — control flow yo
 node by node:
 
 ```
-assess → quantify → enrich → score → assign → approval_gate ⇄ execute
-                                                 (interrupt)   (create_service_order)
+assess → score → approval_gate ⇄ execute
+                   (interrupt)   (create_service_order)
 
-assess        → Maintenance Genie: which machines have unresolved faults, and their codes?
-quantify      → Sales Genie: weekly revenue per store  (→ that store's revenue at risk)
-enrich        → you.com MCP: pull the manufacturer bulletin for the fault code
-score         → plain Python: priority = 4·faults + revenue_at_risk/1000
-assign        → location_managers roster: draft a message to the right store manager
+assess        → the Genies: which machines have unresolved faults, and each store's revenue
+score         → plain Python: priority = 4·faults + revenue_at_risk/1000, then draft messages
 approval_gate → LangGraph interrupt — PAUSES here until Marc approves a machine
 execute       → create_service_order()  ← runs only after Marc approves
 ```
 
 In the chat, the agent returns the result as a **ranked plan**: for each machine, its
-location, the fault count and code, the revenue at risk, the priority score, the bulletin
-it pulled, and the **draft message** to that store's manager. **The plan writes nothing.**
+location, the fault count and code, the revenue at risk, the priority score, and the
+**draft message** to that store's manager. **The plan writes nothing.**
 It is a recommendation until Marc approves a specific machine — which he does by simply
 replying **"approve CBM-003"** in the same chat.
 
@@ -93,7 +90,7 @@ Now open **`app/`** in this repo — it *is* that template, with Marc's agent in
 | File | What it is |
 |---|---|
 | `app/agent_server/dispatch.py` | The **LangGraph pipeline** — the control flow you'll edit in Task 2. |
-| `app/agent_server/tools.py` | The **tool palette**: the two Genie spaces, you.com web search, `create_service_order`, the roster. |
+| `app/agent_server/tools.py` | The **tool palette**: the two Genie spaces, the `create_service_order` UC function, and the location-manager roster. |
 | `app/agent_server/agent.py` | The template's `ResponsesAgent` handlers — routes each message to *plan / explain / qa / approve*. |
 | `app/app.yaml` | Config + resources (catalog, Genie space IDs, serving endpoint). |
 
@@ -102,12 +99,12 @@ Now open **`app/`** in this repo — it *is* that template, with Marc's agent in
 ### **Task 2: Modify one thing in the cloned template (10 min)**
 
 Open **`app/agent_server/dispatch.py`** — this *is* the agent's brain. Read `build_graph()`:
-the nodes and edges *are* the pipeline (`assess → … → approval_gate ⇄ execute`), and
-`approval_gate` calls `interrupt(...)` — the graph pauses there until your "approve"
-resumes it. Now make **one small change** and see it show up later.
+the four nodes and their edges *are* the pipeline (`assess → score → approval_gate ⇄
+execute`), and `approval_gate` calls `interrupt(...)` — the graph pauses there until your
+"approve" resumes it. Now make **one small change** and see it show up later.
 
 **Add a new control-flow element** — a node of your own. Add this function, then insert it
-between `enrich` and `score` (look for the `LAB 3 · TASK 2` marker in `build_graph()`):
+between `assess` and `score` (look for the `LAB 3 · TASK 2` marker in `build_graph()`):
 
 ```python
 def note_fleet(state: PlanState) -> dict:
@@ -119,7 +116,7 @@ def note_fleet(state: PlanState) -> dict:
 ```python
     # in build_graph(), register the node and re-route two edges:
     g.add_node("note_fleet", note_fleet)
-    g.add_edge("enrich", "note_fleet")   # was: enrich → score
+    g.add_edge("assess", "note_fleet")   # was: assess → score
     g.add_edge("note_fleet", "score")
 ```
 
@@ -135,25 +132,23 @@ span in the trace.
 
 ### **Task 3: Create and deploy the app — from the UI (10 min)**
 
-No terminal — do it all in the workspace UI.
+No terminal, no config — do it all in the workspace UI.
 
 1. **Get the code into your workspace.** In the sidebar: **Workspace → Create → Git folder**,
    paste this repo's URL, **Create**. (If your workshop workspace already has it, skip this.)
 
-2. **Set your Genie space IDs.** Open **`app/app.yaml`** in the workspace file editor and
-   fill in `MAINTENANCE_GENIE_SPACE_ID` and `SALES_GENIE_SPACE_ID` (each ID is in its Genie
-   agent's URL — `.../genie/rooms/<SPACE_ID>`) and your `CATALOG`. Save.
-
-3. **Create the app.** **Compute → Apps → Create app → Custom**, name it
+2. **Create the app.** **Compute → Apps → Create app → Custom**, name it
    `marc-dispatch-agent`, and point its **source code path** at the `app/` folder in your
    Git folder.
 
-4. **Add resources** (in the app's **Configure**/**Edit** page):
-   - a **Model serving endpoint** (a Claude/Llama Foundation Model) → *Can query*
-   - a **SQL warehouse** so the UC function and roster query can run
-   - your two **Genie spaces** → *Can run*
+3. Click **Deploy** and wait for the app to reach **Running**.
 
-5. Click **Deploy** and wait for the app to reach **Running**.
+That's it — the app ships in **sample-data mode**, so it deploys with nothing to wire up.
+
+> [!NOTE]
+> The agent runs on built-in Sunny Bay data, so there are **no resources to attach and no
+> yaml to edit**. Wiring in your real Genie spaces and the governed `create_service_order`
+> write-back is **Lab 4 (AI Gateway and Write-back)**.
 
 ---
 
@@ -168,12 +163,13 @@ Open the app URL — it's the template's chat UI. Work through what the agent ca
 | **"What's the weekly revenue by store?"** | routes to the Sales Genie and answers |
 | **"Approve CBM-003"** | executes the gated `create_service_order` write-back |
 
-Read a flagged machine's **draft message** (Sara, for Mission) and the **bulletin** it
-pulled. Then reply **"approve CBM-003"** — *now*, and only now, the agent resumes past the
-gate, creates the service order, and returns the new order ID.
+Read a flagged machine's **draft message** to its store manager (Sara, for Mission). Then
+reply **"approve CBM-003"** — *now*, and only now, the agent resumes past the gate and
+raises the service order (a simulated order ID in sample mode; Lab 4 makes it a real
+governed write-back).
 
 > [!NOTE]
-> Nothing was written until you approved. That gate is the difference between an assistant
+> Nothing happened until you approved. That gate is the difference between an assistant
 > that *answers* and an agent Marc trusts to *act*.
 
 ---
@@ -187,11 +183,11 @@ tool call.
    template wires it via `app.yaml`'s `MLFLOW_EXPERIMENT_ID`).
 
 2. Click the **Traces** tab. Open a dispatch-plan trace and explore the **span waterfall** —
-   one span per LangGraph node: `assess` → `quantify` → `enrich` → **`note_fleet`** (your
-   Task 2 node!) → `score` → `assign` → `approval_gate`.
+   one span per LangGraph node: `assess` → **`note_fleet`** (your Task 2 node!) → `score` →
+   `approval_gate`.
 
-3. Click a span to see its exact inputs and outputs — e.g. what the Maintenance Genie
-   returned, or the priority score the Python step computed.
+3. Click a span to see its exact inputs and outputs — e.g. what the Genie tool returned, or
+   the priority score the Python step computed.
 
 > [!NOTE]
 > This is how you debug an agent. Because the flow is explicit, the trace reads like the

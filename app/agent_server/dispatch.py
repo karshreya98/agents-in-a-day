@@ -4,8 +4,8 @@ This is the "control flow you own": not a generic tool-calling loop, but a graph
 read node-by-node, with a **human-in-the-loop `interrupt`** as the approval gate before the
 `create_service_order` write-back.
 
-    assess → quantify → enrich → score → assign → approval_gate ⇄ execute
-                                                        (interrupt)   (write-back)
+    assess → score → approval_gate ⇄ execute
+                        (interrupt)   (write-back)
 
 `mlflow.langchain.autolog()` (enabled in agent.py) traces every node automatically. A
 MemorySaver checkpointer lets the graph pause at the interrupt and resume when the manager
@@ -45,51 +45,37 @@ class PlanState(TypedDict, total=False):
 
 # --- Nodes -----------------------------------------------------------------
 def assess(state: PlanState) -> dict:
+    """Ask the Genies which machines have unresolved faults and each store's revenue."""
     maintenance = tools.GenieTool(tools.config.MAINTENANCE_GENIE_SPACE_ID, "Maintenance Genie")
-    answer = maintenance.ask(
+    faults = maintenance.ask(
         "Which machines across all locations have unresolved faults, with their fault codes?")
-    return {"fleet": tools.parse_fleet(answer)}
-
-
-def quantify(state: PlanState) -> dict:
     sales = tools.GenieTool(tools.config.SALES_GENIE_SPACE_ID, "Sales Genie")
     sales.ask("What is the weekly coffee revenue by store?")
-    fleet = state["fleet"]
+    fleet = tools.parse_fleet(faults)
     for row in fleet:
-        row["revenue_at_risk"] = row["weekly_revenue"]
-    return {"fleet": fleet}
-
-
-def enrich(state: PlanState) -> dict:
-    fleet = state["fleet"]
-    for row in fleet:
-        if row.get("fault_code"):  # only reach for the web when there's a code to look up
-            row["bulletin"] = tools.web_search(
-                f"manufacturer service bulletin for fault {row['fault_code']} espresso machine")
+        row["revenue_at_risk"] = row["weekly_revenue"]  # a down machine risks its store's revenue
     return {"fleet": fleet}
 
 
 def score(state: PlanState) -> dict:
-    fleet = state["fleet"]
-    for row in fleet:
-        row["priority_score"] = round(
-            FAULT_WEIGHT * row["unresolved_faults"]
-            + REVENUE_WEIGHT * row["revenue_at_risk"] / 1000, 2)
-    ranked = sorted(fleet, key=lambda r: r["priority_score"], reverse=True)
-    return {"ranked": ranked}
-
-
-def assign(state: PlanState) -> dict:
+    """Rank machines by priority and draft a message for the ones worth dispatching."""
+    ranked = sorted(state["fleet"], key=_priority, reverse=True)
+    for row in ranked:
+        row["priority_score"] = _priority(row)
     actions = []
-    for row in state["ranked"]:
-        if row["unresolved_faults"] == 0 or row["priority_score"] < DISPATCH_THRESHOLD:
-            continue
-        row["draft_message"] = _draft_message(row)
-        row["needs_approval"] = True
-        actions.append(row)
-    summary = (f"{len(state['ranked'])} machines assessed, "
+    for row in ranked:
+        if row["unresolved_faults"] and row["priority_score"] >= DISPATCH_THRESHOLD:
+            row["draft_message"] = _draft_message(row)
+            row["needs_approval"] = True
+            actions.append(row)
+    summary = (f"{len(ranked)} machines assessed, "
                f"{len(actions)} recommended for dispatch this week.")
-    return {"actions": actions, "summary": summary}
+    return {"ranked": ranked, "actions": actions, "summary": summary}
+
+
+def _priority(row: dict[str, Any]) -> float:
+    return round(FAULT_WEIGHT * row["unresolved_faults"]
+                 + REVENUE_WEIGHT * row["revenue_at_risk"] / 1000, 2)
 
 
 def approval_gate(state: PlanState) -> dict:
@@ -139,16 +125,12 @@ def _after_gate(state: PlanState) -> str:
 
 def build_graph():
     g = StateGraph(PlanState)
-    for name, fn in [("assess", assess), ("quantify", quantify), ("enrich", enrich),
-                     ("score", score), ("assign", assign),
+    for name, fn in [("assess", assess), ("score", score),
                      ("approval_gate", approval_gate), ("execute", execute)]:
         g.add_node(name, fn)
     g.add_edge(START, "assess")
-    g.add_edge("assess", "quantify")
-    g.add_edge("quantify", "enrich")
-    g.add_edge("enrich", "score")   # LAB 3 · TASK 2: try inserting a node here (enrich → your_node → score)
-    g.add_edge("score", "assign")
-    g.add_edge("assign", "approval_gate")
+    g.add_edge("assess", "score")   # LAB 3 · TASK 2: try inserting a node here (assess → your_node → score)
+    g.add_edge("score", "approval_gate")
     g.add_conditional_edges("approval_gate", _after_gate, {"execute": "execute", END: END})
     g.add_edge("execute", "approval_gate")
     return g.compile(checkpointer=MemorySaver())

@@ -41,11 +41,6 @@ _MANAGERS = {m[1]: {"name": m[2], "email": f"{m[2].split()[0].lower()}@sunnybay.
 # Fault code -> recommended part (feeds the create_service_order write-back).
 _PARTS = {"E-07": "SIE-EQ9-PUMP-003", "E-14": "SIE-EQ9-VALVE-014", "E-02": "DEL-MAE-SEAL-002"}
 
-_BULLETINS = {
-    "E-07": ("Siemens EQ.9 service bulletin SB-114: repeated E-07 pressure faults are "
-             "usually a worn pump seal. Replace pump assembly (part SIE-EQ9-PUMP-003)."),
-}
-
 
 def recommended_part(fault_code: str | None) -> str:
     return _PARTS.get(fault_code or "", "TBD")
@@ -80,20 +75,6 @@ class GenieTool:
         rows = [f"{m[0]} ({m[1]}): {m[3]} unresolved fault(s)"
                 + (f", code {m[4]}" if m[4] else "") for m in _FLEET if m[3] > 0]
         return "Machines with unresolved faults — " + "; ".join(rows)
-
-
-@_trace(span_type="TOOL")
-def web_search(query: str) -> str:
-    """you.com MCP (live web) — manufacturer bulletins, part numbers, procedures."""
-    if config.DRY_RUN:
-        for code, text in _BULLETINS.items():
-            if code in query:
-                return text
-        return "No manufacturer advisory found for that query."
-    # Live: wire the you.com MCP registered in the AI Gateway (Lab 1, Step 4b) via
-    # databricks_langchain.DatabricksMCPServer. Kept a graceful no-op so a missing MCP
-    # grant degrades instead of failing the plan.
-    return "(web lookup not wired in this environment — register the you.com MCP)"
 
 
 @_trace(span_type="TOOL")

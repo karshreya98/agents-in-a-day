@@ -118,7 +118,7 @@ agents-in-a-day/
 │   ├── app.yaml                ← Databricks App config (Genie space IDs, serving endpoint)
 │   ├── agent_server/
 │   │   ├── dispatch.py         ← LangGraph StateGraph: control flow + approval interrupt + scoring
-│   │   ├── tools.py            ← Genie spaces, you.com MCP, create_service_order, roster
+│   │   ├── tools.py            ← Genie spaces, create_service_order, location roster
 │   │   ├── agent.py            ← template ResponsesAgent handlers (routes plan/explain/qa/approve)
 │   │   └── start_server.py, utils.py ← unchanged from the template
 │   ├── scripts/                ← template quickstart / start-app / deploy helpers

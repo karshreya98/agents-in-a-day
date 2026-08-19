@@ -11,15 +11,15 @@ loop, `agent_server/agent.py` drives an **explicit LangGraph pipeline with a
 human-in-the-loop approval gate** — the point of Lab 3.
 
 ```
-assess → quantify → enrich → score → assign → approval_gate ⇄ execute
- Genie     Genie      MCP     Python  roster    (interrupt)    create_service_order (UC fn)
+assess → score → approval_gate ⇄ execute
+ Genies   Python   (interrupt)    create_service_order (UC fn)
 ```
 
 - `agent_server/dispatch.py` — the LangGraph `StateGraph`: nodes, edges, the approval
   `interrupt`, the deterministic scoring policy (`FAULT_WEIGHT` / `REVENUE_WEIGHT` — the
   **Lab 3 · Task 2** edit point), and the chat-formatting helpers.
-- `agent_server/tools.py` — the tool palette: two Genie spaces, you.com web search, the
-  `create_service_order` UC function, the `location_managers` roster.
+- `agent_server/tools.py` — the tool palette: two Genie spaces, the `create_service_order`
+  UC function, the `location_managers` roster.
 - `agent_server/agent.py` — the template's `@invoke()` / `@stream()` handlers, routing each
   message (plan / explain / qa / approve) and keying the graph thread by conversation id so
   the approval gate persists across turns.
@@ -40,16 +40,18 @@ AGENT_DRY_RUN=1 uv run start-server     # agent API + chat UI, canned Sunny Bay 
 `AGENT_DRY_RUN=1` makes every tool return canned data, so you can see the full flow —
 ranking, drafted messages, and the approval gate — with no Databricks calls.
 
-## Run it live
+## Deploy (sample-data mode)
 
-```bash
-uv run quickstart      # verifies tooling, sets up auth + MLflow tracing, starts the app
-```
+`app.yaml` sets `AGENT_DRY_RUN=1`, so the app deploys and runs on built-in Sunny Bay data
+with **no resources or config to wire up** — create the app in the Apps UI (or
+`uv run quickstart` + the template `deploy` skill) and deploy. Traces still log to the
+MLflow experiment in `MLFLOW_EXPERIMENT_NAME`.
 
-Set the catalog and the two Genie space IDs in `app.yaml`, and add a **Model serving
-endpoint** and **SQL warehouse** as app resources (see `databricks.yml` and the
-`.claude/skills/add-tools` examples). Deploy with the Databricks CLI per the template's
-`deploy` skill. Traces log to the MLflow experiment linked to the app.
+## Go live
+
+Drop `AGENT_DRY_RUN`, set the two Genie space IDs + `CATALOG`, and add a **SQL warehouse**
+(for the `create_service_order` write-back) and your **Genie spaces** as app resources —
+this is **Lab 4 (AI Gateway and Write-back)**.
 
 ## Test
 
