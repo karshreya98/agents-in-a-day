@@ -229,3 +229,6 @@ load-test-runs/
 
 # Local MLflow tracking store (regenerated at runtime)
 mlflow.db
+
+# Let the Databricks Apps runtime resolve deps fresh (template ships no lock)
+uv.lock
