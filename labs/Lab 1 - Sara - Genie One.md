@@ -258,8 +258,19 @@ First create the Unity Catalog **HTTP connection**, then register the MCP servic
 
 2. Select **HTTP** as the connection type.
 
-3. Name it `youcom_http`, enter the **you.com MCP server URL**, and set the
-   authentication type to **Bearer token** — paste the `yk_...` key from Step 4a.
+3. Name it `youcom_http`, set the authentication type to **Bearer token**, paste the key from Step 4a and 
+use these settings:
+
+   | Field | Value                     |
+   |---|---------------------------|
+   | Connection type | HTTP                      |
+   | URL | `https://api.you.com:443` |
+   | Base path | `/mcp`                    |
+   | Is mcp connection | `true`                    |
+   | Auth scheme | `bearer`                  |
+   | Host | `https://api.you.com`     |
+   | Port | `443`                     |
+
 
 > [!IMPORTANT]
 > **Create this connection at the metastore level, not inside a catalog or schema.**
