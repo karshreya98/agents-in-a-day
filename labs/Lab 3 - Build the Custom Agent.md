@@ -81,112 +81,96 @@ replying **"approve CBM-003"** in the same chat.
 
 ## Instructions
 
-### **Step 1: See how a custom agent becomes an App (5 min)**
+### **Task 1: Explore custom agents on Apps (5 min)**
 
-First, the product motion — where a custom agent app *comes from*.
+See where a custom agent app *comes from*. In the sidebar go to **Compute → Apps → Create
+app → Start from a template**, and open the **LangGraph agent** template in the gallery —
+an `agent_server/` Python backend plus a built-in chat UI. **You don't need to finish it;**
+the point is to see that a custom agent is just an app you scaffold from this template.
 
-1. In the workspace sidebar go to **Compute → Apps → Create app**. Choose **Start from a
-   template** and open the **LangGraph agent** template in the gallery. Look at what it
-   gives you: an `agent_server/` Python backend, a built-in chat UI, `scripts/quickstart`,
-   and an `app.yaml`. **You don't need to finish creating it** — the point is to see that a
-   custom agent is just an app you scaffold from this template.
+Now open **`app/`** in this repo — it *is* that template, with Marc's agent inside it:
 
-2. Now open **`app/`** in this repo — it *is* that template, with Marc's agent dropped into
-   it. Skim the layout so you know where things live:
-
-   | File | What it is |
-   |---|---|
-   | `app/agent_server/dispatch.py` | The **LangGraph pipeline** — the agent's control flow + scoring policy (Step 2). |
-   | `app/agent_server/tools.py` | The **tool palette**: the two Genie spaces, you.com web search, the `create_service_order` UC function, the `location_managers` roster. |
-   | `app/agent_server/agent.py` | The template's `ResponsesAgent` handlers, routing each message into *plan / explain / qa / approve*. |
-   | `app/agent_server/start_server.py`, `utils.py`, `scripts/` | **Unchanged from the template** — the server, streaming, and quickstart. |
-   | `app/app.yaml` | Config + resources (catalog, Genie space IDs, serving endpoint). |
-
-> [!TIP]
-> **Want to try it before you deploy?** From `app/`, run `uv sync` then
-> `AGENT_DRY_RUN=1 uv run start-server` — the built-in chat UI with canned Sunny Bay data
-> and no workspace calls. Great for seeing the flow first.
+| File | What it is |
+|---|---|
+| `app/agent_server/dispatch.py` | The **LangGraph pipeline** — the control flow you'll edit in Task 2. |
+| `app/agent_server/tools.py` | The **tool palette**: the two Genie spaces, you.com web search, `create_service_order`, the roster. |
+| `app/agent_server/agent.py` | The template's `ResponsesAgent` handlers — routes each message to *plan / explain / qa / approve*. |
+| `app/app.yaml` | Config + resources (catalog, Genie space IDs, serving endpoint). |
 
 ---
 
-### **Step 2: Explore and modify the flow code (10 min)**
+### **Task 2: Modify one thing in the cloned template (10 min)**
 
-Open **`app/agent_server/dispatch.py`** — this *is* the agent's brain, and unlike
-best-effort routing you can read exactly what happens, in what order.
+Open **`app/agent_server/dispatch.py`** — this *is* the agent's brain. Read `build_graph()`:
+the nodes and edges *are* the pipeline (`assess → … → approval_gate ⇄ execute`), and
+`approval_gate` calls `interrupt(...)` — the graph pauses there until your "approve"
+resumes it. Now make **one small change** and see it show up later.
 
-1. Find `build_graph()`. The nodes and edges are the pipeline from the diagram above:
-   `assess → quantify → enrich → score → assign → approval_gate ⇄ execute`.
+**Add a new control-flow element** — a node of your own. Add this function, then insert it
+between `enrich` and `score` (look for the `LAB 3 · TASK 2` marker in `build_graph()`):
 
-2. Find the `approval_gate` node. It calls `interrupt(...)` — the graph **pauses** here.
-   `execute` (which calls `create_service_order`) only runs when the app resumes the graph
-   with an approval (that's what your "approve CBM-003" reply does). That's the
-   **human-in-the-loop gate**, done the LangGraph way.
+```python
+def note_fleet(state: PlanState) -> dict:
+    """A simple pass-through node — it will appear as its own span in the trace."""
+    print(f"[note] scoring {len(state['fleet'])} machines this run")
+    return {}
+```
 
-3. Find the **scoring policy** near the top of the file — marked `LAB 3 · TASK 2`:
+```python
+    # in build_graph(), register the node and re-route two edges:
+    g.add_node("note_fleet", note_fleet)
+    g.add_edge("enrich", "note_fleet")   # was: enrich → score
+    g.add_edge("note_fleet", "score")
+```
 
-   ```python
-   FAULT_WEIGHT = 4.0        # points per unresolved fault
-   REVENUE_WEIGHT = 1.0      # points per $1,000/wk of revenue at risk
-   DISPATCH_THRESHOLD = 10.0 # a machine must score at least this to make the plan
-   ```
-
-   **This is Marc's policy as code** — deterministic and testable, not a prompt the model
-   might ignore. Change one value (e.g. bump `REVENUE_WEIGHT` to `2.0`, so a busy store
-   outranks a fault-heavy quiet one), save the file, and note what you expect to change in
-   the ranking. You'll see the effect when you drive the app in Step 3.
+You've just changed the agent's control flow — in Task 5 you'll see `note_fleet` as a new
+span in the trace.
 
 > [!TIP]
-> Run `AGENT_DRY_RUN=1 uv run pytest tests/ -q` from `app/` after your edit to confirm the
-> pipeline still runs — this is the "testable control flow" a chatbot can't give you.
+> **Even simpler:** instead of a node, tweak the scoring policy at the `LAB 3 · TASK 2`
+> marker (e.g. bump `REVENUE_WEIGHT` to `2.0` so a busy store outranks a fault-heavy quiet
+> one) and watch the ranking change when you test in Task 4.
 
 ---
 
-### **Step 3: Deploy the agent as an App and drive it (12 min)**
+### **Task 3: Create and deploy the app — from the UI (10 min)**
 
-1. Put your catalog and the two **Genie space IDs** into **`app/app.yaml`** (the space ID
-   is in each Genie agent's URL — `.../genie/rooms/<SPACE_ID>`):
+No terminal — do it all in the workspace UI.
 
-   ```yaml
-   env:
-     - name: CATALOG
-       value: "sunny_bay_roastery"          # your Lab 0 catalog
-     - name: MAINTENANCE_GENIE_SPACE_ID
-       value: "<your maintenance space id>"
-     - name: SALES_GENIE_SPACE_ID
-       value: "<your sales space id>"
-   ```
+1. **Get the code into your workspace.** In the sidebar: **Workspace → Create → Git folder**,
+   paste this repo's URL, **Create**. (If your workshop workspace already has it, skip this.)
 
-2. From `app/`, let the template's **quickstart** verify tooling, set up auth, link an
-   MLflow experiment, and run it — then deploy with the Databricks CLI (the app serves the
-   agent and its chat UI together — one deploy, no separate serving endpoint):
+2. **Set your Genie space IDs.** Open **`app/app.yaml`** in the workspace file editor and
+   fill in `MAINTENANCE_GENIE_SPACE_ID` and `SALES_GENIE_SPACE_ID` (each ID is in its Genie
+   agent's URL — `.../genie/rooms/<SPACE_ID>`) and your `CATALOG`. Save.
 
-   ```bash
-   cd app
-   uv run quickstart                       # tooling + auth + MLflow experiment + local run
-   databricks apps create marc-dispatch-agent
-   databricks sync . /Workspace/Users/<you>/marc-dispatch-agent --exclude .venv
-   databricks apps deploy marc-dispatch-agent \
-     --source-code-path /Workspace/Users/<you>/marc-dispatch-agent
-   ```
+3. **Create the app.** **Compute → Apps → Create app → Custom**, name it
+   `marc-dispatch-agent`, and point its **source code path** at the `app/` folder in your
+   Git folder.
 
-3. In the app's page (**Compute → Apps → marc-dispatch-agent → Edit**), add **resources**,
-   then redeploy to pick them up:
+4. **Add resources** (in the app's **Configure**/**Edit** page):
    - a **Model serving endpoint** (a Claude/Llama Foundation Model) → *Can query*
-   - **SQL warehouse** access so the UC function and the roster query can run
+   - a **SQL warehouse** so the UC function and roster query can run
+   - your two **Genie spaces** → *Can run*
 
-4. Open the app URL — it's the template's chat UI. Work through what the agent can do:
+5. Click **Deploy** and wait for the app to reach **Running**.
 
-   | You say… | The agent… |
-   |---|---|
-   | **"Build my dispatch plan"** | runs the pipeline and returns the **ranked plan** |
-   | **"Why is CBM-003 ranked first?"** | explains the score straight from its own formula |
-   | **"What's the weekly revenue by store?"** | routes to the Sales Genie and answers |
-   | **"Approve CBM-003"** | executes the gated `create_service_order` write-back |
+---
 
-   On the plan, check that the ranking reflects the weight you changed in Step 2, and read a
-   flagged machine's **draft message** (Sara, for Mission) and the **manufacturer bulletin**
-   it pulled. Then reply **"approve CBM-003"** — *now*, and only now, the agent resumes past
-   the gate, creates the service order, and returns the new order ID.
+### **Task 4: Test it out (5 min)**
+
+Open the app URL — it's the template's chat UI. Work through what the agent can do:
+
+| You say… | The agent… |
+|---|---|
+| **"Build my dispatch plan"** | runs the pipeline and returns the **ranked plan** |
+| **"Why is CBM-003 ranked first?"** | explains the score straight from its own formula |
+| **"What's the weekly revenue by store?"** | routes to the Sales Genie and answers |
+| **"Approve CBM-003"** | executes the gated `create_service_order` write-back |
+
+Read a flagged machine's **draft message** (Sara, for Mission) and the **bulletin** it
+pulled. Then reply **"approve CBM-003"** — *now*, and only now, the agent resumes past the
+gate, creates the service order, and returns the new order ID.
 
 > [!NOTE]
 > Nothing was written until you approved. That gate is the difference between an assistant
@@ -194,62 +178,57 @@ best-effort routing you can read exactly what happens, in what order.
 
 ---
 
-### **Step 4: Inspect the MLflow trace (7 min)**
+### **Task 5: Review the traces and MLflow experiment (7 min)**
 
-Every message the agent handles is logged as an **MLflow trace** — the full record of the
-routing and every tool call. Because you asked several *different* things in Step 3, you
-have several *different-shaped* traces to inspect.
+Every message is logged as an **MLflow trace** — the full record of the routing and every
+tool call.
 
-1. In the sidebar open **Experiments** (under **Machine Learning** / **MLflow**), and open
-   the experiment **`uv run quickstart` created and linked to the app** (the template wires
-   it via `app.yaml`'s `MLFLOW_EXPERIMENT_ID`).
+1. In the sidebar open **Experiments**, and open the experiment **linked to your app** (the
+   template wires it via `app.yaml`'s `MLFLOW_EXPERIMENT_ID`).
 
 2. Click the **Traces** tab. Open a dispatch-plan trace and explore the **span waterfall** —
-   one span per LangGraph node: `assess` (Maintenance Genie) → `quantify` (Sales Genie) →
-   `enrich` (you.com) → `score` → `assign` → `approval_gate`.
+   one span per LangGraph node: `assess` → `quantify` → `enrich` → **`note_fleet`** (your
+   Task 2 node!) → `score` → `assign` → `approval_gate`.
 
-3. Click into a span to see its exact inputs and outputs — e.g. what the Maintenance Genie
+3. Click a span to see its exact inputs and outputs — e.g. what the Maintenance Genie
    returned, or the priority score the Python step computed.
 
 > [!NOTE]
-> This is how you debug an agent. If a plan missed a machine, the trace shows *which step*
-> dropped it — you're never guessing. Because the flow is explicit, the trace reads like
-> the code you edited in Step 2.
+> This is how you debug an agent. Because the flow is explicit, the trace reads like the
+> code — including the node you just added.
 
 ---
 
-### **Step 5: Stand up a Review App (11 min)**
+### **Task 6: Create a Review App (10 min)**
 
 The loop that hardens an agent: real experts grade real output through a simple UI, and
 every rating lands back on the trace.
 
-1. **Create a label schema** — the question set your reviewers answer for each trace. In
-   your experiment open **Labeling → Labeling schemas → Create schema**, and add two:
+1. **Create a label schema** — in your experiment open **Labeling → Labeling schemas →
+   Create schema**, and add two:
 
    | Field | Quality rating | Correctness check |
    |---|---|---|
    | **Name** | `plan_quality` | `grounded_in_data` |
    | **Type** | Feedback · Categorical | Feedback · Categorical |
    | **Options** | `Poor`, `Fair`, `Good`, `Excellent` | `Yes`, `No` |
-   | **Instruction** | *As the manager receiving this plan, is the ranking sensible and are the drafted messages ready to send?* | *Are the fault counts, revenue figures, and part numbers all supported by the data — nothing made up?* |
+   | **Instruction** | *Is the ranking sensible and are the drafted messages ready to send?* | *Are the fault counts, revenue, and parts all supported by the data — nothing made up?* |
 
 2. **Create a labeling session** — **Labeling → Labeling sessions → Create labeling
    session**. Name it `Sunny Bay — Dispatch Plan Review`, attach both schemas, and assign
-   your reviewers (a colleague, or Marc/Sara).
+   your reviewers.
 
-3. From the **Traces** tab, select the traces from Step 3/4 → **Add to labeling session** →
-   your session.
+3. From the **Traces** tab, select your traces → **Add to labeling session** → your session.
 
-4. Open the session → **Share** → copy the **Review App URL** and send it to reviewers.
-   Then open it yourself: it shows one plan at a time with your schema questions on the
-   side. Rate it, add a comment, submit.
+4. Open the session → **Share** → copy the **Review App URL** for your reviewers. Open it
+   yourself: one plan at a time with your schema questions on the side. Rate it, submit.
 
 5. Back in **Traces**, open a labeled trace — your feedback now appears under
    **Assessments**, attached to that exact trace.
 
 > [!NOTE]
 > That labeled feedback is what you'd later use to build an evaluation set or align an
-> automated judge — so quality checks can run continuously, not just once.
+> automated judge — so quality checks run continuously, not just once.
 
 ---
 

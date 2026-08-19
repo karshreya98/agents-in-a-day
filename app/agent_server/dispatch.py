@@ -146,7 +146,7 @@ def build_graph():
     g.add_edge(START, "assess")
     g.add_edge("assess", "quantify")
     g.add_edge("quantify", "enrich")
-    g.add_edge("enrich", "score")
+    g.add_edge("enrich", "score")   # LAB 3 · TASK 2: try inserting a node here (enrich → your_node → score)
     g.add_edge("score", "assign")
     g.add_edge("assign", "approval_gate")
     g.add_conditional_edges("approval_gate", _after_gate, {"execute": "execute", END: END})
