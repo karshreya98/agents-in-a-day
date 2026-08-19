@@ -114,16 +114,14 @@ agents-in-a-day/
 │           ├── fault_report_pipeline.py ← ai_parse_document + ai_extract
 │           ├── silver/         ← sales silver transforms (dims + fact)
 │           └── gold/           ← sales gold transforms (dims + fact)
-├── app/                        ← Lab 3: Marc's custom agent, deployed as a Databricks App
-│   ├── app.py                  ← FastAPI entry (serves the React UI + /api)
+├── app/                        ← Lab 3: Marc's agent on the agent-langgraph template
 │   ├── app.yaml                ← Databricks App config (Genie space IDs, serving endpoint)
-│   ├── server/
-│   │   ├── graph.py            ← LangGraph StateGraph: the control flow + approval interrupt
-│   │   ├── responses_agent.py  ← graph wrapped in an MLflow ResponsesAgent (deployable)
-│   │   ├── agent.py            ← chat router + session handling
+│   ├── agent_server/
+│   │   ├── dispatch.py         ← LangGraph StateGraph: control flow + approval interrupt + scoring
 │   │   ├── tools.py            ← Genie spaces, you.com MCP, create_service_order, roster
-│   │   └── routes/chat.py      ← /api/chat, /api/dispatch-plan, /api/approve
-│   ├── frontend/               ← React chat UI (Vite + TS)
+│   │   ├── agent.py            ← template ResponsesAgent handlers (routes plan/explain/qa/approve)
+│   │   └── start_server.py, utils.py ← unchanged from the template
+│   ├── scripts/                ← template quickstart / start-app / deploy helpers
 │   └── tests/                  ← offline dry-run smoke tests (AGENT_DRY_RUN=1)
 ├── labs/
 │   ├── Lab 1 - Sara - Genie One.md

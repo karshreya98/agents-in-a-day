@@ -1,65 +1,58 @@
-# Marc's Manager Agent — Databricks App (Lab 3)
+# Marc's Dispatch Agent — Databricks App (Lab 3)
 
-A **custom agent** deployed as a Databricks App: a React chat cockpit + FastAPI backend
-with a **LangGraph** agent (wrapped in an MLflow `ResponsesAgent`) running inside it. This
-is the Lab 3 deliverable. It follows the official
+This app is built **on the official
 [`agent-langgraph`](https://github.com/databricks/app-templates/tree/main/agent-langgraph)
-pattern (LangGraph + `ResponsesAgent` + `mlflow.langchain.autolog`), with our own cockpit UI.
+template**, unchanged in structure: the same `agent_server/` layout, `ResponsesAgent`
+handlers, `scripts/quickstart`, `app.yaml`, and built-in chat UI (served via the agent
+server's chat proxy — no separate frontend).
 
-## What it does
-
-The dispatch plan is an explicit LangGraph graph with a human-in-the-loop interrupt:
+What we changed is the **agent itself**. Instead of the template's generic tool-calling
+loop, `agent_server/agent.py` drives an **explicit LangGraph pipeline with a
+human-in-the-loop approval gate** — the point of Lab 3.
 
 ```
 assess → quantify → enrich → score → assign → approval_gate ⇄ execute
  Genie     Genie      MCP     Python  roster    (interrupt)    create_service_order (UC fn)
 ```
 
-The UI is a **chat cockpit**: `chat()` in `server/agent.py` routes each message (LLM when
-live, keyword router in dry-run) to *plan / explain / qa / approve / help*.
+- `agent_server/dispatch.py` — the LangGraph `StateGraph`: nodes, edges, the approval
+  `interrupt`, the deterministic scoring policy (`FAULT_WEIGHT` / `REVENUE_WEIGHT` — the
+  **Lab 3 · Task 2** edit point), and the chat-formatting helpers.
+- `agent_server/tools.py` — the tool palette: two Genie spaces, you.com web search, the
+  `create_service_order` UC function, the `location_managers` roster.
+- `agent_server/agent.py` — the template's `@invoke()` / `@stream()` handlers, routing each
+  message (plan / explain / qa / approve) and keying the graph thread by conversation id so
+  the approval gate persists across turns.
+- `agent_server/start_server.py`, `utils.py`, `scripts/` — unchanged from the template.
 
-- `server/graph.py` — the LangGraph `StateGraph`: nodes, edges, and the approval `interrupt`.
-- `server/responses_agent.py` — the graph wrapped in an MLflow `ResponsesAgent` (loggable /
-  evaluable / deployable).
-- `server/agent.py` — the chat router + session handling + read-only helpers.
-- `server/tools.py` — the tool palette: 2 Genie spaces, you.com MCP, the
-  `create_service_order` UC function, the `location_managers` roster, the LLM router.
-- `server/routes/chat.py` — `POST /api/chat`, `POST /api/dispatch-plan`, `POST /api/approve`.
+Because it's a plain chat UI, the approval gate is a **conversation**: "build my dispatch
+plan" pauses at the gate and returns the ranked plan; replying **"approve CBM-003"** in the
+same chat resumes the graph and runs the gated write-back.
 
-`/api/dispatch-plan` runs the graph to the interrupt and returns a `thread_id`;
-`/api/approve` resumes that thread to run the write-back for one machine.
-
-## Run it offline (no workspace)
+## Run it locally (dry-run, no workspace)
 
 ```bash
 cd app
 uv sync
-AGENT_DRY_RUN=1 uv run uvicorn app:app --port 8000     # canned Sunny Bay data
-# frontend dev server (optional): cd frontend && npm install && npm run dev
+AGENT_DRY_RUN=1 uv run start-server     # agent API + chat UI, canned Sunny Bay data
 ```
 
-Then open http://localhost:8000. `AGENT_DRY_RUN=1` returns canned data so you can see the
-full flow — ranking, drafted messages, and the approval gate — with no Databricks calls.
+`AGENT_DRY_RUN=1` makes every tool return canned data, so you can see the full flow —
+ranking, drafted messages, and the approval gate — with no Databricks calls.
+
+## Run it live
+
+```bash
+uv run quickstart      # verifies tooling, sets up auth + MLflow tracing, starts the app
+```
+
+Set the catalog and the two Genie space IDs in `app.yaml`, and add a **Model serving
+endpoint** and **SQL warehouse** as app resources (see `databricks.yml` and the
+`.claude/skills/add-tools` examples). Deploy with the Databricks CLI per the template's
+`deploy` skill. Traces log to the MLflow experiment linked to the app.
 
 ## Test
 
 ```bash
 AGENT_DRY_RUN=1 uv run pytest tests/ -q
 ```
-
-## Deploy (live)
-
-Set the Genie space IDs and catalog in `app.yaml`, then:
-
-```bash
-cd frontend && npm install && npm run build && cd ..
-databricks apps create marc-manager-agent
-databricks sync . /Workspace/Users/<you>/marc-manager-agent \
-  --exclude node_modules --exclude .venv --exclude frontend/src
-databricks apps deploy marc-manager-agent \
-  --source-code-path /Workspace/Users/<you>/marc-manager-agent
-```
-
-Add a **Model serving endpoint** and **SQL warehouse** as app resources, then redeploy.
-MLflow traces log to the experiment named in `MLFLOW_EXPERIMENT` (default
-`/Shared/marc-manager-agent`); the Review App runs as a labeling session over them.

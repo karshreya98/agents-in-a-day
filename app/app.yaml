@@ -1,25 +1,25 @@
-command:
-  - "python"
-  - "-m"
-  - "uvicorn"
-  - "app:app"
-  - "--host"
-  - "0.0.0.0"
-  - "--port"
-  - "8000"
+command: ["uv", "run", "start-app"]
+# databricks apps listen by default on port 8000
 
 env:
-  # Catalog seeded by the bootstrap notebook.
+  - name: MLFLOW_TRACKING_URI
+    value: "databricks"
+  - name: MLFLOW_REGISTRY_URI
+    value: "databricks-uc"
+  - name: API_PROXY
+    value: "http://localhost:8000/invocations"
+  - name: CHAT_APP_PORT
+    value: "3000"
+  - name: CHAT_PROXY_TIMEOUT_SECONDS
+    value: "300"
+  - name: MLFLOW_EXPERIMENT_ID
+    valueFrom: "experiment"
+  # --- Marc's dispatch agent wiring (Lab 3) ---
   - name: CATALOG
-    value: "sunny_bay_roastery"
-  # Genie space IDs — fill these in from Genie → your space → URL/settings.
+    value: "sunny_bay_roastery"          # your Lab 0 catalog
   - name: MAINTENANCE_GENIE_SPACE_ID
-    value: ""
+    value: ""                            # Genie → Maintenance space → URL/settings
   - name: SALES_GENIE_SPACE_ID
-    value: ""
-  # Serving endpoint for drafting/synthesis (add as a "Model serving" app resource).
+    value: ""                            # Genie → Sales space → URL/settings
   - name: SERVING_ENDPOINT
     value: "databricks-claude-sonnet-4-5"
-  # MLflow experiment traces are logged to (Pattern B).
-  - name: MLFLOW_EXPERIMENT
-    value: "/Shared/marc-manager-agent"

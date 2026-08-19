@@ -42,15 +42,6 @@ across twelve locations.
 That last part — *the agent takes an action, but only after a human approves* — is the
 thing a chat assistant can't do and why Marc needs a **custom agent**, not just a chatbot.
 
-> [!IMPORTANT]
-> **Prerequisites:**
-> - Lab 0 setup job has run (`machines`, `fault_reports_structured`, `location_managers`,
->   and the `create_service_order` UC function all exist).
-> - The **Sunny Bay Maintenance Genie** (Lab 1) and the pre-built **Sunny Bay Sales Genie**
->   both exist, and you have each one's **space ID** (from its URL).
-> - you.com MCP service is registered in the Unity AI Gateway (Lab 1 — Step 4b).
-> - You have the Databricks CLI (`databricks --version`) and can deploy a **Databricks App**.
-
 ---
 
 ## What the dispatch plan is
@@ -71,17 +62,20 @@ approval_gate → LangGraph interrupt — PAUSES here until Marc approves a mach
 execute       → create_service_order()  ← runs only after Marc approves
 ```
 
-The app renders the result as **ranked machine cards**: each card shows the machine, its
+In the chat, the agent returns the result as a **ranked plan**: for each machine, its
 location, the fault count and code, the revenue at risk, the priority score, the bulletin
 it pulled, and the **draft message** to that store's manager. **The plan writes nothing.**
-It is a recommendation until Marc approves a specific machine at the gate.
+It is a recommendation until Marc approves a specific machine — which he does by simply
+replying **"approve CBM-003"** in the same chat.
 
 > [!NOTE]
-> This is the canonical Databricks stack, so what you learn transfers: a **LangGraph**
-> graph wrapped in an **MLflow `ResponsesAgent`**, with `mlflow.langchain.autolog()` for
-> tracing — the same pattern as the official
+> This app is built directly on the official
 > [`agent-langgraph`](https://github.com/databricks/app-templates/tree/main/agent-langgraph)
-> template. We add a React cockpit on top for the manager's UX.
+> template — same `agent_server/` layout, same MLflow `ResponsesAgent` handlers, same
+> built-in chat UI, same `mlflow.langchain.autolog()` tracing. **The only thing we changed
+> is the agent itself:** instead of the template's generic tool-calling loop, it runs the
+> explicit LangGraph pipeline above, with the approval gate. So what you learn here is the
+> real template, not a bespoke fork.
 
 ---
 
@@ -92,40 +86,41 @@ It is a recommendation until Marc approves a specific machine at the gate.
 First, the product motion — where a custom agent app *comes from*.
 
 1. In the workspace sidebar go to **Compute → Apps → Create app**. Choose **Start from a
-   template** and open the **agent / chatbot** template in the gallery. Look at what it
-   gives you: a chat frontend, a Python backend, and an `app.yaml`. **You don't need to
-   finish creating it** — the point is to see that a custom agent is just an app you can
-   scaffold from a template.
+   template** and open the **LangGraph agent** template in the gallery. Look at what it
+   gives you: an `agent_server/` Python backend, a built-in chat UI, `scripts/quickstart`,
+   and an `app.yaml`. **You don't need to finish creating it** — the point is to see that a
+   custom agent is just an app you scaffold from this template.
 
-2. Now open **`app/`** in this repo. It's exactly that pattern, built out into Marc's real
-   agent. Skim the layout so you know where things live:
+2. Now open **`app/`** in this repo — it *is* that template, with Marc's agent dropped into
+   it. Skim the layout so you know where things live:
 
    | File | What it is |
    |---|---|
-   | `app/server/graph.py` | The **LangGraph pipeline** — the agent's control flow (Step 2). |
-   | `app/server/tools.py` | The **tool palette**: the two Genie spaces, you.com web search, the `create_service_order` UC function, the `location_managers` roster. |
-   | `app/server/agent.py` | The **chat router** — classifies each message into *plan / explain / qa / approve*. |
-   | `app/server/responses_agent.py` | The graph wrapped in an MLflow `ResponsesAgent` — the loggable, deployable surface. |
+   | `app/agent_server/dispatch.py` | The **LangGraph pipeline** — the agent's control flow + scoring policy (Step 2). |
+   | `app/agent_server/tools.py` | The **tool palette**: the two Genie spaces, you.com web search, the `create_service_order` UC function, the `location_managers` roster. |
+   | `app/agent_server/agent.py` | The template's `ResponsesAgent` handlers, routing each message into *plan / explain / qa / approve*. |
+   | `app/agent_server/start_server.py`, `utils.py`, `scripts/` | **Unchanged from the template** — the server, streaming, and quickstart. |
    | `app/app.yaml` | Config + resources (catalog, Genie space IDs, serving endpoint). |
 
 > [!TIP]
-> **Want to try it before you deploy?** From `app/`, run
-> `AGENT_DRY_RUN=1 uv run uvicorn app:app --port 8000` — the same UI with canned Sunny Bay
-> data and no workspace calls. Great for seeing the flow first.
+> **Want to try it before you deploy?** From `app/`, run `uv sync` then
+> `AGENT_DRY_RUN=1 uv run start-server` — the built-in chat UI with canned Sunny Bay data
+> and no workspace calls. Great for seeing the flow first.
 
 ---
 
 ### **Step 2: Explore and modify the flow code (10 min)**
 
-Open **`app/server/graph.py`** — this *is* the agent's brain, and unlike best-effort
-routing you can read exactly what happens, in what order.
+Open **`app/agent_server/dispatch.py`** — this *is* the agent's brain, and unlike
+best-effort routing you can read exactly what happens, in what order.
 
 1. Find `build_graph()`. The nodes and edges are the pipeline from the diagram above:
    `assess → quantify → enrich → score → assign → approval_gate ⇄ execute`.
 
 2. Find the `approval_gate` node. It calls `interrupt(...)` — the graph **pauses** here.
    `execute` (which calls `create_service_order`) only runs when the app resumes the graph
-   with an approval. That's the **human-in-the-loop gate**, done the LangGraph way.
+   with an approval (that's what your "approve CBM-003" reply does). That's the
+   **human-in-the-loop gate**, done the LangGraph way.
 
 3. Find the **scoring policy** near the top of the file — marked `LAB 3 · TASK 2`:
 
@@ -161,37 +156,37 @@ routing you can read exactly what happens, in what order.
        value: "<your sales space id>"
    ```
 
-2. From a terminal in the repo, build the frontend and deploy the app (it runs the agent
-   **inside itself** — one deploy, no separate serving endpoint):
+2. From `app/`, let the template's **quickstart** verify tooling, set up auth, link an
+   MLflow experiment, and run it — then deploy with the Databricks CLI (the app serves the
+   agent and its chat UI together — one deploy, no separate serving endpoint):
 
    ```bash
-   cd app/frontend && npm install && npm run build && cd ..
-   databricks apps create marc-manager-agent
-   databricks sync . /Workspace/Users/<you>/marc-manager-agent \
-     --exclude node_modules --exclude .venv --exclude frontend/src
-   databricks apps deploy marc-manager-agent \
-     --source-code-path /Workspace/Users/<you>/marc-manager-agent
+   cd app
+   uv run quickstart                       # tooling + auth + MLflow experiment + local run
+   databricks apps create marc-dispatch-agent
+   databricks sync . /Workspace/Users/<you>/marc-dispatch-agent --exclude .venv
+   databricks apps deploy marc-dispatch-agent \
+     --source-code-path /Workspace/Users/<you>/marc-dispatch-agent
    ```
 
-3. In the app's page (**Compute → Apps → marc-manager-agent → Edit**), add **resources**,
+3. In the app's page (**Compute → Apps → marc-dispatch-agent → Edit**), add **resources**,
    then redeploy to pick them up:
    - a **Model serving endpoint** (a Claude/Llama Foundation Model) → *Can query*
    - **SQL warehouse** access so the UC function and the roster query can run
 
-4. Open the app URL and work through what the agent can do (type them, or click the
-   suggestion chips):
+4. Open the app URL — it's the template's chat UI. Work through what the agent can do:
 
    | You say… | The agent… |
    |---|---|
-   | **"Build my dispatch plan"** | runs the pipeline and returns **ranked machine cards** |
+   | **"Build my dispatch plan"** | runs the pipeline and returns the **ranked plan** |
    | **"Why is CBM-003 ranked first?"** | explains the score straight from its own formula |
    | **"What's the weekly revenue by store?"** | routes to the Sales Genie and answers |
    | **"Approve CBM-003"** | executes the gated `create_service_order` write-back |
 
-   On the plan, check that the ranking reflects the weight you changed in Step 2. Read a
-   flagged card's **draft message** (Sara, for Mission) and the **manufacturer bulletin**
-   it pulled. Then **Approve** one machine — *now*, and only now, the agent creates the
-   service order and returns the new order ID.
+   On the plan, check that the ranking reflects the weight you changed in Step 2, and read a
+   flagged machine's **draft message** (Sara, for Mission) and the **manufacturer bulletin**
+   it pulled. Then reply **"approve CBM-003"** — *now*, and only now, the agent resumes past
+   the gate, creates the service order, and returns the new order ID.
 
 > [!NOTE]
 > Nothing was written until you approved. That gate is the difference between an assistant
@@ -206,8 +201,8 @@ routing and every tool call. Because you asked several *different* things in Ste
 have several *different-shaped* traces to inspect.
 
 1. In the sidebar open **Experiments** (under **Machine Learning** / **MLflow**), and open
-   the experiment named in `app.yaml`'s `MLFLOW_EXPERIMENT` (default
-   **`/Shared/marc-manager-agent`**).
+   the experiment **`uv run quickstart` created and linked to the app** (the template wires
+   it via `app.yaml`'s `MLFLOW_EXPERIMENT_ID`).
 
 2. Click the **Traces** tab. Open a dispatch-plan trace and explore the **span waterfall** —
    one span per LangGraph node: `assess` (Maintenance Genie) → `quantify` (Sales Genie) →
