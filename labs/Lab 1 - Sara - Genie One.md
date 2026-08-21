@@ -7,6 +7,7 @@ By the end of Lab 1, you will be able to:
 - Build a **Genie agent** (formerly *Genie space*) over the Sunny Bay maintenance data.
 - Use **Genie One** as a business-user interface, driven by that Genie agent.
 - Connect an external **MCP tool** (you.com) to enrich Genie One conversations with live web knowledge.
+- Package a repeated question as a reusable **skill** and put it on a **schedule**, so Genie One briefs Sara automatically.
 
 ## Introduction
 
@@ -250,7 +251,7 @@ AI Gateway, fixes that.
 
 ---
 
-**Step 4b-1 — Register the you.com MCP service (only if Step 4b found nothing)**
+**Step 4b-1 — Register the you.com connection in Unity Catalog**
 
 First create the Unity Catalog **HTTP connection**, then register the MCP service on top of it.
 
@@ -258,8 +259,19 @@ First create the Unity Catalog **HTTP connection**, then register the MCP servic
 
 2. Select **HTTP** as the connection type.
 
-3. Name it `youcom_http`, enter the **you.com MCP server URL**, and set the
-   authentication type to **Bearer token** — paste the `yk_...` key from Step 4a.
+3. Name it `youcom_http`, set the authentication type to **Bearer token**, paste the key from Step 4a and 
+use these settings:
+
+   | Field | Value                     |
+   |---|---------------------------|
+   | Connection type | HTTP                      |
+   | URL | `https://api.you.com:443` |
+   | Base path | `/mcp`                    |
+   | Is mcp connection | `true`                    |
+   | Auth scheme | `bearer`                  |
+   | Host | `https://api.you.com`     |
+   | Port | `443`                     |
+
 
 > [!IMPORTANT]
 > **Create this connection at the metastore level, not inside a catalog or schema.**
@@ -269,41 +281,10 @@ First create the Unity Catalog **HTTP connection**, then register the MCP servic
 > You need `CREATE CONNECTION` to do this. If the option is greyed out, you don't have
 > the privilege — ask your facilitator or a metastore admin to create it.
 
-4. Click **Create**.
+**Step 4c — Ask enriched questions**
 
-5. Go to **AI Gateway** → **MCPs** → **Register MCP Server**.
-
-6. Give the service a name, select the `youcom_http` connection you just created, pick the
-   **Tools** you want exposed (web search), and click **Create**.
-
-7. Open the new MCP service → **Permissions** tab → **Grant**. Add the workshop users or
-   group and grant **`EXECUTE`**, then click **Grant**.
-
-> [!WARNING]
-> Grant participants **`EXECUTE` on the MCP service only — never `USE CONNECTION`**.
-> `USE CONNECTION` would let them call you.com directly or register their own MCP
-> services, bypassing governance. `EXECUTE` is all they need to use the tool.
-
-Full reference: [Register an MCP service](https://docs.databricks.com/aws/en/ai-gateway/register-mcp-service).
-
----
-
-**Step 4c — Add the MCP service to your Genie agent**
-
-1. In the workspace sidebar, open **Genie** and go to your **Sunny Bay Maintenance
-   Genie** (from Step 1).
-
-2. Open the Genie agent's **settings / tools** and add the **you.com** MCP service as a
-   tool — it appears in the list because it's registered in the AI Gateway and you have
-   `EXECUTE` on it.
-
-> [!NOTE]
-> If you don't see it in the list, confirm the service is registered under
-> **AI Gateway → MCPs** and that you have **`EXECUTE`** on it (Step 4b-1, task 7).
-
-**Step 4d — Ask enriched questions**
-
-Now in Genie One, ask questions that combine your governed data with the web:
+In Genie One, enable the you.com connection you created `Customizations > Connections > Toggle youcom_http`.    
+You can now ask questions that combine your governed data with the web:
 
 ```
 What does Siemens recommend when a repeated E-07 pressure error appears on
@@ -321,19 +302,102 @@ commercial machines?
 
 ---
 
-### **Step 5: Make it a standing question (optional, 10 min)**
+### **Step 5: Turn Sara's weekly check into a skill — and schedule it (optional, 15 min)**
 
-Sara has explored and built trust. A natural next step is a *standing* question — one
-Genie re-runs on a cadence so she gets a briefing without asking.
+Sara keeps asking the same weekly question: *which machines need attention, and why?*
+Genie One lets her stop re-typing it. Two features turn a repeated question into something
+durable:
+
+- A **skill** — a custom, reusable capability she creates once and runs any time.
+- A **scheduled task** — a question (or skill) Genie One re-runs on a cadence and emails to
+  her as a briefing, no prompting required.
+
+Sara wants to send the results of her findings to her maintenance team. Genie One supports managed connections 
+with GSuite and MS365. For this Lab, we will use Gmail.  
+
+**Enable the connector click on the `+` sign on the below the text box and enable the connection
+with Gmail (credentials will be communicated by the instructor).**
 
 > [!NOTE]
-> **Facilitator note:** Scheduled/standing Genie briefings depend on the features
-> enabled in your workspace. Confirm availability before the session. If it isn't
-> available in your Free Edition workspace, demonstrate the intent instead: Sara would
-> save *"Which of my machines logged faults in the last 7 days, and are there any open
-> service bulletins for them?"* to run every Monday morning.
+> **Skills and scheduled tasks are personal to you.** A skill you create lives in your own
+> Genie One — it isn't shared with the workspace. In the near future, skills will be shareable
+> enabling teams to share standard and best practices.
 
-The point stands either way: Sara defines the *question*. Genie does the *work*.
+**Step 5a — Create a skill**
+
+In Genie One chat, just describe the capability you want. Genie One writes the skill and
+saves it for you:
+
+```
+Create a user skill called "maintenance update email drafter".
+
+When the skill is invoked or if you are asked to prepare a maintenance update:
+
+1. Use the Sunny Bay Maintenance Genie to identify relevant machines, recent faults and
+   repeated fault codes.
+
+2. Using the Gmail connector, draft an email to maintenance@sunnybailroastery.com:
+   - Start with a clear subject line.
+   - Summarize the situation in plain business language.
+   - Identify affected machines and locations.
+   - Explain the operational impact without unnecessary technical jargon.
+   - List recommended actions, owners, and urgency.
+   - End with a clear request or next step.
+```
+
+Genie One creates the skill and saves it to your workspace at
+`/Workspace/Users/<your-email>/.assistant/skills/` and accessible on the tab `Customizations > Skill`
+where it can be edited or deleted and (soon) shared.
+
+**Step 5b — Execute the skill**
+
+Two ways to run it:
+
+- **Invoke it by hand:** type `/` in the chat input and pick your skill from the list.
+- **Let Genie One load it:** just ask a related question. Genie One automatically loads the
+  skill when it decides the skill is relevant to your request — you don't have to name it.
+
+You still get **Show code** and the **citation icons** on the answer, exactly as in Steps 2–3.
+
+At the end of the skill execution, a new draft will be written in Gmail.
+
+**Step 5d — Schedule it as a standing briefing**
+
+Now make it run itself. The fastest way is to just ask in chat:
+
+```
+Run maintenance update email drafter every Monday at 7am.
+```
+
+Or create it deliberately from the sidebar:
+
+1. In the Genie One sidebar, click **Schedules**.
+2. Open the dropdown next to **+ Create in chat** and choose **Create manually**.
+3. Fill in **Title**, **Instructions** (the question or skill to run), **Connections** (the
+   data/agent the task should use — your Maintenance Genie agent, plus you.com for bulletins),
+   **Schedule** (e.g. weekly, Monday 07:00), and **Timezone**.
+4. Click **Create**. Use **Run now** to fire it immediately and check the output.
+
+When the task runs it **posts the results in a chat thread and emails you the results with a
+PDF attachment** — so Sara gets her Monday briefing whether or not she's in Databricks that
+morning.
+
+> [!NOTE]
+> Manage every scheduled task under **Scheduled tasks** in the sidebar: click one to see its
+> past runs, edit it, or delete it. To pull a task into a fresh conversation, **@mention** it
+> in chat.
+
+> [!NOTE]
+> **Facilitator note:** Skills and scheduled tasks are newer Genie One capabilities. Confirm
+> they're enabled in your workshop workspace before the session — some Free Edition workspaces
+> may not have them yet. If they're unavailable, demonstrate the *intent* instead: Sara defines
+> the weekly machine-health question once, and Genie One runs it for her every Monday morning.
+
+The point stands either way: **Sara defines the *question* once. Genie does the *work* — on
+demand and on a schedule.**
+
+Full reference: [Chat in Genie One](https://docs.databricks.com/aws/en/genie-one/chat)
+(covers both user skills and scheduled tasks).
 
 ---
 
@@ -355,8 +419,9 @@ that *acts* on it.
 
 ## What Happens Next?
 
-You have built a Genie agent, driven it from Genie One as a business user, and enriched
-it with live web knowledge — all on governed data that never left Unity Catalog.
+You have built a Genie agent, driven it from Genie One as a business user, enriched it with
+live web knowledge — and, optionally, packaged Sara's weekly check as a scheduled skill that
+briefs her automatically — all on governed data that never left Unity Catalog.
 
 ➡️ Continue to **[Lab 2 — Document Intelligence](./Lab%202%20-%20Document%20Intelligence.md)**
    to start building Marc's Maintenance Agent.
