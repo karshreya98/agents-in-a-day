@@ -24,9 +24,7 @@ from langgraph.types import Command, interrupt
 
 from . import tools
 
-# --- LAB 3 · TASK 2: Marc's scoring policy — deterministic, not a prompt. ---
-# Try changing a value here, then re-run the plan and watch the ranking move. E.g. bump
-# REVENUE_WEIGHT to 2.0 so a busy store outranks a fault-heavy quiet one.
+# Marc's scoring policy — deterministic Python, not a prompt the model might ignore.
 FAULT_WEIGHT = 4.0          # points per unresolved fault
 REVENUE_WEIGHT = 1.0        # points per $1,000/wk of revenue at risk
 DISPATCH_THRESHOLD = 10.0   # a machine must score at least this to make the plan
@@ -123,48 +121,61 @@ def _after_gate(state: PlanState) -> str:
     return "execute" if state.get("pending") else END
 
 
-def build_graph():
+def build_checkpointer():
+    """The agent's short-term memory — where the in-progress plan and pending approval live.
+
+    ┌─ LAB 3 · TASK 3 ────────────────────────────────────────────────────────────┐
+    │ Today this is `MemorySaver()`: in-memory, so the plan and pending approval    │
+    │ are LOST when the app restarts. Swap it for a Lakebase-backed                  │
+    │ `AsyncCheckpointSaver` to give the agent durable short-term memory on          │
+    │ governed Postgres. See the `add-lakebase-short-term-memory` skill.            │
+    └───────────────────────────────────────────────────────────────────────────────┘
+    """
+    return MemorySaver()
+
+
+def build_graph(checkpointer=None):
     g = StateGraph(PlanState)
     for name, fn in [("assess", assess), ("score", score),
                      ("approval_gate", approval_gate), ("execute", execute)]:
         g.add_node(name, fn)
     g.add_edge(START, "assess")
-    g.add_edge("assess", "score")   # LAB 3 · TASK 2: try inserting a node here (assess → your_node → score)
+    g.add_edge("assess", "score")
     g.add_edge("score", "approval_gate")
     g.add_conditional_edges("approval_gate", _after_gate, {"execute": "execute", END: END})
     g.add_edge("execute", "approval_gate")
-    return g.compile(checkpointer=MemorySaver())
+    return g.compile(checkpointer=checkpointer or build_checkpointer())
 
 
-# One compiled graph per process; MemorySaver keeps per-thread (per-conversation) state.
+# One compiled graph per process; the checkpointer keeps per-thread (per-conversation) state.
 GRAPH = build_graph()
 
 
-# --- Orchestration the chat surface calls ----------------------------------
-def build_plan(thread_id: str) -> dict[str, Any]:
-    """Run assess→assign; pause at the approval gate; return the plan."""
+# --- Orchestration the chat surface calls (async, so a Lakebase saver drops in) ---
+async def build_plan(thread_id: str) -> dict[str, Any]:
+    """Run assess→score; pause at the approval gate; return the plan."""
     cfg = {"configurable": {"thread_id": thread_id}}
-    GRAPH.invoke({"executed": []}, cfg)
-    return _plan_from_state(thread_id)
+    await GRAPH.ainvoke({"executed": []}, cfg)
+    return await _plan_from_state(thread_id)
 
 
-def approve_machine(thread_id: str, machine_id: str) -> dict[str, Any]:
+async def approve_machine(thread_id: str, machine_id: str) -> dict[str, Any]:
     """Resume the paused graph to execute the write-back for one approved machine."""
     cfg = {"configurable": {"thread_id": thread_id}}
-    GRAPH.invoke(Command(resume={"machine_id": canonical_id(machine_id) or machine_id}), cfg)
-    executed = GRAPH.get_state(cfg).values.get("executed", [])
+    await GRAPH.ainvoke(Command(resume={"machine_id": canonical_id(machine_id) or machine_id}), cfg)
+    executed = (await GRAPH.aget_state(cfg)).values.get("executed", [])
     return executed[-1] if executed else {"status": "error", "reason": "nothing executed"}
 
 
-def _plan_from_state(thread_id: str) -> dict[str, Any]:
-    vals = GRAPH.get_state({"configurable": {"thread_id": thread_id}}).values
+async def _plan_from_state(thread_id: str) -> dict[str, Any]:
+    vals = (await GRAPH.aget_state({"configurable": {"thread_id": thread_id}})).values
     return {"ranked": vals.get("ranked", []), "actions": vals.get("actions", []),
             "summary": vals.get("summary", ""), "executed": vals.get("executed", [])}
 
 
-def explain_ranking(thread_id: str, machine_id: str | None) -> str:
+async def explain_ranking(thread_id: str, machine_id: str | None) -> str:
     mid = canonical_id(machine_id)
-    plan = build_plan(thread_id) if not _has_plan(thread_id) else _plan_from_state(thread_id)
+    plan = await build_plan(thread_id) if not await _has_plan(thread_id) else await _plan_from_state(thread_id)
     row = next((r for r in plan["ranked"] if r["machine_id"] == mid), None)
     if row is None:
         return f"I don't have {machine_id or 'that machine'} in the current plan."
@@ -184,8 +195,9 @@ def answer_question(question: str, genie: str | None = None) -> str:
     return tools.GenieTool(space, genie or "maintenance").ask(question)
 
 
-def _has_plan(thread_id: str) -> bool:
-    return bool(GRAPH.get_state({"configurable": {"thread_id": thread_id}}).values.get("ranked"))
+async def _has_plan(thread_id: str) -> bool:
+    state = await GRAPH.aget_state({"configurable": {"thread_id": thread_id}})
+    return bool(state.values.get("ranked"))
 
 
 def canonical_id(text: str | None) -> str | None:

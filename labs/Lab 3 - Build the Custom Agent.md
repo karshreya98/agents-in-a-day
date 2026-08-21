@@ -4,14 +4,11 @@
 
 By the end of this lab you will be able to:
 
-- See how a **custom agent** is packaged as a **Databricks App** — and that you can start
-  one by cloning a template right from the Apps UI.
-- Read and **modify the agent's control-flow code** (a LangGraph pipeline) and see your
-  change take effect.
-- **Deploy** the agent as an App and drive it — including a **human-in-the-loop approval
-  gate** before it writes anything back.
-- Inspect the agent's **MLflow trace** to debug what it did, step by step.
-- Stand up a **Review App** so the people who do the job can grade real answers.
+- **Create a custom agent app** on Databricks from the Apps UI.
+- Read the agent's source code and find **where the control flow is defined**.
+- Use the in-product **AI assistant to add a Databricks capability** — durable **short-term
+  agent memory backed by Lakebase** — without writing the code yourself.
+- **Observe and review** the agent with **MLflow traces** and a **Review App**.
 
 ---
 
@@ -78,168 +75,123 @@ replying **"approve CBM-003"** in the same chat.
 
 ## Instructions
 
-### **Task 1: Explore custom agents on Apps (5 min)**
+### **Task 1: Create the app in the UI (10 min)**
 
-See where a custom agent app *comes from*. In the sidebar go to **Compute → Apps → Create
-app → Start from a template**, and open the **LangGraph agent** template in the gallery —
-an `agent_server/` Python backend plus a built-in chat UI. **You don't need to finish it;**
-the point is to see that a custom agent is just an app you scaffold from this template.
+A custom agent is just an app you deploy on Databricks. Let's stand this one up first.
 
-Now open **`app/`** in this repo — it *is* that template, with Marc's agent inside it:
+1. **Get the code into your workspace** (if it isn't already): sidebar → **Workspace →
+   Create → Git folder**, paste this repo's URL, **Create**. The app lives in the `app/`
+   folder (that's where `app.yaml` is).
 
-| File | What it is |
-|---|---|
-| `app/agent_server/dispatch.py` | The **LangGraph pipeline** — the control flow you'll edit in Task 2. |
-| `app/agent_server/tools.py` | The **tool palette**: the two Genie spaces, the `create_service_order` UC function, and the location-manager roster. |
-| `app/agent_server/agent.py` | The template's `ResponsesAgent` handlers — routes each message to *plan / explain / qa / approve*. |
-| `app/app.yaml` | Config + resources (catalog, Genie space IDs, serving endpoint). |
+2. **Create the app**: **Compute → Apps → Create app → Custom**, name it
+   `marc-dispatch-agent`, **Create**.
 
----
+3. **Deploy it**: open the app → **Deploy** → set the source path to the `app/` folder →
+   **Deploy**, and wait for **Running**.
 
-### **Task 2: Modify one thing in the cloned template (10 min)**
-
-Open **`app/agent_server/dispatch.py`** — this *is* the agent's brain. Read `build_graph()`:
-the four nodes and their edges *are* the pipeline (`assess → score → approval_gate ⇄
-execute`), and `approval_gate` calls `interrupt(...)` — the graph pauses there until your
-"approve" resumes it. Now make **one small change** and see it show up later.
-
-**Add a new control-flow element** — a node of your own. Add this function, then insert it
-between `assess` and `score` (look for the `LAB 3 · TASK 2` marker in `build_graph()`):
-
-```python
-def note_fleet(state: PlanState) -> dict:
-    """A simple pass-through node — it will appear as its own span in the trace."""
-    print(f"[note] scoring {len(state['fleet'])} machines this run")
-    return {}
-```
-
-```python
-    # in build_graph(), register the node and re-route two edges:
-    g.add_node("note_fleet", note_fleet)
-    g.add_edge("assess", "note_fleet")   # was: assess → score
-    g.add_edge("note_fleet", "score")
-```
-
-You've just changed the agent's control flow — in Task 5 you'll see `note_fleet` as a new
-span in the trace.
-
-> [!TIP]
-> **Even simpler:** instead of a node, tweak the scoring policy at the `LAB 3 · TASK 2`
-> marker (e.g. bump `REVENUE_WEIGHT` to `2.0` so a busy store outranks a fault-heavy quiet
-> one) and watch the ranking change when you test in Task 4.
-
----
-
-### **Task 3: Create and deploy the app — from the UI (10 min)**
-
-No terminal, no config — do it all in the workspace UI.
-
-1. **Get the code into your workspace.** In the sidebar: **Workspace → Create → Git folder**,
-   paste this repo's URL, **Create**. (If your workshop workspace already has it, skip this.)
-
-2. **Create the app.** **Compute → Apps → Create app → Custom**, name it
-   `marc-dispatch-agent`, and point its **source code path** at the `app/` folder in your
-   Git folder.
-
-3. Click **Deploy** and wait for the app to reach **Running**.
-
-That's it — the app ships in **sample-data mode**, so it deploys with nothing to wire up.
-
-> [!NOTE]
-> The agent runs on built-in Sunny Bay data, so there are **no resources to attach and no
-> yaml to edit**. Wiring in your real Genie spaces and the governed `create_service_order`
-> write-back is **Lab 4 (AI Gateway and Write-back)**.
-
----
-
-### **Task 4: Test it out (5 min)**
-
-Open the app URL — it's the template's chat UI. Work through what the agent can do:
+The app ships in **sample-data mode**, so it deploys with **no resources to attach**. Open
+the app URL and try it — it's a chat cockpit:
 
 | You say… | The agent… |
 |---|---|
-| **"Build my dispatch plan"** | runs the pipeline and returns the **ranked plan** |
-| **"Why is CBM-003 ranked first?"** | explains the score straight from its own formula |
-| **"What's the weekly revenue by store?"** | routes to the Sales Genie and answers |
-| **"Approve CBM-003"** | executes the gated `create_service_order` write-back |
+| **"Build my dispatch plan"** | ranks this week's machines and returns the plan |
+| **"Why is CBM-003 ranked first?"** | explains the score from its own formula |
+| **"Approve CBM-003"** | runs the gated `create_service_order` write-back |
 
-Read a flagged machine's **draft message** to its store manager (Sara, for Mission). Then
-reply **"approve CBM-003"** — *now*, and only now, the agent resumes past the gate and
-raises the service order (a simulated order ID in sample mode; Lab 4 makes it a real
-governed write-back).
-
-> [!NOTE]
-> Nothing happened until you approved. That gate is the difference between an assistant
-> that *answers* and an agent Marc trusts to *act*.
+Reply **"approve CBM-003"** and the agent raises the order — but only *after* your approval.
 
 ---
 
-### **Task 5: Review the traces and MLflow experiment (7 min)**
+### **Task 2: Find where the control flow is defined (5 min)**
+
+Open **`app/agent_server/dispatch.py`** — this is the agent's brain. Two things to spot:
+
+1. **`build_graph()`** — the four nodes and edges *are* the control flow:
+   `assess → score → approval_gate ⇄ execute`. The `approval_gate` node calls
+   `interrupt(...)`, which pauses the graph until your "approve" resumes it.
+
+2. **`build_checkpointer()`** — this is the agent's **short-term memory**: where the
+   in-progress plan and the pending approval are stored between your messages. Right now
+   it's `MemorySaver()` — **in-memory**, so if the app restarts, the plan and pending
+   approval are **gone**. That's what you'll fix in Task 3.
+
+---
+
+### **Task 3: Add short-term memory with Lakebase — using the AI assistant (15 min)**
+
+You won't hand-write this. You'll provision a **Lakebase** instance (Databricks' managed
+Postgres) and let the in-product **AI assistant** make the code change for you.
+
+1. **Create a Lakebase instance**: sidebar → **Compute → Database instances → Create
+   database instance** (Lakebase). Give it a name and create it. Note its name/endpoint —
+   you'll grant your app access to it.
+
+2. **Open the app's code** in the workspace editor, open the **AI assistant**, and give it
+   this prompt:
+
+   > *"Add short-term agent memory to this app backed by Lakebase, following the
+   > `add-lakebase-short-term-memory` skill. Replace the in-memory `MemorySaver()` in
+   > `agent_server/dispatch.py` with a Lakebase-backed `AsyncCheckpointSaver` so the
+   > dispatch plan and the pending approval survive an app restart. Add the
+   > `databricks-langchain[memory]` dependency, add my Lakebase instance as an app resource,
+   > and initialize the checkpoint tables once at startup. Don't change the graph nodes or
+   > the approval gate."*
+
+   The assistant follows the bundled **`add-lakebase-short-term-memory`** skill (in
+   `app/.claude/skills/`) to make the edits.
+
+3. **Redeploy** the app (Task 1, step 3) and let it reach **Running**.
+
+4. **Prove the memory is durable**: ask **"Build my dispatch plan"**, then **restart the
+   app** from its page. When it's back, reply **"approve CBM-003"** — it *still works*,
+   because the plan and pending approval were read back from **Lakebase**, not memory.
+
+> [!NOTE]
+> That's the whole point: **durable agent memory on governed Postgres you didn't have to
+> run.** The pattern is short-term (thread-scoped) memory — the same one the
+> [`agent-langgraph-advanced`](https://github.com/databricks/app-templates/tree/main/agent-langgraph-advanced)
+> template ships.
+
+---
+
+### **Task 4: Observe and review with MLflow (12 min)**
 
 Every message is logged as an **MLflow trace** — the full record of the routing and every
 tool call.
 
-1. In the sidebar open **Experiments**, and open the experiment **linked to your app** (the
-   template wires it via `app.yaml`'s `MLFLOW_EXPERIMENT_ID`).
+1. Sidebar → **Experiments** → open the experiment **linked to your app**. Click the
+   **Traces** tab, open a dispatch-plan trace, and explore the **span waterfall** — one span
+   per LangGraph node: `assess` → `score` → `approval_gate`. Click a span to see its exact
+   inputs and outputs (what the Genie tool returned, the priority score, the Lakebase
+   checkpoint read/write).
 
-2. Click the **Traces** tab. Open a dispatch-plan trace and explore the **span waterfall** —
-   one span per LangGraph node: `assess` → **`note_fleet`** (your Task 2 node!) → `score` →
-   `approval_gate`.
-
-3. Click a span to see its exact inputs and outputs — e.g. what the Genie tool returned, or
-   the priority score the Python step computed.
-
-> [!NOTE]
-> This is how you debug an agent. Because the flow is explicit, the trace reads like the
-> code — including the node you just added.
-
----
-
-### **Task 6: Create a Review App (10 min)**
-
-The loop that hardens an agent: real experts grade real output through a simple UI, and
-every rating lands back on the trace.
-
-1. **Create a label schema** — in your experiment open **Labeling → Labeling schemas →
-   Create schema**, and add two:
-
-   | Field | Quality rating | Correctness check |
-   |---|---|---|
-   | **Name** | `plan_quality` | `grounded_in_data` |
-   | **Type** | Feedback · Categorical | Feedback · Categorical |
-   | **Options** | `Poor`, `Fair`, `Good`, `Excellent` | `Yes`, `No` |
-   | **Instruction** | *Is the ranking sensible and are the drafted messages ready to send?* | *Are the fault counts, revenue, and parts all supported by the data — nothing made up?* |
-
-2. **Create a labeling session** — **Labeling → Labeling sessions → Create labeling
-   session**. Name it `Sunny Bay — Dispatch Plan Review`, attach both schemas, and assign
-   your reviewers.
-
-3. From the **Traces** tab, select your traces → **Add to labeling session** → your session.
-
-4. Open the session → **Share** → copy the **Review App URL** for your reviewers. Open it
-   yourself: one plan at a time with your schema questions on the side. Rate it, submit.
-
-5. Back in **Traces**, open a labeled trace — your feedback now appears under
-   **Assessments**, attached to that exact trace.
+2. **Stand up a Review App** so domain experts grade real output:
+   - In your experiment: **Labeling → Labeling schemas → Create schema**. Add a
+     `plan_quality` rating (*Poor / Fair / Good / Excellent* — "is the ranking sensible and
+     are the drafted messages ready to send?") and a `grounded_in_data` check (*Yes / No* —
+     "are the fault counts, revenue, and parts all supported by the data?").
+   - **Labeling → Labeling sessions → Create labeling session**, name it
+     `Sunny Bay — Dispatch Plan Review`, attach both schemas, assign reviewers.
+   - From **Traces**, select your traces → **Add to labeling session**.
+   - Open the session → **Share** → copy the **Review App URL** for reviewers. Open it
+     yourself, rate a plan, submit — the feedback lands back under **Assessments** on that
+     exact trace.
 
 > [!NOTE]
-> That labeled feedback is what you'd later use to build an evaluation set or align an
-> automated judge — so quality checks run continuously, not just once.
+> This is the loop that hardens an agent: the people who do the job grade real output, and
+> every rating attaches to the trace — the raw material for an eval set or an automated judge.
 
 ---
 
 ## 💡 Key takeaways
 
-- **A custom agent is an app you can scaffold from a template** — a chat frontend, a Python
-  backend, and the agent's logic running inside it.
-- **The control flow is code you own.** The dispatch pipeline is ordered Python you can
-  read, modify, and test — you changed a scoring weight and saw the ranking move.
-- **The approval gate is the line between answering and acting.** It's a LangGraph
-  `interrupt`, and it's why Marc trusts the agent with `create_service_order`.
-- **The trace reads like the code.** One span per node means you debug by looking, not
-  guessing.
-- **The Review App closes the loop** — the people who do the job grade real output, and
-  every rating lands back on the trace.
+- **A custom agent is just an app** you create and deploy from the Databricks Apps UI.
+- **The control flow lives in code you can read** — an explicit pipeline with a
+  human-in-the-loop approval gate before it acts.
+- **You extend the agent with Databricks capabilities, by prompting the AI assistant** — you
+  added durable **short-term memory on Lakebase** without writing the code yourself.
+- **Observability and review are built in** — MLflow traces to debug, and a Review App so
+  the people who do the job grade real output.
 
 ---
 

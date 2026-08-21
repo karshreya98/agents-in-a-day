@@ -21,8 +21,9 @@ DRY_RUN = os.environ.get("AGENT_DRY_RUN", "0") == "1"
 CATALOG = os.environ.get("CATALOG", "sunny_bay_roastery")
 MAINTENANCE_GENIE_SPACE_ID = os.environ.get("MAINTENANCE_GENIE_SPACE_ID", "")
 SALES_GENIE_SPACE_ID = os.environ.get("SALES_GENIE_SPACE_ID", "")
-# Foundation Model endpoint used for drafting/synthesis and (live) intent routing.
-SERVING_ENDPOINT = os.environ.get("SERVING_ENDPOINT", "databricks-claude-sonnet-4-5")
+# Foundation Model endpoint for drafting/synthesis and (live) intent routing.
+# Default is an OSS model available on Databricks Free Edition (Claude is not).
+SERVING_ENDPOINT = os.environ.get("SERVING_ENDPOINT", "databricks-qwen3-next-80b-a3b-instruct")
 
 
 @lru_cache(maxsize=1)

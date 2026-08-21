@@ -51,7 +51,7 @@ test_cases = [
 simulator = ConversationSimulator(
     test_cases=test_cases,
     max_turns=5,
-    user_model="databricks:/databricks-claude-sonnet-4-5",
+    user_model="databricks:/databricks-qwen3-next-80b-a3b-instruct",
 )
 
 # Get the invoke function that was registered via @invoke decorator in your agent

@@ -78,24 +78,24 @@ def _route(text: str) -> str:
 
 
 @mlflow.trace(span_type="AGENT")
-def build_reply(request: ResponsesAgentRequest) -> str:
+async def build_reply(request: ResponsesAgentRequest) -> str:
     thread_id = get_session_id(request) or "default"
     text = _latest_user_text(request)
     intent = _route(text)
 
     if intent == "approve":
-        if not dispatch._has_plan(thread_id):
-            dispatch.build_plan(thread_id)  # make sure a plan exists and is paused at the gate
-        order = dispatch.approve_machine(thread_id, text)
+        if not await dispatch._has_plan(thread_id):
+            await dispatch.build_plan(thread_id)  # ensure a plan exists and is paused at the gate
+        order = await dispatch.approve_machine(thread_id, text)
         return dispatch.format_order(order)
     if intent == "explain":
-        return dispatch.explain_ranking(thread_id, text)
+        return await dispatch.explain_ranking(thread_id, text)
     if intent == "qa_sales":
         return dispatch.answer_question(text, genie="sales")
     if intent == "qa_maintenance":
         return dispatch.answer_question(text, genie="maintenance")
     if intent == "dispatch_plan":
-        return dispatch.format_plan(dispatch.build_plan(thread_id))
+        return dispatch.format_plan(await dispatch.build_plan(thread_id))
     return HELP
 
 
@@ -115,6 +115,6 @@ async def stream_handler(
 ) -> AsyncGenerator[ResponsesAgentStreamEvent, None]:
     if session_id := get_session_id(request):
         mlflow.update_current_trace(metadata={"mlflow.trace.session": session_id})
-    reply = build_reply(request)
+    reply = await build_reply(request)
     for item in output_to_responses_items_stream([AIMessage(content=reply)]):
         yield item

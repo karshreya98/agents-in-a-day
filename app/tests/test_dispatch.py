@@ -1,4 +1,5 @@
 """Dry-run tests for Marc's dispatch pipeline — no workspace calls."""
+import asyncio
 import os
 
 os.environ.setdefault("AGENT_DRY_RUN", "1")
@@ -7,25 +8,28 @@ from agent_server import dispatch  # noqa: E402
 
 
 def test_plan_ranks_mission_first():
-    plan = dispatch.build_plan("t-rank")
+    plan = asyncio.run(dispatch.build_plan("t-rank"))
     assert plan["ranked"][0]["machine_id"] == "CBM-003"  # 3 faults + high revenue
     assert plan["summary"]
 
 
 def test_gate_holds_until_approved():
-    plan = dispatch.build_plan("t-gate")
+    plan = asyncio.run(dispatch.build_plan("t-gate"))
     assert plan["executed"] == []  # the approval gate wrote nothing
 
 
 def test_approve_creates_order():
-    dispatch.build_plan("t-appr")
-    order = dispatch.approve_machine("t-appr", "CBM-003")
+    async def flow():
+        await dispatch.build_plan("t-appr")
+        return await dispatch.approve_machine("t-appr", "CBM-003")
+
+    order = asyncio.run(flow())
     assert order["status"] == "created"
     assert order["machine_id"] == "CBM-003"
 
 
 def test_scoring_is_deterministic_and_weighted():
-    plan = dispatch.build_plan("t-score")
+    plan = asyncio.run(dispatch.build_plan("t-score"))
     top = plan["ranked"][0]
     expected = round(dispatch.FAULT_WEIGHT * top["unresolved_faults"]
                      + dispatch.REVENUE_WEIGHT * top["revenue_at_risk"] / 1000, 2)
@@ -39,7 +43,7 @@ def test_canonical_id():
 
 
 def test_explain_mentions_score():
-    txt = dispatch.explain_ranking("t-exp", "CBM-003")
+    txt = asyncio.run(dispatch.explain_ranking("t-exp", "CBM-003"))
     assert "CBM-003" in txt and "score" in txt.lower()
 
 
