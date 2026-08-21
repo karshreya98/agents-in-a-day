@@ -5,12 +5,13 @@
 # MAGIC Run this **once** to stand up the whole workshop. It:
 # MAGIC 1. **Creates the catalog** (default `sunny_bay_roastery`) — or reuses it if it
 # MAGIC    already exists / an admin pre-created it.
-# MAGIC 2. **Deploys the bundle** (the setup job + both Lakeflow pipelines).
+# MAGIC 2. **Deploys the bundle** — the setup job, both Lakeflow pipelines, and the
+# MAGIC    **`sunny-bay-lakebase`** Lakebase instance that Lab 3's agent uses for durable
+# MAGIC    short-term memory.
 # MAGIC 3. **Runs the setup job** end-to-end (maintenance tables, sales star schema +
 # MAGIC    metric view, pre-built Sales Genie, dashboard, and the fault-report PDFs +
 # MAGIC    `fault_reports_structured`).
-# MAGIC 4. **Pre-creates the Lakebase instance** (`sunny-bay-lakebase`) that Lab 3's agent
-# MAGIC    uses for durable short-term memory.
+# MAGIC 4. **Installs the Lab 3 Genie Code skill** into your `.assistant/skills/` folder.
 # MAGIC
 # MAGIC **Why a bootstrap notebook and not just "Deploy"?** A Lakeflow pipeline's target
 # MAGIC `catalog` is validated by Unity Catalog **at bundle-deploy time** — which is
@@ -149,35 +150,7 @@ run_cli(["current-user", "me", "-o", "json"])
 
 # COMMAND ----------
 
-# MAGIC %md ## 3b. Pre-create the Lakebase instance (Lab 3 short-term memory)
-# MAGIC Lab 3 gives Marc's agent durable short-term memory on **Lakebase**. Kick off the
-# MAGIC instance now (non-blocking) so it's provisioned well before you reach Lab 3.
-
-# COMMAND ----------
-
-# Idempotent and non-fatal: only Lab 3 uses this, so a failure here (e.g. Lakebase not
-# available in this region) must not break the rest of the workshop.
-LAKEBASE_INSTANCE = "sunny-bay-lakebase"
-_exists = subprocess.run(
-    [CLI, "database", "get-database-instance", LAKEBASE_INSTANCE],
-    cwd=bundle_root, env=cli_env, capture_output=True, text=True,
-)
-if _exists.returncode == 0:
-    print(f"✅ Lakebase instance already exists: {LAKEBASE_INSTANCE}")
-else:
-    try:
-        run_cli(["database", "create-database-instance", LAKEBASE_INSTANCE,
-                 "--capacity", "CU_1", "--no-wait"])
-        print(f"✅ Creating Lakebase instance '{LAKEBASE_INSTANCE}' (provisioning in the "
-              "background; ready well before Lab 3).")
-    except Exception as e:
-        print(f"⚠️  Could not create Lakebase instance '{LAKEBASE_INSTANCE}': {e}\n"
-              "    Lab 3's memory task needs it — create it manually "
-              "(Compute → Database instances → Create) or skip that task.")
-
-# COMMAND ----------
-
-# MAGIC %md ## 3c. Install the Lab 3 memory skill for Genie Code
+# MAGIC %md ## 4. Install the Lab 3 memory skill for Genie Code
 # MAGIC Genie Code loads skills from your **`.assistant/skills/`** folder. Copy the repo's
 # MAGIC `add-lakebase-short-term-memory` skill there so Lab 3's one-line prompt just works.
 
@@ -202,17 +175,19 @@ except Exception as e:
 
 # COMMAND ----------
 
-# MAGIC %md ## 4. Deploy the bundle
-# MAGIC Passes the catalog you chose above so the pipelines target the catalog we just created.
+# MAGIC %md ## 5. Deploy the bundle
+# MAGIC Creates the setup job, both Lakeflow pipelines, and the **Lakebase instance**
+# MAGIC (`sunny-bay-lakebase`) that Lab 3 uses for durable short-term memory. Passes the
+# MAGIC catalog you chose above so the pipelines target the catalog we just created.
 
 # COMMAND ----------
 
 run_cli(["bundle", "deploy", "-t", target, "--var", f"catalog={catalog}", "--force-lock"])
-print("✅ Bundle deployed.")
+print("✅ Bundle deployed (including the sunny-bay-lakebase Lakebase instance).")
 
 # COMMAND ----------
 
-# MAGIC %md ## 5. Run the setup job end-to-end
+# MAGIC %md ## 6. Run the setup job end-to-end
 # MAGIC This is the long one (~15–20 min): it builds every table, the metric view, the
 # MAGIC Sales Genie, the dashboard, and parses the fault-report PDFs. When this cell
 # MAGIC finishes green, the whole workshop is ready.
