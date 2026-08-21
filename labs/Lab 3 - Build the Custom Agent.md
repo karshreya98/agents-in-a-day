@@ -117,32 +117,26 @@ Open **`app/agent_server/dispatch.py`** — this is the agent's brain. Two thing
 
 ---
 
-### **Task 3: Add short-term memory with Lakebase — using the AI assistant (15 min)**
+### **Task 3: Add short-term memory with Lakebase — using the AI assistant (10 min)**
 
-You won't hand-write this. You'll provision a **Lakebase** instance (Databricks' managed
-Postgres) and let the in-product **AI assistant** make the code change for you.
+A **Lakebase** instance (Databricks' managed Postgres) named **`sunny-bay-lakebase`** has
+been **pre-created for you**. You won't write any code — you'll let the in-product **AI
+assistant** wire it in.
 
-1. **Create a Lakebase instance**: sidebar → **Compute → Database instances → Create
-   database instance** (Lakebase). Give it a name and create it. Note its name/endpoint —
-   you'll grant your app access to it.
+1. Open the app's code in the workspace editor, open the **AI assistant**, and paste this
+   short prompt:
 
-2. **Open the app's code** in the workspace editor, open the **AI assistant**, and give it
-   this prompt:
-
-   > *"Add short-term agent memory to this app backed by Lakebase, following the
-   > `add-lakebase-short-term-memory` skill. Replace the in-memory `MemorySaver()` in
-   > `agent_server/dispatch.py` with a Lakebase-backed `AsyncCheckpointSaver` so the
-   > dispatch plan and the pending approval survive an app restart. Add the
-   > `databricks-langchain[memory]` dependency, add my Lakebase instance as an app resource,
-   > and initialize the checkpoint tables once at startup. Don't change the graph nodes or
-   > the approval gate."*
+   > *"Add short-term memory to this app using our Lakebase instance `sunny-bay-lakebase`,
+   > following the `add-lakebase-short-term-memory` skill."*
 
    The assistant follows the bundled **`add-lakebase-short-term-memory`** skill (in
-   `app/.claude/skills/`) to make the edits.
+   `app/.claude/skills/`) — it adds the `databricks-langchain[memory]` dependency, attaches
+   the Lakebase instance as an app resource, and swaps the in-memory checkpointer for a
+   Lakebase-backed one, without touching the graph or the approval gate.
 
-3. **Redeploy** the app (Task 1, step 3) and let it reach **Running**.
+2. **Redeploy** the app (Task 1, step 3) and let it reach **Running**.
 
-4. **Prove the memory is durable**: ask **"Build my dispatch plan"**, then **restart the
+3. **Prove the memory is durable**: ask **"Build my dispatch plan"**, then **restart the
    app** from its page. When it's back, reply **"approve CBM-003"** — it *still works*,
    because the plan and pending approval were read back from **Lakebase**, not memory.
 

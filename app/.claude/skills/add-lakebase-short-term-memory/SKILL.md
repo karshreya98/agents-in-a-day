@@ -32,15 +32,15 @@ dependencies = [
 ]
 ```
 
-## Step 2 — Get a Lakebase instance
+## Step 2 — Get the Lakebase instance name
 
-The user creates one in the UI: **Compute → Database instances → Create database instance**.
-You need its **autoscaling endpoint** (a short endpoint name or the full
-`projects/<project>/branches/<branch>/endpoints/<endpoint>` path), or the **project +
-branch**. See the bundled `lakebase-setup` skill for the API calls to list these:
+A Lakebase **Database Instance** named **`sunny-bay-lakebase`** is **pre-created** for this
+workshop — do **not** create a new one. Its identifier is just that name; you pass it as
+`instance_name` in Step 4. (If the user gives a different name, use theirs.) Confirm it
+exists with:
 
 ```bash
-databricks api get /api/2.0/postgres/projects --profile <profile>
+databricks database list-database-instances --profile <profile>
 ```
 
 ## Step 3 — Declare Lakebase as an app resource (`databricks.yml`)
@@ -57,13 +57,13 @@ resources:
       resources:
         - name: 'database'
           database:
-            instance_name: "<your-lakebase-instance-name>"
+            instance_name: "sunny-bay-lakebase"
             database_name: "databricks_postgres"
             permission: 'CAN_CONNECT_AND_CREATE'
       config:
         env:
           - name: LAKEBASE_INSTANCE_NAME
-            value: "<your-lakebase-instance-name>"
+            value: "sunny-bay-lakebase"
 ```
 
 > See the bundled `lakebase-setup` skill for the exact resource YAML, including the
