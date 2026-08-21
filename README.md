@@ -16,8 +16,8 @@ infrastructure to provision.
 |-----|---------|----------------|
 | **Lab 1** | Sara | A **Maintenance Genie** agent, driven from Genie One alongside the pre-built Sales Genie, enriched with a you.com MCP tool |
 | **Lab 2** | Marc | Manager analysis — `ai_parse_document()` + `ai_extract()` turn technicians' fault-report PDFs into a table |
-| **Lab 3** | Marc | A **custom agent** deployed as a **Databricks App** (control-flow pipeline over Genie + web + a UC write-back), then observe it with **MLflow traces** and review it via a **Review App** |
-| **Lab 4** | Platform | Governed AI-assisted coding — Unity AI Gateway + PII guardrail + `ucode`/OpenCode |
+| **Lab 3** | Marc | A **custom agent** deployed as a **Databricks App** with a human-in-the-loop approval gate; add durable **short-term memory on Lakebase** via the AI assistant, then observe with **MLflow traces** and a **Review App** |
+| **Lab 4** | Tim (Platform) | Govern **reusable AI blocks** with the **AI Gateway** — a PII-blocking, rate-limited, logged model endpoint + an approval-gated you.com MCP tool; tested in the Playground |
 
 ## Prerequisites
 
@@ -33,9 +33,10 @@ infrastructure to provision.
   and seeds all the data, so there's no other workshop to install. If catalog creation is
   restricted on your workspace, set the notebook's `catalog` widget to one an admin already
   made (it falls back to using the existing catalog).
-- **Lab 4 only:** an account admin must enable the **Unity AI Gateway (Beta)** and
-  **Managed MCP Servers** previews (account console → Previews). Participants install
-  [`ucode`](https://github.com/databricks/ucode) + [OpenCode](https://opencode.ai) locally.
+- **Lab 4 only:** admin rights to create a **model serving endpoint** and configure its
+  **AI Gateway** guardrails, plus the **you.com MCP** connection (registered in Lab 1). It's
+  all UI-driven and Free-Edition friendly. The `ucode` coding-agent step is an optional
+  **bonus** that needs a non-Free workspace.
 
 > Not using Free Edition or have not admin rights on your environment? See each lab's admin/prerequisite callouts — one admin
 > registers the you.com MCP service, governs a model for Lab 4, and grants participants
@@ -126,8 +127,8 @@ agents-in-a-day/
 ├── labs/
 │   ├── Lab 1 - Sara - Genie One.md
 │   ├── Lab 2 - Document Intelligence.md
-│   ├── Lab 3 - Build the Custom Agent.md      ← build the agent + MLflow traces + Review App
-│   └── Lab 4 - AI Gateway and Write-back.md
+│   ├── Lab 3 - Build the Custom Agent.md      ← deploy the agent app + Lakebase memory + MLflow/Review App
+│   └── Lab 4 - AI Gateway and Write-back.md   ← govern reusable AI blocks (model endpoint + MCP) with the AI Gateway
 │   (artifacts/ holds per-lab screenshots)
 └── README.md
 ```

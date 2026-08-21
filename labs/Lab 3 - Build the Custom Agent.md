@@ -198,7 +198,8 @@ tool call.
 ## What Happens Next?
 
 Marc has a custom agent — deployed as an app, observable in MLflow, and reviewed by the
-people who do the job. In the final lab you meet the **Unity AI Gateway** head-on and see
-how the platform governs the AI *coding* that produced the write-back function.
+people who do the job. Sunny Bay's team is inspired and wants to build more agents. In the
+final lab you step into the platform team's shoes and use the **AI Gateway** to create
+**governed, reusable AI blocks** so every next use case inherits governance by default.
 
-➡️ Continue to **[Lab 4 — AI Gateway and Write-back](./Lab%204%20-%20AI%20Gateway%20and%20Write-back.md)**
+➡️ Continue to **[Lab 4 — Govern Reusable AI Blocks with the AI Gateway](./Lab%204%20-%20AI%20Gateway%20and%20Write-back.md)**
