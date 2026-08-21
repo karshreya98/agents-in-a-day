@@ -19,6 +19,14 @@ resources:
       # Points at the folder holding app.yaml (this bundle root). app.yaml drives the
       # command + env, so there is no `config` block here to drift out of sync.
       source_code_path: ./
+      # Lakebase instance (created by the workshop bundle) — Lab 3's durable short-term
+      # memory. Pre-declared so the only change Lab 3 needs is the start_server lifespan.
+      resources:
+        - name: 'lakebase'
+          database:
+            instance_name: "sunny-bay-lakebase"
+            database_name: "databricks_postgres"
+            permission: 'CAN_CONNECT_AND_CREATE'
 
 targets:
   dev:
