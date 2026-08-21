@@ -45,7 +45,8 @@ databricks api get /api/2.0/postgres/projects --profile <profile>
 
 ## Step 3 — Declare Lakebase as an app resource (`databricks.yml`)
 
-Add a `postgres` resource under the app, and pass the endpoint through as an env var:
+Add the Lakebase instance as an app resource so the app's service principal can reach it,
+and pass its **name** through as an env var (this is the identifier Step 4 constructs with):
 
 ```yaml
 resources:
@@ -54,26 +55,49 @@ resources:
       name: "marc-dispatch-agent"
       source_code_path: ./
       resources:
-        - name: 'postgres'
-          postgres:
-            branch: "projects/<project>/branches/<branch>"
-            database: "projects/<project>/branches/<branch>/databases/<database-id>"
+        - name: 'database'
+          database:
+            instance_name: "<your-lakebase-instance-name>"
+            database_name: "databricks_postgres"
             permission: 'CAN_CONNECT_AND_CREATE'
       config:
         env:
-          - name: LAKEBASE_AUTOSCALING_ENDPOINT
-            value: "<your-endpoint-or-projects/p/branches/b/endpoints/e>"
+          - name: LAKEBASE_INSTANCE_NAME
+            value: "<your-lakebase-instance-name>"
 ```
 
+> See the bundled `lakebase-setup` skill for the exact resource YAML, including the
+> **autoscaling** (`postgres` with `branch`/`database`) form if that's your instance type.
 > If deploying via the Apps UI instead of the bundle, add the Lakebase instance under the
-> app's **Edit → App resources → Add resource**, and set `LAKEBASE_AUTOSCALING_ENDPOINT` in
-> the app's environment.
+> app's **Edit → App resources → Add resource**, and set `LAKEBASE_INSTANCE_NAME` in the
+> app's environment.
+
+> [!NOTE]
+> Adding the resource injects `PGHOST` / `PGUSER` / `PGDATABASE` / … into the app — but
+> `AsyncCheckpointSaver` does **not** use those; it connects via the SDK using the instance
+> name you pass in Step 4. The env var here is just how Step 4 receives that name.
 
 ## Step 4 — Create the Lakebase checkpointer at startup and rebind the graph
 
-`AsyncCheckpointSaver` is an async context manager that needs `await checkpointer.setup()`
-once (to create the checkpoint tables) and should stay open for the app's lifetime. Wire it
-into the server's lifespan in **`agent_server/start_server.py`**, and rebind
+> [!IMPORTANT]
+> **Two things `AsyncCheckpointSaver` requires — get these right or it silently fails:**
+> 1. **Construct it with a Lakebase identifier.** It does **NOT** read `PGHOST` / `PGUSER` /
+>    `PGPASSWORD` / `PGDATABASE` env vars. It connects through the Databricks SDK using the
+>    instance identifier you pass. Pick the mode that matches how you created the instance:
+>    - **Provisioned** (the usual "Compute → Database instances → Create" path):
+>      `AsyncCheckpointSaver(instance_name="<your-instance-name>")`
+>    - **Autoscaling** (project/branch/endpoint):
+>      `AsyncCheckpointSaver(autoscaling_endpoint="<endpoint>", project="<p>", branch="<b>")`
+> 2. **Use it as an async context manager.** The connection pool opens on `__aenter__` and
+>    the checkpoint tables are created there. Do **not** build it as a bare/lazy singleton
+>    and call `.setup()` on it — with no open pool that will not work. Enter it with
+>    `async with ...` (a startup lifespan is the clean place) and keep it open for the app's
+>    lifetime.
+
+Its constructor signature: `AsyncCheckpointSaver(*, instance_name=None,
+autoscaling_endpoint=None, project=None, branch=None, workspace_client=None, schema=None)`.
+
+Wire it into the server lifespan in **`agent_server/start_server.py`** and rebind
 `dispatch.GRAPH` to a graph that uses it. Add this after `app = agent_server.app`:
 
 ```python
@@ -89,14 +113,14 @@ _original_lifespan = app.router.lifespan_context
 
 @asynccontextmanager
 async def _lifespan(app):
-    endpoint = os.getenv("LAKEBASE_AUTOSCALING_ENDPOINT")
-    if not endpoint:
-        # No Lakebase configured (e.g. local/sample mode) — keep in-memory MemorySaver.
+    instance = os.getenv("LAKEBASE_INSTANCE_NAME")
+    if not instance:
+        # No Lakebase configured (e.g. local/sample mode) — keep the in-memory MemorySaver.
         async with _original_lifespan(app):
             yield
         return
-    async with AsyncCheckpointSaver(autoscaling_endpoint=endpoint) as checkpointer:
-        await checkpointer.setup()                       # create checkpoint tables (once)
+    # async with opens the connection pool and creates the checkpoint tables.
+    async with AsyncCheckpointSaver(instance_name=instance) as checkpointer:
         dispatch.GRAPH = dispatch.build_graph(checkpointer)  # durable short-term memory
         async with _original_lifespan(app):
             yield
@@ -105,8 +129,9 @@ async def _lifespan(app):
 app.router.lifespan_context = _lifespan
 ```
 
-That's the whole code change — `dispatch.build_graph(checkpointer)` already exists and takes
-the checkpointer; nothing else in `dispatch.py` or `agent.py` needs to change.
+> Use `autoscaling_endpoint=...` / `project=...` / `branch=...` instead of `instance_name`
+> if your Lakebase is an autoscaling instance. Either way, `dispatch.build_graph(checkpointer)`
+> already exists and takes the checkpointer — nothing in `dispatch.py` or `agent.py` changes.
 
 ## Step 5 — Grant the app's service principal access to Lakebase
 
