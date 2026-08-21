@@ -129,10 +129,10 @@ assistant** wire it in.
    > *"Add short-term memory to this app using our Lakebase instance `sunny-bay-lakebase`,
    > following the `add-lakebase-short-term-memory` skill."*
 
-   The assistant follows the bundled **`add-lakebase-short-term-memory`** skill (in
-   `app/.claude/skills/`) — it adds the `databricks-langchain[memory]` dependency, attaches
-   the Lakebase instance as an app resource, and swaps the in-memory checkpointer for a
-   Lakebase-backed one, without touching the graph or the approval gate.
+   Genie Code loads the **`add-lakebase-short-term-memory`** skill (the bootstrap installed
+   it into your `.assistant/skills/` folder) — it adds the `databricks-langchain[memory]`
+   dependency, attaches the Lakebase instance as an app resource, and swaps the in-memory
+   checkpointer for a Lakebase-backed one, without touching the graph or the approval gate.
 
 2. **Redeploy** the app (Task 1, step 3) and let it reach **Running**.
 

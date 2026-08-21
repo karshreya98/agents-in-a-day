@@ -9,6 +9,8 @@
 # MAGIC 3. **Runs the setup job** end-to-end (maintenance tables, sales star schema +
 # MAGIC    metric view, pre-built Sales Genie, dashboard, and the fault-report PDFs +
 # MAGIC    `fault_reports_structured`).
+# MAGIC 4. **Pre-creates the Lakebase instance** (`sunny-bay-lakebase`) that Lab 3's agent
+# MAGIC    uses for durable short-term memory.
 # MAGIC
 # MAGIC **Why a bootstrap notebook and not just "Deploy"?** A Lakeflow pipeline's target
 # MAGIC `catalog` is validated by Unity Catalog **at bundle-deploy time** — which is
@@ -144,6 +146,59 @@ def run_cli(args, **kw):
 
 
 run_cli(["current-user", "me", "-o", "json"])
+
+# COMMAND ----------
+
+# MAGIC %md ## 3b. Pre-create the Lakebase instance (Lab 3 short-term memory)
+# MAGIC Lab 3 gives Marc's agent durable short-term memory on **Lakebase**. Kick off the
+# MAGIC instance now (non-blocking) so it's provisioned well before you reach Lab 3.
+
+# COMMAND ----------
+
+# Idempotent and non-fatal: only Lab 3 uses this, so a failure here (e.g. Lakebase not
+# available in this region) must not break the rest of the workshop.
+LAKEBASE_INSTANCE = "sunny-bay-lakebase"
+_exists = subprocess.run(
+    [CLI, "database", "get-database-instance", LAKEBASE_INSTANCE],
+    cwd=bundle_root, env=cli_env, capture_output=True, text=True,
+)
+if _exists.returncode == 0:
+    print(f"✅ Lakebase instance already exists: {LAKEBASE_INSTANCE}")
+else:
+    try:
+        run_cli(["database", "create-database-instance", LAKEBASE_INSTANCE,
+                 "--capacity", "CU_1", "--no-wait"])
+        print(f"✅ Creating Lakebase instance '{LAKEBASE_INSTANCE}' (provisioning in the "
+              "background; ready well before Lab 3).")
+    except Exception as e:
+        print(f"⚠️  Could not create Lakebase instance '{LAKEBASE_INSTANCE}': {e}\n"
+              "    Lab 3's memory task needs it — create it manually "
+              "(Compute → Database instances → Create) or skip that task.")
+
+# COMMAND ----------
+
+# MAGIC %md ## 3c. Install the Lab 3 memory skill for Genie Code
+# MAGIC Genie Code loads skills from your **`.assistant/skills/`** folder. Copy the repo's
+# MAGIC `add-lakebase-short-term-memory` skill there so Lab 3's one-line prompt just works.
+
+# COMMAND ----------
+
+# Non-fatal: if this can't write, Lab 3 tells you how to add the skill by hand.
+import pathlib
+import shutil
+
+_user = spark.sql("SELECT current_user()").first()[0]
+_skill = "add-lakebase-short-term-memory"
+_src = pathlib.Path(bundle_root).parent / "app" / ".claude" / "skills" / _skill / "SKILL.md"
+_dst = pathlib.Path(f"/Workspace/Users/{_user}/.assistant/skills/{_skill}")
+try:
+    _dst.mkdir(parents=True, exist_ok=True)
+    shutil.copy(_src, _dst / "SKILL.md")
+    print(f"✅ Installed Genie Code skill '{_skill}' at {_dst}")
+except Exception as e:
+    print(f"⚠️  Could not install the Genie Code skill: {e}\n"
+          f"    In Lab 3, open Genie Code → Settings → 'Open skills folder' and copy "
+          f"app/.claude/skills/{_skill}/SKILL.md into it manually.")
 
 # COMMAND ----------
 
