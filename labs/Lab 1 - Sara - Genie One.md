@@ -251,7 +251,7 @@ AI Gateway, fixes that.
 
 ---
 
-**Step 4b-1 — Register the you.com MCP service (only if Step 4b found nothing)**
+**Step 4b-1 — Register the you.com connection in Unity Catalog**
 
 First create the Unity Catalog **HTTP connection**, then register the MCP service on top of it.
 
@@ -281,41 +281,10 @@ use these settings:
 > You need `CREATE CONNECTION` to do this. If the option is greyed out, you don't have
 > the privilege — ask your facilitator or a metastore admin to create it.
 
-4. Click **Create**.
+**Step 4c — Ask enriched questions**
 
-5. Go to **AI Gateway** → **MCPs** → **Register MCP Server**.
-
-6. Give the service a name, select the `youcom_http` connection you just created, pick the
-   **Tools** you want exposed (web search), and click **Create**.
-
-7. Open the new MCP service → **Permissions** tab → **Grant**. Add the workshop users or
-   group and grant **`EXECUTE`**, then click **Grant**.
-
-> [!WARNING]
-> Grant participants **`EXECUTE` on the MCP service only — never `USE CONNECTION`**.
-> `USE CONNECTION` would let them call you.com directly or register their own MCP
-> services, bypassing governance. `EXECUTE` is all they need to use the tool.
-
-Full reference: [Register an MCP service](https://docs.databricks.com/aws/en/ai-gateway/register-mcp-service).
-
----
-
-**Step 4c — Add the MCP service to your Genie agent**
-
-1. In the workspace sidebar, open **Genie** and go to your **Sunny Bay Maintenance
-   Genie** (from Step 1).
-
-2. Open the Genie agent's **settings / tools** and add the **you.com** MCP service as a
-   tool — it appears in the list because it's registered in the AI Gateway and you have
-   `EXECUTE` on it.
-
-> [!NOTE]
-> If you don't see it in the list, confirm the service is registered under
-> **AI Gateway → MCPs** and that you have **`EXECUTE`** on it (Step 4b-1, task 7).
-
-**Step 4d — Ask enriched questions**
-
-Now in Genie One, ask questions that combine your governed data with the web:
+In Genie One, enable the you.com connection you created `Customizations > Connections > Toggle youcom_http`.    
+You can now ask questions that combine your governed data with the web:
 
 ```
 What does Siemens recommend when a repeated E-07 pressure error appears on
