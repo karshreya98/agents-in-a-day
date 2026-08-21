@@ -88,11 +88,12 @@ resources:
 >      `AsyncCheckpointSaver(instance_name="<your-instance-name>")`
 >    - **Autoscaling** (project/branch/endpoint):
 >      `AsyncCheckpointSaver(autoscaling_endpoint="<endpoint>", project="<p>", branch="<b>")`
-> 2. **Use it as an async context manager.** The connection pool opens on `__aenter__` and
->    the checkpoint tables are created there. Do **not** build it as a bare/lazy singleton
->    and call `.setup()` on it — with no open pool that will not work. Enter it with
->    `async with ...` (a startup lifespan is the clean place) and keep it open for the app's
->    lifetime.
+> 2. **Enter it as an async context manager AND call `await checkpointer.setup()`.** The
+>    connection pool opens on `__aenter__`; then `setup()` creates the checkpoint tables
+>    (`checkpoints`, `checkpoint_writes`, …). **Do not skip `setup()`** — without it the
+>    first request fails with `relation "checkpoints" does not exist`. Do **not** build a
+>    bare/lazy singleton either (no open pool). Use `async with ...` in a startup lifespan
+>    and keep it open for the app's lifetime.
 
 Its constructor signature: `AsyncCheckpointSaver(*, instance_name=None,
 autoscaling_endpoint=None, project=None, branch=None, workspace_client=None, schema=None)`.
@@ -119,8 +120,9 @@ async def _lifespan(app):
         async with _original_lifespan(app):
             yield
         return
-    # async with opens the connection pool and creates the checkpoint tables.
+    # async with opens the connection pool; setup() creates the checkpoint tables.
     async with AsyncCheckpointSaver(instance_name=instance) as checkpointer:
+        await checkpointer.setup()                            # REQUIRED: creates the tables
         dispatch.GRAPH = dispatch.build_graph(checkpointer)  # durable short-term memory
         async with _original_lifespan(app):
             yield
