@@ -7,6 +7,7 @@ By the end of Lab 1, you will be able to:
 - Build a **Genie agent** (formerly *Genie space*) over the Sunny Bay maintenance data.
 - Use **Genie One** as a business-user interface, driven by that Genie agent.
 - Connect an external **MCP tool** (you.com) to enrich Genie One conversations with live web knowledge.
+- Package a repeated question as a reusable **skill** and put it on a **schedule**, so Genie One briefs Sara automatically.
 
 ## Introduction
 
@@ -332,19 +333,102 @@ commercial machines?
 
 ---
 
-### **Step 5: Make it a standing question (optional, 10 min)**
+### **Step 5: Turn Sara's weekly check into a skill — and schedule it (optional, 15 min)**
 
-Sara has explored and built trust. A natural next step is a *standing* question — one
-Genie re-runs on a cadence so she gets a briefing without asking.
+Sara keeps asking the same weekly question: *which machines need attention, and why?*
+Genie One lets her stop re-typing it. Two features turn a repeated question into something
+durable:
+
+- A **skill** — a custom, reusable capability she creates once and runs any time.
+- A **scheduled task** — a question (or skill) Genie One re-runs on a cadence and emails to
+  her as a briefing, no prompting required.
+
+Sara wants to send the results of her findings to her maintenance team. Genie One supports managed connections 
+with GSuite and MS365. For this Lab, we will use Gmail.  
+
+**Enable the connector click on the `+` sign on the below the text box and enable the connection
+with Gmail (credentials will be communicated by the instructor).**
 
 > [!NOTE]
-> **Facilitator note:** Scheduled/standing Genie briefings depend on the features
-> enabled in your workspace. Confirm availability before the session. If it isn't
-> available in your Free Edition workspace, demonstrate the intent instead: Sara would
-> save *"Which of my machines logged faults in the last 7 days, and are there any open
-> service bulletins for them?"* to run every Monday morning.
+> **Skills and scheduled tasks are personal to you.** A skill you create lives in your own
+> Genie One — it isn't shared with the workspace. In the near future, skills will be shareable
+> enabling teams to share standard and best practices.
 
-The point stands either way: Sara defines the *question*. Genie does the *work*.
+**Step 5a — Create a skill**
+
+In Genie One chat, just describe the capability you want. Genie One writes the skill and
+saves it for you:
+
+```
+Create a user skill called "maintenance update email drafter".
+
+When the skill is invoked or if you are asked to prepare a maintenance update:
+
+1. Use the Sunny Bay Maintenance Genie to identify relevant machines, recent faults and
+   repeated fault codes.
+
+2. Using the Gmail connector, draft an email to maintenance@sunnybailroastery.com:
+   - Start with a clear subject line.
+   - Summarize the situation in plain business language.
+   - Identify affected machines and locations.
+   - Explain the operational impact without unnecessary technical jargon.
+   - List recommended actions, owners, and urgency.
+   - End with a clear request or next step.
+```
+
+Genie One creates the skill and saves it to your workspace at
+`/Workspace/Users/<your-email>/.assistant/skills/` and accessible on the tab `Customizations > Skill`
+where it can be edited or deleted and (soon) shared.
+
+**Step 5b — Execute the skill**
+
+Two ways to run it:
+
+- **Invoke it by hand:** type `/` in the chat input and pick your skill from the list.
+- **Let Genie One load it:** just ask a related question. Genie One automatically loads the
+  skill when it decides the skill is relevant to your request — you don't have to name it.
+
+You still get **Show code** and the **citation icons** on the answer, exactly as in Steps 2–3.
+
+At the end of the skill execution, a new draft will be written in Gmail.
+
+**Step 5d — Schedule it as a standing briefing**
+
+Now make it run itself. The fastest way is to just ask in chat:
+
+```
+Run maintenance update email drafter every Monday at 7am.
+```
+
+Or create it deliberately from the sidebar:
+
+1. In the Genie One sidebar, click **Schedules**.
+2. Open the dropdown next to **+ Create in chat** and choose **Create manually**.
+3. Fill in **Title**, **Instructions** (the question or skill to run), **Connections** (the
+   data/agent the task should use — your Maintenance Genie agent, plus you.com for bulletins),
+   **Schedule** (e.g. weekly, Monday 07:00), and **Timezone**.
+4. Click **Create**. Use **Run now** to fire it immediately and check the output.
+
+When the task runs it **posts the results in a chat thread and emails you the results with a
+PDF attachment** — so Sara gets her Monday briefing whether or not she's in Databricks that
+morning.
+
+> [!NOTE]
+> Manage every scheduled task under **Scheduled tasks** in the sidebar: click one to see its
+> past runs, edit it, or delete it. To pull a task into a fresh conversation, **@mention** it
+> in chat.
+
+> [!NOTE]
+> **Facilitator note:** Skills and scheduled tasks are newer Genie One capabilities. Confirm
+> they're enabled in your workshop workspace before the session — some Free Edition workspaces
+> may not have them yet. If they're unavailable, demonstrate the *intent* instead: Sara defines
+> the weekly machine-health question once, and Genie One runs it for her every Monday morning.
+
+The point stands either way: **Sara defines the *question* once. Genie does the *work* — on
+demand and on a schedule.**
+
+Full reference: [Chat in Genie One](https://docs.databricks.com/aws/en/genie-one/chat)
+(covers both user skills and scheduled tasks).
 
 ---
 
@@ -366,8 +450,9 @@ that *acts* on it.
 
 ## What Happens Next?
 
-You have built a Genie agent, driven it from Genie One as a business user, and enriched
-it with live web knowledge — all on governed data that never left Unity Catalog.
+You have built a Genie agent, driven it from Genie One as a business user, enriched it with
+live web knowledge — and, optionally, packaged Sara's weekly check as a scheduled skill that
+briefs her automatically — all on governed data that never left Unity Catalog.
 
 ➡️ Continue to **[Lab 2 — Document Intelligence](./Lab%202%20-%20Document%20Intelligence.md)**
    to start building Marc's Maintenance Agent.
