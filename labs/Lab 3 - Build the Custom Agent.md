@@ -137,11 +137,11 @@ assistant** wire it in.
 
 2. **Attach the Lakebase instance to the app.** On the app's page → **Edit → App resources →
    Add resource → Database instance** → pick **`sunny-bay-lakebase`** →
-   **CAN_CONNECT_AND_CREATE** → Save. *(This is the one thing the code can't do for you. If
-   you deploy with the bundle instead of the UI, it's already declared in `databricks.yml` —
-   skip this.)*
+   **CAN_CONNECT_AND_CREATE** → **Save**. This grants the app's service principal access to
+   the database — the one thing the code change can't do for you.
 
-3. **Redeploy** the app (Task 1, step 3) and let it reach **Running**.
+3. **Redeploy from the UI**: on the app's page click **Deploy** to re-sync your edited code,
+   and wait for **Running**.
 
 4. **Prove the memory is durable**: ask **"Build my dispatch plan"**, then **restart the
    app** from its page. Back in the **same chat**, reply **"approve CBM-003"** — it still
