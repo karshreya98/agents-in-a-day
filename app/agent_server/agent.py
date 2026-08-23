@@ -110,10 +110,23 @@ def _route(text: str) -> str:
 
 
 @mlflow.trace(span_type="AGENT")
+def _thread_id(request: ResponsesAgentRequest) -> str:
+    """Stable memory key across app restarts, so durable memory is demonstrable. Prefer the
+    signed-in user (per-user working memory); fall back to a fixed key. We deliberately do
+    NOT key on the chat UI's conversation id — it changes when the app restarts, which would
+    make the restored plan look 'lost'."""
+    uid = None
+    if request.context and getattr(request.context, "user_id", None):
+        uid = request.context.user_id
+    if not uid and isinstance(request.custom_inputs, dict):
+        uid = request.custom_inputs.get("user_id")
+    return f"user:{uid}" if uid else "default"
+
+
 async def build_reply(request: ResponsesAgentRequest) -> str:
     if _is_title_request(request):        # the chat UI naming the conversation
         return _title_from(request)
-    thread_id = get_session_id(request) or "default"
+    thread_id = _thread_id(request)
     text = _latest_user_text(request)
     intent = _route(text)
 

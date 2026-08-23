@@ -144,11 +144,11 @@ assistant** wire it in.
    and wait for **Running**.
 
 4. **Prove the memory is durable**: ask **"Build my dispatch plan"**, then **restart the
-   app** from its page. Back in the **same chat**, reply **"approve CBM-003"** — it still
-   creates the order, because the paused plan was restored from **Lakebase**. (The agent
-   only approves a plan that's *in progress*; with the old in-memory state the plan was gone
-   after a restart and it would answer *"build a plan first"* — that gap is what you're
-   proving is now fixed.)
+   app** from its page. When it's back, reply **"approve CBM-003"** — it still creates the
+   order, because your in-progress plan was restored from **Lakebase** (the agent keys the
+   memory to *you*, so it survives the restart). (The agent only approves a plan that's
+   *in progress*; with the old in-memory state the plan was gone after a restart and it
+   would answer *"build a plan first"* — that gap is what you're proving is now fixed.)
 
 5. **See it recorded in Lakebase**: open **Compute → Database instances →
    `sunny-bay-lakebase`**, connect to the `databricks_postgres` database, and query the
