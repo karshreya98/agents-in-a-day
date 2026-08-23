@@ -6,8 +6,7 @@ description: "Add durable SHORT-TERM agent memory to this dispatch-agent app, ba
 # Add Lakebase-backed short-term memory (Lab 3 · Task 3)
 
 **Goal:** move the agent's short-term memory — the in-progress dispatch plan and the pending
-approval, keyed by conversation `thread_id` — from the in-memory `MemorySaver()` to
-**Lakebase** so it survives an app restart.
+approval — from the in-memory `MemorySaver()` to **Lakebase** so it survives an app restart.
 
 > **Almost everything is already wired in this repo. Make ONE change.**
 > - `pyproject.toml` already has `databricks-langchain[memory]`.
@@ -65,8 +64,12 @@ Two things that MUST be right, or it silently fails:
 > Database instance → CAN_CONNECT_AND_CREATE**) — that's a UI step, not a code change, so
 > don't try to do it from code.
 
-## Verify
+## Redeploy and verify
 
-1. Redeploy the app; wait for **Running**.
+> **Redeploy from the Databricks UI — do NOT run any CLI / `databricks apps deploy` /
+> bundle commands.** Just tell the user: *on the app's page in the workspace, click
+> **Deploy** to re-sync the edited code, then wait for **Running**.*
+
+1. Redeploy via the UI (above); wait for **Running**.
 2. Chat: **"Build my dispatch plan"** → **restart the app** → **"approve CBM-003"**. It still
    works, because the plan and pending approval were read back from Lakebase, not memory.

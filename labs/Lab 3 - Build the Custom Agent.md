@@ -6,7 +6,7 @@ By the end of this lab you will be able to:
 
 - **Create a custom agent app** on Databricks from the Apps UI.
 - Read the agent's source code and find **where the control flow is defined**.
-- Use the in-product **AI assistant to add a Databricks capability** — durable **short-term
+- Use the in-product **Genie Code assistant to add a Databricks capability** — durable **short-term
   agent memory backed by Lakebase** — without writing the code yourself.
 - **Observe and review** the agent with **MLflow traces** and a **Review App**.
 
@@ -117,13 +117,13 @@ Open **`app/agent_server/dispatch.py`** — this is the agent's brain. Two thing
 
 ---
 
-### **Task 3: Add short-term memory with Lakebase — using the AI assistant (10 min)**
+### **Task 3: Add short-term memory with Lakebase — using Genie Code (10 min)**
 
 A **Lakebase** instance (Databricks' managed Postgres) named **`sunny-bay-lakebase`** has
-been **pre-created for you**. You won't write any code — you'll let the in-product **AI
-assistant** wire it in.
+been **pre-created for you**. You won't write any code — you'll let **Genie Code** (the
+in-product assistant) wire it in.
 
-1. Open the app's code in the workspace editor, open the **AI assistant**, and paste this
+1. Open the app's code in the workspace editor, open **Genie Code**, and paste this
    short prompt:
 
    > *"Add short-term memory to this app using our Lakebase instance `sunny-bay-lakebase`,
@@ -206,7 +206,7 @@ tool call.
 - **A custom agent is just an app** you create and deploy from the Databricks Apps UI.
 - **The control flow lives in code you can read** — an explicit pipeline with a
   human-in-the-loop approval gate before it acts.
-- **You extend the agent with Databricks capabilities, by prompting the AI assistant** — you
+- **You extend the agent with Databricks capabilities, by prompting Genie Code** — you
   added durable **short-term memory on Lakebase** without writing the code yourself.
 - **Observability and review are built in** — MLflow traces to debug, and a Review App so
   the people who do the job grade real output.
