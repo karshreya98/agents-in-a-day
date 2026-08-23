@@ -3,8 +3,9 @@
 The template ships a generic tool-calling `create_agent` loop. We keep the template's
 `ResponsesAgent` handlers, MLflow autolog, and session handling, but drive an **explicit
 LangGraph pipeline with a human-in-the-loop approval gate** (see `dispatch.py`) — the whole
-point of Lab 3. The graph's thread is keyed by the conversation id, so a plan pauses at the
-gate and a later "approve CBM-003" in the same chat resumes it.
+point of Lab 3. The graph's thread is keyed by the signed-in user (see `_thread_id`), so a
+plan pauses at the gate and a later "approve CBM-003" resumes it — and, because that key is
+stable across restarts, the Lakebase checkpointer swap makes the plan survive one.
 """
 import logging
 from typing import AsyncGenerator

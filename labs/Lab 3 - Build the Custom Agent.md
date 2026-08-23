@@ -60,7 +60,8 @@ In the chat, the agent returns the result as a **ranked plan**: for each machine
 location, the fault count and code, the revenue at risk, the priority score, and the
 **draft message** to that store's manager. **The plan writes nothing.**
 It is a recommendation until Marc approves a specific machine — which he does by simply
-replying **"approve CBM-003"** in the same chat.
+replying **"approve CBM-003"**. (The in-progress plan is remembered *per signed-in user*, so
+approve works as long as a plan is in progress for you — the point you'll test in Task 3.)
 
 > [!NOTE]
 > This app is built directly on the official
@@ -114,6 +115,12 @@ Open **`app/agent_server/dispatch.py`** — this is the agent's brain. Two thing
    in-progress plan and the pending approval are stored between your messages. Right now
    it's `MemorySaver()` — **in-memory**, so if the app restarts, the plan and pending
    approval are **gone**. That's what you'll fix in Task 3.
+
+**Prove it forgets first (do this before Task 3):** ask **"Build my dispatch plan"**, then
+**restart the app** from its page. When it's back, reply **"approve CBM-003"** — it answers
+*"build a plan first"*, because in-memory state was wiped on restart. (Use a **restart**, not
+a new chat — memory is keyed to you, so it survives across chats within a run; only a restart
+clears `MemorySaver`.) After Task 3 wires Lakebase, you'll repeat this and it will remember.
 
 ---
 

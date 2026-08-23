@@ -9,9 +9,11 @@ read node-by-node, with a **human-in-the-loop `interrupt`** as the approval gate
 
 `mlflow.langchain.autolog()` (enabled in agent.py) traces every node automatically. A
 MemorySaver checkpointer lets the graph pause at the interrupt and resume when the manager
-approves — the canonical LangGraph HITL pattern. The chat surface (agent.py) keys each
-LangGraph thread by the conversation id, so "build my plan" pauses at the gate and a later
-"approve CBM-003" in the same conversation resumes it.
+approves — the canonical LangGraph HITL pattern. The chat surface (agent.py) keys the
+thread to the signed-in user (not the chat id), so "build my plan" pauses at the gate and a
+later "approve CBM-003" resumes it. That per-user key is stable across an app restart, which
+is what makes durable memory demonstrable: with MemorySaver the plan is lost on restart, and
+swapping in the Lakebase checkpointer makes it survive.
 """
 from __future__ import annotations
 
