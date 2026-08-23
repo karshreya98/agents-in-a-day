@@ -84,8 +84,13 @@ async def build_reply(request: ResponsesAgentRequest) -> str:
     intent = _route(text)
 
     if intent == "approve":
+        # Resume the plan paused at the approval gate. We do NOT silently rebuild it — an
+        # approve only works if there's a plan in progress for this conversation. That's
+        # what makes memory observable: after a restart, the plan is restored from the
+        # checkpointer (Lakebase → survives; in-memory → gone, so this asks you to rebuild).
         if not await dispatch._has_plan(thread_id):
-            await dispatch.build_plan(thread_id)  # ensure a plan exists and is paused at the gate
+            return ("I don't have a dispatch plan in progress for this conversation — say "
+                    "**\"build my dispatch plan\"** first, then approve a machine.")
         order = await dispatch.approve_machine(thread_id, text)
         return dispatch.format_order(order)
     if intent == "explain":

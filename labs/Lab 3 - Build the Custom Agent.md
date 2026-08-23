@@ -137,8 +137,11 @@ assistant** wire it in.
 2. **Redeploy** the app (Task 1, step 3) and let it reach **Running**.
 
 3. **Prove the memory is durable**: ask **"Build my dispatch plan"**, then **restart the
-   app** from its page. When it's back, reply **"approve CBM-003"** — it *still works*,
-   because the plan and pending approval were read back from **Lakebase**, not memory.
+   app** from its page. Back in the **same chat**, reply **"approve CBM-003"** — it still
+   creates the order, because the paused plan was restored from **Lakebase**. (The agent
+   only approves a plan that's *in progress*; with the old in-memory state the plan was gone
+   after a restart and it would answer *"build a plan first"* — that gap is what you're
+   proving is now fixed.)
 
 > [!NOTE]
 > That's the whole point: **durable agent memory on governed Postgres you didn't have to
