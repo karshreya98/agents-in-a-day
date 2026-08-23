@@ -143,6 +143,20 @@ assistant** wire it in.
    after a restart and it would answer *"build a plan first"* — that gap is what you're
    proving is now fixed.)
 
+4. **See it recorded in Lakebase**: open **Compute → Database instances →
+   `sunny-bay-lakebase`**, connect to the `databricks_postgres` database, and query the
+   checkpoint table the agent writes to:
+
+   ```sql
+   SELECT thread_id, checkpoint_id, type
+   FROM checkpoints
+   ORDER BY checkpoint_id DESC
+   LIMIT 10;
+   ```
+
+   Those rows **are** the agent's memory — a checkpoint per step of your conversation,
+   written straight to governed Postgres. That's your direct proof it's being recorded.
+
 > [!NOTE]
 > That's the whole point: **durable agent memory on governed Postgres you didn't have to
 > run.** The pattern is short-term (thread-scoped) memory — the same one the

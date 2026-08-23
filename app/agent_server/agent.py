@@ -60,6 +60,38 @@ def _latest_user_text(request: ResponsesAgentRequest) -> str:
     return ""
 
 
+def _is_title_request(request: ResponsesAgentRequest) -> bool:
+    """The chat UI names each conversation by asking the agent for a 'short title'. Detect
+    that system prompt so we return a title instead of running the dispatch pipeline (which
+    would dump the full response into the header)."""
+    for item in (request.input or []):
+        d = item.model_dump() if hasattr(item, "model_dump") else dict(item)
+        if d.get("role") != "system":
+            continue
+        content = d.get("content")
+        text = content if isinstance(content, str) else (
+            " ".join(c.get("text", "") for c in content if isinstance(c, dict))
+            if isinstance(content, list) else "")
+        if "short title" in (text or "").lower():
+            return True
+    return False
+
+
+def _title_from(request: ResponsesAgentRequest) -> str:
+    """A short, plain-text conversation title from the user's first message."""
+    import json
+
+    text = _latest_user_text(request)
+    try:  # the UI sends the message as a JSON blob — pull the inner text out
+        obj = json.loads(text)
+        inner = " ".join(p.get("text", "") for p in obj.get("parts", [])
+                         if isinstance(p, dict) and p.get("type") == "text").strip()
+        text = inner or text
+    except Exception:
+        pass
+    return (text or "Marc's dispatch agent")[:70]
+
+
 def _route(text: str) -> str:
     """Deterministic intent router (offline-friendly). `dispatch.llm_route` is available
     for a Foundation-Model router when running live."""
@@ -79,6 +111,8 @@ def _route(text: str) -> str:
 
 @mlflow.trace(span_type="AGENT")
 async def build_reply(request: ResponsesAgentRequest) -> str:
+    if _is_title_request(request):        # the chat UI naming the conversation
+        return _title_from(request)
     thread_id = get_session_id(request) or "default"
     text = _latest_user_text(request)
     intent = _route(text)
