@@ -130,20 +130,27 @@ assistant** wire it in.
    > following the `add-lakebase-short-term-memory` skill."*
 
    Genie Code loads the **`add-lakebase-short-term-memory`** skill (the bootstrap installed
-   it into your `.assistant/skills/` folder) — it adds the `databricks-langchain[memory]`
-   dependency, attaches the Lakebase instance as an app resource, and swaps the in-memory
-   checkpointer for a Lakebase-backed one, without touching the graph or the approval gate.
+   it into your `.assistant/skills/` folder) and makes the one change it needs — wiring the
+   Lakebase checkpointer into `start_server.py`. (The `databricks-langchain[memory]`
+   dependency and the Lakebase app resource are already declared in the repo, so that's the
+   only file it edits; it doesn't touch the graph or the approval gate.)
 
-2. **Redeploy** the app (Task 1, step 3) and let it reach **Running**.
+2. **Attach the Lakebase instance to the app.** On the app's page → **Edit → App resources →
+   Add resource → Database instance** → pick **`sunny-bay-lakebase`** →
+   **CAN_CONNECT_AND_CREATE** → Save. *(This is the one thing the code can't do for you. If
+   you deploy with the bundle instead of the UI, it's already declared in `databricks.yml` —
+   skip this.)*
 
-3. **Prove the memory is durable**: ask **"Build my dispatch plan"**, then **restart the
+3. **Redeploy** the app (Task 1, step 3) and let it reach **Running**.
+
+4. **Prove the memory is durable**: ask **"Build my dispatch plan"**, then **restart the
    app** from its page. Back in the **same chat**, reply **"approve CBM-003"** — it still
    creates the order, because the paused plan was restored from **Lakebase**. (The agent
    only approves a plan that's *in progress*; with the old in-memory state the plan was gone
    after a restart and it would answer *"build a plan first"* — that gap is what you're
    proving is now fixed.)
 
-4. **See it recorded in Lakebase**: open **Compute → Database instances →
+5. **See it recorded in Lakebase**: open **Compute → Database instances →
    `sunny-bay-lakebase`**, connect to the `databricks_postgres` database, and query the
    checkpoint table the agent writes to:
 

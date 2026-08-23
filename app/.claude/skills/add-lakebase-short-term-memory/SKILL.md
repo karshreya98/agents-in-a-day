@@ -60,6 +60,10 @@ Two things that MUST be right, or it silently fails:
 2. **Enter it with `async with`** (that opens the connection pool). Never build a bare/lazy
    singleton — it has no open pool.
 
+> The app must have `sunny-bay-lakebase` attached as a resource so its service principal
+> can connect. That's already declared in `databricks.yml` for bundle deploys; for a UI
+> deploy, add it under the app's **Edit → App resources → Add resource → Database instance**.
+
 ## Verify
 
 1. Redeploy the app; wait for **Running**.
