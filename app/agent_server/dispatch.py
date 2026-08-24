@@ -58,18 +58,27 @@ def assess(state: PlanState) -> dict:
 
 
 def score(state: PlanState) -> dict:
-    """Rank machines by priority and draft a message for the ones worth dispatching."""
+    """Rank machines by priority and draft a message for the ones worth dispatching.
+
+    Machines that already have a service order (`executed` — remembered across restarts by
+    the checkpointer) are marked `serviced` and left OUT of the approval list, so a rebuilt
+    plan focuses on the remaining machines instead of re-recommending one Marc already handled.
+    """
+    serviced_ids = {e.get("machine_id") for e in state.get("executed", [])}
     ranked = sorted(state["fleet"], key=_priority, reverse=True)
-    for row in ranked:
-        row["priority_score"] = _priority(row)
     actions = []
     for row in ranked:
+        row["priority_score"] = _priority(row)
+        row["serviced"] = row["machine_id"] in serviced_ids
+        if row["serviced"]:
+            continue  # already has a service order — don't recommend it again
         if row["unresolved_faults"] and row["priority_score"] >= DISPATCH_THRESHOLD:
             row["draft_message"] = _draft_message(row)
             row["needs_approval"] = True
             actions.append(row)
     summary = (f"{len(ranked)} machines assessed, "
-               f"{len(actions)} recommended for dispatch this week.")
+               f"{len(actions)} recommended for dispatch this week"
+               + (f" ({len(serviced_ids)} already serviced)." if serviced_ids else "."))
     return {"ranked": ranked, "actions": actions, "summary": summary}
 
 
@@ -92,8 +101,12 @@ def approval_gate(state: PlanState) -> dict:
 def execute(state: PlanState) -> dict:
     """The accountable action — reached only after the manager approves at the gate."""
     mid = state.get("pending")
-    row = next((r for r in state.get("ranked", []) if r["machine_id"] == mid), None)
     executed = list(state.get("executed", []))
+    # Idempotent: if this machine already has a service order (e.g. approved before an app
+    # restart and restored from Lakebase), don't raise a duplicate — approving again is a no-op.
+    if any(e.get("machine_id") == mid for e in executed):
+        return {"executed": executed, "pending": None}
+    row = next((r for r in state.get("ranked", []) if r["machine_id"] == mid), None)
     if row is not None:
         fault_code = row["fault_code"] or "UNSPEC"
         part_id = tools.recommended_part(row["fault_code"])
@@ -155,18 +168,33 @@ GRAPH = build_graph()
 
 # --- Orchestration the chat surface calls (async, so a Lakebase saver drops in) ---
 async def build_plan(thread_id: str) -> dict[str, Any]:
-    """Run assess→score; pause at the approval gate; return the plan."""
+    """Run assess→score; pause at the approval gate; return the plan.
+
+    We carry the existing `executed` list forward (rather than resetting it) so a rebuilt
+    plan still knows which machines already have a service order and leaves them out.
+    """
     cfg = {"configurable": {"thread_id": thread_id}}
-    await GRAPH.ainvoke({"executed": []}, cfg)
+    prior = (await GRAPH.aget_state(cfg)).values.get("executed", [])
+    await GRAPH.ainvoke({"executed": prior}, cfg)
     return await _plan_from_state(thread_id)
 
 
 async def approve_machine(thread_id: str, machine_id: str) -> dict[str, Any]:
-    """Resume the paused graph to execute the write-back for one approved machine."""
+    """Resume the paused graph to execute the write-back for one approved machine.
+
+    Returns the order with `status="exists"` if that machine was already serviced (so the
+    chat can say "already raised" instead of implying a fresh write-back).
+    """
+    mid = canonical_id(machine_id) or machine_id
     cfg = {"configurable": {"thread_id": thread_id}}
-    await GRAPH.ainvoke(Command(resume={"machine_id": canonical_id(machine_id) or machine_id}), cfg)
+    existed = any(e.get("machine_id") == mid
+                  for e in (await GRAPH.aget_state(cfg)).values.get("executed", []))
+    await GRAPH.ainvoke(Command(resume={"machine_id": mid}), cfg)
     executed = (await GRAPH.aget_state(cfg)).values.get("executed", [])
-    return executed[-1] if executed else {"status": "error", "reason": "nothing executed"}
+    order = next((e for e in executed if e.get("machine_id") == mid), None)
+    if order is None:
+        return {"status": "error", "reason": f"{mid} isn't in the current plan"}
+    return dict(order, status="exists" if existed else order.get("status", "created"))
 
 
 async def _plan_from_state(thread_id: str) -> dict[str, Any]:
@@ -216,24 +244,37 @@ def format_plan(plan: dict[str, Any]) -> str:
         return "No machines to assess right now."
     lines = [f"**Dispatch plan** — {plan.get('summary', '')}", ""]
     for i, row in enumerate(ranked, 1):
-        flag = " ⚠️ **needs approval**" if row.get("needs_approval") else ""
+        if row.get("serviced"):
+            flag = " ✅ **service order already raised**"
+        elif row.get("needs_approval"):
+            flag = " ⚠️ **needs approval**"
+        else:
+            flag = ""
         lines.append(
             f"**{i}. {row['machine_id']} — {row['location']}** · score "
             f"{row['priority_score']}{flag}\n"
             f"   - {row['unresolved_faults']} unresolved fault(s)"
             + (f", code {row['fault_code']}" if row.get("fault_code") else "")
             + f" · ${row.get('revenue_at_risk', 0):,}/wk at risk")
-        if row.get("draft_message"):
+        if row.get("draft_message") and not row.get("serviced"):
             lines.append(f"   - _Draft to {row['manager']['name']}:_ {row['draft_message']}")
     staged = [r["machine_id"] for r in plan.get("actions", [])]
     if staged:
         lines += ["", f"Reply **\"approve {staged[0]}\"** to raise the service order — "
                       "nothing is written until you approve."]
+    elif any(r.get("serviced") for r in ranked):
+        lines += ["", "Every machine that needed dispatch this week has a service order "
+                      "raised — nothing left to approve."]
     return "\n".join(lines)
 
 
 def format_order(order: dict[str, Any]) -> str:
-    if order.get("status") != "created":
+    status = order.get("status")
+    if status == "exists":
+        return (f"**{order.get('order_id')}** was already raised for "
+                f"**{order.get('machine_id')}** — I didn't create a duplicate. That order is "
+                "remembered from before, so approving it again is a no-op.")
+    if status != "created":
         return f"I couldn't raise that order: {order.get('reason', 'unknown error')}."
     return (f"✅ Service order **{order.get('order_id')}** created for "
             f"**{order.get('machine_id')}** (part {order.get('part_id')}). "

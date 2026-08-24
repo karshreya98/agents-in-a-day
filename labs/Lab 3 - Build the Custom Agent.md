@@ -128,48 +128,76 @@ clears `MemorySaver`.) After Task 3 wires Lakebase, you'll repeat this and it wi
 
 A **Lakebase** instance (Databricks' managed Postgres) named **`sunny-bay-roastery-lakebase`** has
 been **pre-created for you**. You won't write any code — you'll let **Genie Code** (the
-in-product assistant) wire it in.
+in-product assistant) wire it in, then attach the instance to the app and redeploy.
 
-1. Open the app's code in the workspace editor, open **Genie Code**, and paste this
-   short prompt:
+Do these four steps **in order** — the attach (step 2) must happen **before** the redeploy
+(step 3), because the app connects to Lakebase the moment it starts.
 
-   > *"Add short-term memory to this app using our Lakebase instance `sunny-bay-roastery-lakebase`,
-   > following the `add-lakebase-short-term-memory` skill."*
+#### Step 1 — Wire the checkpointer with Genie Code
 
-   Genie Code loads the **`add-lakebase-short-term-memory`** skill (the bootstrap installed
-   it into your `.assistant/skills/` folder) and makes the one change it needs — wiring the
-   Lakebase checkpointer into `start_server.py`. (The `databricks-langchain[memory]`
-   dependency and the Lakebase app resource are already declared in the repo, so that's the
-   only file it edits; it doesn't touch the graph or the approval gate.)
+Open the app's code in the workspace editor, open **Genie Code**, and paste this short prompt:
 
-2. **Attach the Lakebase instance to the app.** On the app's page → **Edit → App resources →
-   Add resource → Database instance** → pick **`sunny-bay-roastery-lakebase`** →
-   **CAN_CONNECT_AND_CREATE** → **Save**. This grants the app's service principal access to
-   the database — the one thing the code change can't do for you.
+> *"Add short-term memory to this app using our Lakebase instance `sunny-bay-roastery-lakebase`,
+> following the `add-lakebase-short-term-memory` skill."*
 
-3. **Redeploy from the UI**: on the app's page click **Deploy** to re-sync your edited code,
-   and wait for **Running**.
+Genie Code loads the **`add-lakebase-short-term-memory`** skill (the bootstrap installed it
+into your `.assistant/skills/` folder) and makes the one change it needs — wiring the Lakebase
+checkpointer into **`start_server.py`**. The `databricks-langchain[memory]` dependency and the
+Lakebase app resource are already declared in the repo, so that's the **only file it edits**;
+it doesn't touch the graph or the approval gate. Confirm the change landed only in
+`start_server.py`.
 
-4. **Prove the memory is durable**: ask **"Build my dispatch plan"**, then **restart the
-   app** from its page. When it's back, reply **"approve CBM-003"** — it still creates the
-   order, because your in-progress plan was restored from **Lakebase** (the agent keys the
-   memory to *you*, so it survives the restart). (The agent only approves a plan that's
-   *in progress*; with the old in-memory state the plan was gone after a restart and it
-   would answer *"build a plan first"* — that gap is what you're proving is now fixed.)
+#### Step 2 — Attach the Lakebase instance to the app *(do this before redeploying)*
 
-5. **See it recorded in Lakebase**: open **Compute → Database instances →
-   `sunny-bay-roastery-lakebase`**, connect to the `databricks_postgres` database, and query the
-   checkpoint table the agent writes to:
+On the app's page → **Edit → App resources → Add resource → Database instance** → pick
+**`sunny-bay-roastery-lakebase`** → set the permission to **`CAN_CONNECT_AND_CREATE`** → **Save**.
 
-   ```sql
-   SELECT thread_id, checkpoint_id, type
-   FROM agent_memory.checkpoints
-   ORDER BY checkpoint_id DESC
-   LIMIT 10;
-   ```
+This grants the app's **service principal** access to the database — the one thing the code
+change can't do for you.
 
-   Those rows **are** the agent's memory — a checkpoint per step of your conversation,
-   written straight to governed Postgres. That's your direct proof it's being recorded.
+> [!IMPORTANT]
+> - **Attach before you redeploy.** The app opens a Lakebase connection at startup, so the
+>   resource has to be attached first. If you redeploy without it, the app **crashes on
+>   startup** (`App crashed` on the app page).
+> - **The permission must be `CAN_CONNECT_AND_CREATE`, not `CAN_CONNECT`.** On first start the
+>   app creates its own `agent_memory` schema and the checkpoint tables inside it. With only
+>   `CAN_CONNECT` it can't create the schema and crashes with
+>   *`permission denied for schema public`*.
+
+#### Step 3 — Redeploy from the UI
+
+On the app's page click **Deploy** to re-sync your edited code, and wait for **Running**. (If
+it shows **Crashed**, re-check step 2 — the resource attach and the `CAN_CONNECT_AND_CREATE`
+permission are the usual cause.)
+
+#### Step 4 — Prove the memory is durable
+
+Ask **"Build my dispatch plan"**, then **restart the app** from its page. When it's back,
+reply **"approve CBM-003"** — it **still creates the order**, because your in-progress plan was
+restored from **Lakebase** (the agent keys the memory to *you*, so it survives the restart).
+
+> Contrast with Task 2: before Lakebase, a restart wiped the plan and the agent answered
+> *"build a plan first."* That gap is what you just closed.
+
+Want to see the memory do more than survive? After the restart, ask **"Build my dispatch
+plan"** again: CBM-003 now shows **✅ service order already raised** and drops off the approval
+list — the agent remembers it already acted, straight from Lakebase, and won't double-book it.
+
+#### Step 5 — See it recorded in Lakebase
+
+Open **Compute → Database instances → `sunny-bay-roastery-lakebase`**, connect to the
+`databricks_postgres` database, and query the checkpoint table the agent writes to (it lives in
+the `agent_memory` schema the app created):
+
+```sql
+SELECT thread_id, checkpoint_id, type
+FROM agent_memory.checkpoints
+ORDER BY checkpoint_id DESC
+LIMIT 10;
+```
+
+Those rows **are** the agent's memory — a checkpoint per step of your conversation, written
+straight to governed Postgres. That's your direct proof it's being recorded.
 
 > [!NOTE]
 > That's the whole point: **durable agent memory on governed Postgres you didn't have to
@@ -184,11 +212,13 @@ in-product assistant) wire it in.
 Every message is logged as an **MLflow trace** — the full record of the routing and every
 tool call.
 
-1. Sidebar → **Experiments** → open the experiment **linked to your app**. Click the
-   **Traces** tab, open a dispatch-plan trace, and explore the **span waterfall** — one span
-   per LangGraph node: `assess` → `score` → `approval_gate`. Click a span to see its exact
-   inputs and outputs (what the Genie tool returned, the priority score, the Lakebase
-   checkpoint read/write).
+1. Sidebar → **Experiments** → open **`/Shared/marc-dispatch-agent`**. The app creates and
+   connects this experiment for you on deploy (it's set in `app.yaml` — no setup needed); it's
+   owned by the app's **service principal**, so you'll find it under the shared experiments,
+   not under experiments you own. Click the **Traces** tab, open a dispatch-plan trace, and
+   explore the **span waterfall** — one span per LangGraph node: `assess` → `score` →
+   `approval_gate`. Click a span to see its exact inputs and outputs (what the Genie tool
+   returned, the priority score, the Lakebase checkpoint read/write).
 
 2. **Stand up a Review App** so domain experts grade real output:
    - In your experiment: **Labeling → Labeling schemas → Create schema**. Add a

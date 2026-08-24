@@ -70,10 +70,19 @@ Two things that MUST be right, or it silently fails:
    grants) — and it owns that schema, so the tables create cleanly. (Running locally as
    yourself works without it because you own `public`; that hides the bug until deploy.)
 
-> The app must have `sunny-bay-roastery-lakebase` attached as a resource so its service principal can
-> connect. The user attaches it in the app UI (**Edit → App resources → Add resource →
-> Database instance → CAN_CONNECT_AND_CREATE**) — that's a UI step, not a code change, so
-> don't try to do it from code.
+## Attach the Lakebase instance to the app — BEFORE redeploying
+
+After you make the code edit, tell the user to attach the instance as an app resource, and be
+explicit that this happens **before** the redeploy. The app opens a Lakebase connection at
+startup, so the resource must already be attached or the app **crashes on startup**.
+
+> Tell the user, in the app UI: **Edit → App resources → Add resource → Database instance →
+> `sunny-bay-roastery-lakebase` → permission `CAN_CONNECT_AND_CREATE` → Save.**
+>
+> - This is a UI step, not a code change — **don't** try to do it from code.
+> - The permission **must be `CAN_CONNECT_AND_CREATE`, not `CAN_CONNECT`** — the app creates
+>   its own `agent_memory` schema on first start, which needs the CREATE grant. With only
+>   `CAN_CONNECT` it crashes with `permission denied for schema public`.
 
 ## Redeploy and verify
 
@@ -81,6 +90,7 @@ Two things that MUST be right, or it silently fails:
 > bundle commands.** Just tell the user: *on the app's page in the workspace, click
 > **Deploy** to re-sync the edited code, then wait for **Running**.*
 
-1. Redeploy via the UI (above); wait for **Running**.
+1. Confirm the resource is attached (above), then redeploy via the UI; wait for **Running**.
+   If it shows **Crashed**, the attach/permission from the previous section is the usual cause.
 2. Chat: **"Build my dispatch plan"** → **restart the app** → **"approve CBM-003"**. It still
    works, because the plan and pending approval were read back from Lakebase, not memory.
