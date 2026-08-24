@@ -145,9 +145,9 @@ Sidebar → **Playground**. Select your **`sunny-bay-governed-llm`** endpoint fr
 Every call you just made is logged — this is Tim's audit trail across all the reusable
 blocks.
 
-1. Open **Serving → your endpoint → Usage** (or **Govern → AI Gateway → Usage dashboard**).
-   You'll see request counts, tokens, latency, and per-user attribution — including the
-   requests that were **blocked** by the PII guardrail.
+1. Open the **AI Gateway → Usage dashboard** (**Govern → AI Gateway → Usage**). You'll see
+   request counts, tokens, latency, and per-user attribution across your governed blocks —
+   including the requests that were **blocked** by the PII guardrail.
 
 2. For a workspace-wide view, query the usage system table in a SQL editor:
 
