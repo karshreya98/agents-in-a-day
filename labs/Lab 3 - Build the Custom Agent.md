@@ -9,9 +9,6 @@ By the end of this lab you will be able to:
 - Use the in-product **Genie Code assistant to add a Databricks capability** — durable **short-term
   agent memory backed by Lakebase** — without writing the code yourself.
 
-> Observing the agent with **MLflow traces** and hardening it with a **Review App** is its own
-> topic — see the **[Deep Dive: Observability & Feedback](./Deep%20Dives/Observability%20and%20Feedback.md)**.
-
 ---
 
 ## 📖 Introduction
@@ -211,11 +208,8 @@ straight to governed Postgres. That's your direct proof it's being recorded.
 ---
 
 > [!NOTE]
-> **Want to see inside the agent and harden it?** Every message the agent handles is recorded
-> as an **MLflow trace** — the routing, each LangGraph node, every tool call — and you can
-> collect expert **feedback** on real output with a Review App. That's a topic on its own,
-> with an important Free-Edition-vs-paid wrinkle, so it lives in its own lab:
-> **[Deep Dive: Observability & Feedback](./Deep%20Dives/Observability%20and%20Feedback.md)**.
+> Observing the agent with **MLflow traces** and hardening it with a **Review App** is its own
+> topic — see the **[Deep Dive: Observability & Feedback](./Deep%20Dives/Observability%20and%20Feedback.md)**.
 
 ---
 
@@ -226,19 +220,14 @@ straight to governed Postgres. That's your direct proof it's being recorded.
   human-in-the-loop approval gate before it acts.
 - **You extend the agent with Databricks capabilities, by prompting Genie Code** — you
   added durable **short-term memory on Lakebase** without writing the code yourself.
-- **Observability and review are built in** — every message is an MLflow trace, and a Review
-  App collects expert feedback. Go deep in the
-  **[Observability & Feedback deep dive](./Deep%20Dives/Observability%20and%20Feedback.md)**.
 
 ---
 
 ## What Happens Next?
 
 Marc has a custom agent — deployed as an app, with an explicit control flow, a human-in-the-loop
-approval gate, and durable memory on Lakebase. *(Want to see inside it and harden it? The
-**[Observability & Feedback deep dive](./Deep%20Dives/Observability%20and%20Feedback.md)** covers
-traces, an LLM judge, and a Review App.)* Sunny Bay's team is inspired and wants to build more
-agents. In the final lab you step into the platform team's shoes and use the **AI Gateway** to
-create **governed, reusable AI blocks** so every next use case inherits governance by default.
+approval gate, and durable memory on Lakebase. Sunny Bay's team is inspired and wants to build
+more agents. In the final lab you step into the platform team's shoes and use the **AI Gateway**
+to create **governed, reusable AI blocks** so every next use case inherits governance by default.
 
 ➡️ Continue to **[Lab 4 — Govern Reusable AI Blocks with the AI Gateway](./Lab%204%20-%20AI%20Gateway%20and%20Write-back.md)**
