@@ -163,7 +163,7 @@ in-product assistant) wire it in.
 
    ```sql
    SELECT thread_id, checkpoint_id, type
-   FROM checkpoints
+   FROM agent_memory.checkpoints
    ORDER BY checkpoint_id DESC
    LIMIT 10;
    ```

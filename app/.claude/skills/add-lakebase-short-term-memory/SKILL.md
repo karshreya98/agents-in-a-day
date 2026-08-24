@@ -42,7 +42,10 @@ async def _lifespan(app):
             yield
         return
     # Deployed: durable short-term memory on the pre-created Lakebase instance.
-    async with AsyncCheckpointSaver(instance_name="sunny-bay-roastery-lakebase") as checkpointer:
+    async with AsyncCheckpointSaver(
+        instance_name="sunny-bay-roastery-lakebase",
+        schema="agent_memory",   # REQUIRED — see note below; the app SP can't write to `public`
+    ) as checkpointer:
         await checkpointer.setup()                           # REQUIRED — creates the tables
         dispatch.GRAPH = dispatch.build_graph(checkpointer)  # rebind graph to Lakebase memory
         async with _original_lifespan(app):
@@ -58,6 +61,14 @@ Two things that MUST be right, or it silently fails:
    Skip it and the first request errors with `relation "checkpoints" does not exist`.
 2. **Enter it with `async with`** (that opens the connection pool). Never build a bare/lazy
    singleton — it has no open pool.
+3. **`schema="agent_memory"`** is not optional. The deployed app connects as its **service
+   principal**, which can *connect* to the database but does **not** own the default `public`
+   schema — so `setup()`'s `CREATE TABLE` there fails with
+   `psycopg.errors.InsufficientPrivilege: permission denied for schema public` and the app
+   **crashes on startup**. Passing a `schema` makes `setup()` run `CREATE SCHEMA IF NOT EXISTS
+   agent_memory` first — which the SP *is* allowed to do (that's what `CAN_CONNECT_AND_CREATE`
+   grants) — and it owns that schema, so the tables create cleanly. (Running locally as
+   yourself works without it because you own `public`; that hides the bug until deploy.)
 
 > The app must have `sunny-bay-roastery-lakebase` attached as a resource so its service principal can
 > connect. The user attaches it in the app UI (**Edit → App resources → Add resource →
