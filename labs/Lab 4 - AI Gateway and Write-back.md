@@ -35,11 +35,6 @@ guardrails, traffic management, and monitoring, in one place.
 > Free Edition. Tasks 4–5 are **bonus** and need a non-Free workspace / admin rights — do
 > them if you can, otherwise read along.
 
-> [!NOTE]
-> **Roles.** Standing up governed blocks is a **platform/admin** job — so Tasks 1–2 are done
-> by whoever has admin on the workspace (the facilitator, or you if it's your own Free
-> Edition workspace). Everyone can watch and then *consume* the blocks in the Playground.
-
 ---
 
 ## Instructions
