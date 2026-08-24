@@ -7,6 +7,14 @@ env:
     value: "databricks"
   - name: MLFLOW_EXPERIMENT_NAME
     value: "/Shared/marc-dispatch-agent"
+  # Store trace span data in Unity Catalog (a deployed app can't reach the default trace blob
+  # storage, so the span waterfall would be dropped). agent.py reads these and points MLflow
+  # tracing at <catalog>.<schema>. UC links only to an experiment with no traces yet, so this
+  # takes effect on the app's first deploy (before any trace is logged).
+  - name: MLFLOW_TRACE_CATALOG
+    value: "sunny_bay_roastery"
+  - name: MLFLOW_TRACE_SCHEMA
+    value: "gold"
   - name: API_PROXY
     value: "http://localhost:8000/invocations"
   - name: CHAT_APP_PORT

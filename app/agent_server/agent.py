@@ -9,6 +9,7 @@ plan pauses at the gate and a later "approve CBM-003" resumes it — and, becaus
 stable across restarts, the Lakebase checkpointer swap makes the plan survive one.
 """
 import logging
+import os
 from typing import AsyncGenerator
 
 import mlflow
@@ -31,6 +32,24 @@ logger = logging.getLogger(__name__)
 # `mlflow.langchain.autolog()` here — its callback-based spans would duplicate our explicit
 # node spans, and our sync graph nodes run in a worker thread that autolog's tracing context
 # doesn't stitch together cleanly. Explicit tracing yields one clean AGENT → nodes → tools tree.
+
+# Store trace span data in Unity Catalog instead of the default artifact store. A deployed
+# Databricks App can't reach the trace blob-storage host, so by default spans (the waterfall)
+# never land and the experiment shows "No trace data available"; UC storage rides the
+# workspace API the app CAN reach. Driven by env (set in app.yaml) so it's automatic on
+# deploy and a no-op locally / in dry-run when the vars are unset.
+_trace_catalog = os.getenv("MLFLOW_TRACE_CATALOG")
+_trace_schema = os.getenv("MLFLOW_TRACE_SCHEMA")
+if _trace_catalog and _trace_schema:
+    try:
+        from mlflow.entities.trace_location import UnityCatalog
+
+        mlflow.set_experiment(
+            experiment_name=os.environ.get("MLFLOW_EXPERIMENT_NAME", "/Shared/marc-dispatch-agent"),
+            trace_location=UnityCatalog(catalog_name=_trace_catalog, schema_name=_trace_schema),
+        )
+    except Exception as e:  # never let tracing config break the app
+        logger.warning("UC trace storage unavailable, using default trace store: %s", e)
 
 HELP = (
     "I'm Marc's dispatch agent. Try:\n"
