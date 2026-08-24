@@ -68,11 +68,10 @@ approve works as long as a plan is in progress for you — the point you'll test
 > [!NOTE]
 > This app is built directly on the official
 > [`agent-langgraph`](https://github.com/databricks/app-templates/tree/main/agent-langgraph)
-> template — same `agent_server/` layout, same MLflow `ResponsesAgent` handlers, same
-> built-in chat UI, same `mlflow.langchain.autolog()` tracing. **The only thing we changed
-> is the agent itself:** instead of the template's generic tool-calling loop, it runs the
-> explicit LangGraph pipeline above, with the approval gate. So what you learn here is the
-> real template, not a bespoke fork.
+> template — same `agent_server/` layout, same MLflow `ResponsesAgent` handlers, same built-in
+> chat UI. **The only thing we changed is the agent itself:** instead of the template's generic
+> tool-calling loop, it runs the explicit LangGraph pipeline above, with the approval gate. So
+> what you learn here is the real template, not a bespoke fork.
 
 ---
 
@@ -233,9 +232,11 @@ straight to governed Postgres. That's your direct proof it's being recorded.
 
 ## What Happens Next?
 
-Marc has a custom agent — deployed as an app, observable in MLflow, and reviewed by the
-people who do the job. Sunny Bay's team is inspired and wants to build more agents. In the
-final lab you step into the platform team's shoes and use the **AI Gateway** to create
-**governed, reusable AI blocks** so every next use case inherits governance by default.
+Marc has a custom agent — deployed as an app, with an explicit control flow, a human-in-the-loop
+approval gate, and durable memory on Lakebase. *(Want to see inside it and harden it? The
+**[Observability & Feedback deep dive](./Deep%20Dives/Observability%20and%20Feedback.md)** covers
+traces, an LLM judge, and a Review App.)* Sunny Bay's team is inspired and wants to build more
+agents. In the final lab you step into the platform team's shoes and use the **AI Gateway** to
+create **governed, reusable AI blocks** so every next use case inherits governance by default.
 
 ➡️ Continue to **[Lab 4 — Govern Reusable AI Blocks with the AI Gateway](./Lab%204%20-%20AI%20Gateway%20and%20Write-back.md)**

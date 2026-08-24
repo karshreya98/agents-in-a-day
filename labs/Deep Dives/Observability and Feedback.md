@@ -1,235 +1,113 @@
 # 🔬 Deep Dive — Observability & Feedback
 
-> A deep dive that pairs with **[Lab 3 — Build the Custom Agent](../Lab%203%20-%20Build%20the%20Custom%20Agent.md)**.
-> Do Lab 3 first (you'll have Marc's dispatch agent running); come here to see *inside* it and
-> to build the loop that hardens it over time.
+> Pairs with **[Lab 3 — Build the Custom Agent](../Lab%203%20-%20Build%20the%20Custom%20Agent.md)**.
+> Do Lab 3 first, then come here to see *inside* the agent and build the loop that hardens it.
 
-## 🎯 What you'll learn
+## What you'll do
 
-- **Read an agent's MLflow trace** — the span waterfall that shows the routing, every
-  LangGraph node, and every tool call, with the exact inputs and outputs.
-- **Where traces are stored**, and the one thing that differs between **Free Edition** and a
-  **paid / managed-storage** workspace (so you're never surprised by an empty trace).
-- **Collect expert feedback** with a **Review App** and labeling sessions — the raw material
-  for an eval set or an automated judge.
+1. **Generate the agent's traces** and read the **span waterfall** — the routing, every node, every tool call.
+2. **Add an LLM-as-a-judge scorer** that grades every trace automatically, from the UI.
+3. **Collect human feedback** with a **Review App**, from the UI.
 
 ---
 
-## ⚠️ Read this first: Free Edition vs. paid workspaces
+## ⚠️ Free Edition vs. paid — read first
 
-An MLflow trace has two parts: the **trace record** (the request, the response, latency,
-status — lightweight, saved through the workspace API) and the **span data** (the waterfall:
-each node and tool call with its inputs/outputs — heavier, written to storage).
+A trace has a lightweight **record** (request, response, latency, status — saved via the API) and heavier **span data** (the waterfall — saved to storage). Where the span data can be written depends on *who produces the trace*:
 
-Where the span data can be written depends on **who is producing the trace** and **what
-storage the workspace has**:
-
-| Producing the trace from… | Free Edition | Paid / managed-storage workspace |
+| Traces produced by… | Free Edition | Paid / managed-storage workspace |
 |---|---|---|
-| **A notebook or an eval run** (this lab's main path) | ✅ full waterfall | ✅ full waterfall |
-| **A deployed Databricks App** | ⚠️ trace record only — **no span waterfall** | ✅ full waterfall (via Unity Catalog) |
+| **A notebook** (Task 1 here) | ✅ full waterfall | ✅ full waterfall |
+| **A deployed Databricks App** | ⚠️ record only — no waterfall | ✅ full waterfall (via Unity Catalog) |
 
-**Why the deployed-app gap on Free Edition?** A deployed app runs in a locked-down network
-sandbox that can't reach the default trace-artifact storage, so its span data is dropped —
-you'll see the message *"No trace data available."* The usual fix, **Unity Catalog trace
-storage**, needs *managed* storage, which Free-Edition catalogs don't have. So on Free
-Edition, a deployed app's detailed trace stays empty — it's a platform limit, not a bug.
-
-**The good news:** a **notebook** (or an eval) runs in a context that *can* write span data,
-on **any** workspace. So this lab drives the agent **from a notebook** — you get the full,
-explorable, labelable waterfall on Free Edition *and* paid. Part 4 then shows the production
-path (the deployed app streaming live traces to Unity Catalog) for when you're on a
-managed-storage workspace.
+A deployed app on Free Edition can't ship its span data (its sandbox can't reach trace storage, and UC trace tables need managed storage Free Edition lacks) — so you'll see *"No trace data available."* A **notebook** runs outside that sandbox and works everywhere, so **Task 1 uses a notebook.** Everything after works the same regardless of how the traces got there.
 
 ---
 
-## Part 1 — Generate a full trace from a notebook (works everywhere)
+## Task 1 — Generate & review traces
 
-Create a notebook in your workspace (in the same Git folder as the app) and run these cells.
+**Get traces into an experiment — pick your path:**
 
-> **Prefer to just run it?** A ready-to-run version of these cells is checked in at
-> **[`explore_agent_traces.py`](./explore_agent_traces.py)** — open it as a notebook, paste
-> your Git-folder path where marked, and **Run All**. The cells below are the same thing,
-> explained.
+- **Any workspace (recommended, always works):** open the ready notebook
+  **[`explore_agent_traces.py`](./explore_agent_traces.py)**, paste your Git-folder `app/` path
+  where marked, and **Run All**. It drives the dispatch agent and logs the traces to the
+  experiment **`/Shared/dispatch-agent-observability`**.
+- **Managed-storage workspace only — skip the notebook:** your **deployed app** already logs
+  traces to Unity Catalog (wired in `app.yaml` → `/Shared/marc-dispatch-agent`,
+  `sunny_bay_roastery.gold`). Just chat with the app from Lab 3 and use that experiment. One
+  one-time grant is required first — see the note below.
 
-**Cell 1 — install the (light) dependencies**
-```python
-%pip install -q "mlflow>=3.10" "langgraph>=1.1.0" nest_asyncio
-dbutils.library.restartPython()
-```
-> We import the agent's **pipeline** (`dispatch.py`) directly — not the full app server. That
-> keeps the import light; pulling in the whole server stack (`databricks-agents`, FastAPI) can
-> make a Free-Edition serverless kernel go unresponsive.
+**Review the trace:**
 
-**Cell 2 — point MLflow at an experiment and import the pipeline**
-```python
-import os, sys, asyncio, mlflow
-
-os.environ["AGENT_DRY_RUN"] = "1"   # canned Sunny Bay data — no Genie/warehouse needed
-# Leave MLFLOW_TRACE_CATALOG / MLFLOW_TRACE_SCHEMA UNSET here: from a notebook the default
-# (managed) trace store works, so we don't need Unity Catalog trace storage.
-
-mlflow.set_experiment("/Shared/dispatch-agent-observability")
-
-# Make the app package importable — EDIT to your Git folder's app/ path:
-APP_DIR = "/Workspace/Users/<you>@example.com/agents-in-a-day/app"
-sys.path.insert(0, APP_DIR)
-
-from agent_server import dispatch   # the LangGraph pipeline — light, no server deps
-print("dispatch imported")
-```
-
-**Cell 3 — drive the agent (this is what records the traces)**
-```python
-# Databricks notebooks already run inside an event loop, so allow nesting before asyncio.run:
-import nest_asyncio
-nest_asyncio.apply()
-
-# A root AGENT span per message, mirroring what the deployed app's build_reply does — the
-# graph nodes and tool calls nest underneath it into one trace.
-@mlflow.trace(span_type="AGENT", name="dispatch_agent")
-async def dispatch_agent(text, thread="observability-lab"):
-    t = text.lower()
-    if "approve" in t:
-        return dispatch.format_order(await dispatch.approve_machine(thread, text))
-    if t.startswith("why") or "explain" in t:
-        return await dispatch.explain_ranking(thread, text)
-    return dispatch.format_plan(await dispatch.build_plan(thread))
-
-async def go():
-    print(await dispatch_agent("Build my dispatch plan")); print("---")
-    print(await dispatch_agent("Why is CBM-003 ranked first?")); print("---")
-    print(await dispatch_agent("approve CBM-003"))
-
-asyncio.run(go())
-mlflow.flush_trace_async_logging()
-print("traces flushed")
-```
-
-**Cell 4 — confirm the span tree landed (before opening the UI)**
-```python
-import time; time.sleep(3)
-t = max(mlflow.search_traces(max_results=8, return_type="list"), key=lambda x: len(x.data.spans))
-kids = {}
-for s in t.data.spans:
-    kids.setdefault(s.parent_id, []).append(s)
-def show(pid, d):
-    for s in sorted(kids.get(pid, []), key=lambda x: x.start_time_ns):
-        print("  " * d + f"- [{s.span_type}] {s.name}")
-        show(s.span_id, d + 1)
-print(f"{len(t.data.spans)} spans:")
-show(None, 0)
-```
-
-You should see one connected tree per message, e.g. for the plan:
-
-```
-- [AGENT] dispatch_agent
-  - [CHAIN] assess
-    - [TOOL] ask                 (Maintenance Genie)
-    - [TOOL] ask                 (Sales Genie)
-    - [TOOL] get_location_roster
-  - [CHAIN] score
-  - [CHAIN] approval_gate
-```
-
----
-
-## Part 2 — Read the trace in the UI
-
-1. Sidebar → **Experiments** → open **`/Shared/dispatch-agent-observability`** → **Traces** tab.
+1. Sidebar → **Experiments** → open your experiment → **Traces** tab.
 2. Open the **"Build my dispatch plan"** trace → **See detailed trace view**.
-3. Walk the **span waterfall** top to bottom — it *is* the agent's control flow:
-   - **`dispatch_agent`** — the whole message (root).
-   - **`assess`** — expand it: the **Genie tool calls** (`ask`) and the roster lookup, each
-     with its exact **inputs and outputs** (click a span). This is where you verify the agent
-     asked the Genies the right thing and got sensible data back.
-   - **`score`** — the deterministic priority ranking.
-   - **`approval_gate`** — where the graph paused for a human.
-   For the **approve** message you'll see `execute → create_service_order` — the gated
-   write-back, captured with the order it raised.
-4. Notice each span's **latency** and **status** — this is how you debug a slow or wrong
-   answer: you can see exactly which node or tool call caused it.
+3. Walk the waterfall top to bottom — it *is* the agent's control flow:
+   - **`dispatch_agent`** → the whole message.
+   - **`assess`** → expand it: the **Genie tool calls** and the roster lookup, each with its
+     exact inputs/outputs (click a span) — proof of what the agent asked and got back.
+   - **`score`** → the deterministic priority ranking · **`approval_gate`** → where it paused
+     for a human. (The **approve** message adds `execute → create_service_order`, the gated
+     write-back.)
+   - Each span shows **latency** and **status** — this is how you debug a slow or wrong answer.
 
 > [!NOTE]
-> This is why a custom agent beats a black-box chatbot: the trace is a faithful, replayable
-> record of *what the agent did and why* — every routing decision, every tool result.
+> **Managed-storage deployed-app path only** — grant the app's service principal write access
+> to the trace schema *before its first deploy* (the app writes as its SP, and UC links the
+> experiment on startup). Copy the app's **App ID** from its page, then run once in a SQL editor:
+> ```sql
+> GRANT USE CATALOG ON CATALOG sunny_bay_roastery TO `<APP_ID>`;
+> GRANT USE SCHEMA, CREATE TABLE, MODIFY, SELECT ON SCHEMA sunny_bay_roastery.gold TO `<APP_ID>`;
+> ```
+> On Free Edition this won't take (default-storage catalog) — use the notebook path instead.
 
 ---
 
-## Part 3 — Collect expert feedback (the Review App)
+## Task 2 — Add an LLM-as-a-judge scorer (UI)
 
-Traces tell you *what happened*; feedback tells you *whether it was any good*. The people who
-do the job — Marc, the store managers — grade real output, and every rating attaches to the
-trace.
+A trace tells you *what happened*; a **judge** tells you *whether it was any good* — automatically, so you don't read every trace by hand. An LLM-as-a-judge scores each trace against a criterion you write in plain English.
 
-1. In the experiment: **Labeling → Labeling schemas → Create schema**. Add:
-   - `plan_quality` — a rating (*Poor / Fair / Good / Excellent*): *"is the ranking sensible
-     and are the drafted messages ready to send?"*
-   - `grounded_in_data` — a yes/no check: *"are the fault counts, revenue, and parts all
-     supported by the data?"*
+1. In your experiment, open the **Evaluation → Judges / Scorers** area → **Create judge**.
+2. Choose a **custom LLM judge** and give it a plain-language **guideline**, e.g.:
+   > *"The dispatch plan ranks machines sensibly — more unresolved faults and higher
+   > revenue-at-risk should rank higher — and each drafted manager message is specific and
+   > ready to send."*
+3. Run it over your traces. The judge model reads each trace and records a **pass/fail with a
+   rationale** as an assessment on the trace — visible in the **Assessments** panel.
+
+> [!NOTE]
+> Databricks also ships **built-in judges** (relevance, safety, groundedness, …) you can enable
+> the same way. Automated judges are how you keep score as the agent changes — run them on every
+> new version and watch the pass rate.
+
+---
+
+## Task 3 — Collect human feedback with a Review App (UI)
+
+Judges scale; humans set the bar. A **Review App** lets the people who own the outcome — Marc,
+the store managers — grade real output, and every rating attaches to the exact trace.
+
+1. In your experiment: **Labeling → Labeling schemas → Create schema**. Add:
+   - `plan_quality` — rating *Poor / Fair / Good / Excellent*: *"is the ranking sensible and are
+     the drafted messages ready to send?"*
+   - `grounded_in_data` — *Yes / No*: *"are the fault counts, revenue, and parts all supported
+     by the data?"*
 2. **Labeling → Labeling sessions → Create labeling session**, name it
    `Sunny Bay — Dispatch Plan Review`, attach both schemas, assign reviewers.
-3. From **Traces**, select the traces you generated in Part 1 → **Add to labeling session**.
-4. Open the session → **Share** → copy the **Review App URL** for reviewers. Open it
-   yourself, rate a plan, submit — the feedback lands back under **Assessments** on that exact
-   trace.
+3. From **Traces**, select your traces → **Add to labeling session**.
+4. Open the session → **Share** → copy the **Review App URL**. Open it, rate a plan, submit —
+   the feedback lands under **Assessments** on that exact trace.
 
 > [!NOTE]
-> This is the loop that hardens an agent: real output, graded by the people who own the
-> outcome, attached to the exact trace. That labeled set becomes your **eval dataset** and the
-> seed for an **automated judge** — so the next version can be measured, not guessed at.
-
----
-
-## Part 4 — Production: the deployed app's live traces (paid / managed-storage only)
-
-Part 1 traced the agent from a notebook so it works anywhere. In production you want the
-**deployed app** to stream traces from *real usage* into an experiment automatically. On a
-**managed-storage workspace**, route those traces to **Unity Catalog** so span data lands over
-the API (bypassing the app-sandbox storage limit) — and it's queryable from SQL, notebooks,
-and dashboards, with UC governance.
-
-The app is already wired for this — `app.yaml` sets the experiment and the UC trace
-destination:
-
-```yaml
-- name: MLFLOW_EXPERIMENT_NAME
-  value: "/Shared/marc-dispatch-agent"
-- name: MLFLOW_TRACE_CATALOG
-  value: "sunny_bay_roastery"
-- name: MLFLOW_TRACE_SCHEMA
-  value: "gold"
-```
-
-The only manual step is a one-time grant, because the app writes as its **service principal**,
-which needs to create/write the trace tables. On the app's page copy its **App ID** (under
-*About the App*), then run once in a SQL editor **before the app's first deploy** (UC links the
-experiment to storage on startup, and only on an experiment that has no traces yet):
-
-```sql
-GRANT USE CATALOG ON CATALOG sunny_bay_roastery TO `<APP_ID>`;
-GRANT USE SCHEMA, CREATE TABLE, MODIFY, SELECT ON SCHEMA sunny_bay_roastery.gold TO `<APP_ID>`;
-```
-
-Deploy the app, chat with it, and its traces appear in `/Shared/marc-dispatch-agent` with the
-same waterfall you explored in Part 2 — now from live traffic, and labelable exactly as in
-Part 3.
-
-> [!IMPORTANT]
-> On **Free Edition** this step won't take — its catalogs use *default storage*, which can't
-> hold UC trace tables, and the deployed app can't reach the default trace store either. That's
-> expected. Use the **notebook path (Parts 1–3)** on Free Edition; it gives you the full
-> observability and feedback experience without a managed-storage workspace.
+> That labeled set is your **eval dataset** and the seed for tuning the judge from Task 2 — so
+> the next version of the agent is measured, not guessed at.
 
 ---
 
 ## 💡 Key takeaways
 
 - **A trace is the agent's control flow, replayable** — root → nodes → tool calls, each with
-  inputs, outputs, latency, and status. It's how you debug and trust a custom agent.
-- **Where span data can be written depends on the producer and the workspace** — notebooks and
-  evals work everywhere; a deployed app needs managed storage (Unity Catalog) for its spans,
-  which Free Edition doesn't have.
-- **Feedback closes the loop** — expert ratings attached to real traces become the eval set and
-  the judge that let you improve the agent with evidence, not guesswork.
+  inputs, outputs, latency, and status.
+- **Where span data lands depends on the producer** — notebooks work everywhere; a deployed app
+  needs managed storage (Unity Catalog), which Free Edition doesn't have.
+- **Two graders, one loop** — an **LLM judge** scores every trace automatically, **human review**
+  sets the standard, and both attach to the trace as the raw material for eval and improvement.
