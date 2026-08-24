@@ -15,42 +15,6 @@ agent_server = AgentServer("ResponsesAgent", enable_chat_proxy=True)
 app = agent_server.app  # noqa: F841
 setup_mlflow_git_based_version_tracking()
 
-# --- Lab 3 · Task 3: durable short-term memory on Lakebase (rebinds dispatch.GRAPH) ---
-import logging  # noqa: E402
-import os  # noqa: E402
-from contextlib import asynccontextmanager  # noqa: E402
-
-from databricks_langchain import AsyncCheckpointSaver  # noqa: E402
-
-from agent_server import dispatch  # noqa: E402
-
-_original_lifespan = app.router.lifespan_context
-
-
-@asynccontextmanager
-async def _lifespan(app):
-    # Local/dev (not deployed as a Databricks App): keep the in-memory MemorySaver.
-    if not os.getenv("DATABRICKS_APP_NAME"):
-        async with _original_lifespan(app):
-            yield
-        return
-    # Deployed: durable short-term memory on the pre-created Lakebase instance.
-    # Fail soft: if Lakebase can't be reached, stay up on in-memory memory instead of crashing.
-    try:
-        async with AsyncCheckpointSaver(instance_name="sunny-bay-roastery-lakebase") as checkpointer:
-            await checkpointer.setup()                           # REQUIRED - creates the tables
-            dispatch.GRAPH = dispatch.build_graph(checkpointer)  # rebind graph to Lakebase memory
-            async with _original_lifespan(app):
-                yield
-    except Exception as e:
-        logging.getLogger(__name__).warning(
-            "Lakebase unavailable, falling back to in-memory memory: %s", e)
-        async with _original_lifespan(app):
-            yield
-
-
-app.router.lifespan_context = _lifespan
-
 
 def main():
     agent_server.run(app_import_string="agent_server.start_server:app")
