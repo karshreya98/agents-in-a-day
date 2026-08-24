@@ -126,14 +126,14 @@ clears `MemorySaver`.) After Task 3 wires Lakebase, you'll repeat this and it wi
 
 ### **Task 3: Add short-term memory with Lakebase — using Genie Code (10 min)**
 
-A **Lakebase** instance (Databricks' managed Postgres) named **`sunny-bay-lakebase`** has
+A **Lakebase** instance (Databricks' managed Postgres) named **`sunny-bay-roastery-lakebase`** has
 been **pre-created for you**. You won't write any code — you'll let **Genie Code** (the
 in-product assistant) wire it in.
 
 1. Open the app's code in the workspace editor, open **Genie Code**, and paste this
    short prompt:
 
-   > *"Add short-term memory to this app using our Lakebase instance `sunny-bay-lakebase`,
+   > *"Add short-term memory to this app using our Lakebase instance `sunny-bay-roastery-lakebase`,
    > following the `add-lakebase-short-term-memory` skill."*
 
    Genie Code loads the **`add-lakebase-short-term-memory`** skill (the bootstrap installed
@@ -143,7 +143,7 @@ in-product assistant) wire it in.
    only file it edits; it doesn't touch the graph or the approval gate.)
 
 2. **Attach the Lakebase instance to the app.** On the app's page → **Edit → App resources →
-   Add resource → Database instance** → pick **`sunny-bay-lakebase`** →
+   Add resource → Database instance** → pick **`sunny-bay-roastery-lakebase`** →
    **CAN_CONNECT_AND_CREATE** → **Save**. This grants the app's service principal access to
    the database — the one thing the code change can't do for you.
 
@@ -158,7 +158,7 @@ in-product assistant) wire it in.
    would answer *"build a plan first"* — that gap is what you're proving is now fixed.)
 
 5. **See it recorded in Lakebase**: open **Compute → Database instances →
-   `sunny-bay-lakebase`**, connect to the `databricks_postgres` database, and query the
+   `sunny-bay-roastery-lakebase`**, connect to the `databricks_postgres` database, and query the
    checkpoint table the agent writes to:
 
    ```sql

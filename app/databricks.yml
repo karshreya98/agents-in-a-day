@@ -24,7 +24,7 @@ resources:
       resources:
         - name: 'lakebase'
           database:
-            instance_name: "sunny-bay-lakebase"
+            instance_name: "sunny-bay-roastery-lakebase"
             database_name: "databricks_postgres"
             permission: 'CAN_CONNECT_AND_CREATE'
 

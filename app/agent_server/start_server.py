@@ -37,7 +37,7 @@ async def _lifespan(app):
     # Deployed: durable short-term memory on the pre-created Lakebase instance.
     # Fail soft: if Lakebase can't be reached, stay up on in-memory memory instead of crashing.
     try:
-        async with AsyncCheckpointSaver(instance_name="sunny-bay-lakebase") as checkpointer:
+        async with AsyncCheckpointSaver(instance_name="sunny-bay-roastery-lakebase") as checkpointer:
             await checkpointer.setup()                           # REQUIRED - creates the tables
             dispatch.GRAPH = dispatch.build_graph(checkpointer)  # rebind graph to Lakebase memory
             async with _original_lifespan(app):

@@ -1,8 +1,8 @@
 # Lakebase Database Instance for Lab 3 — the agent's durable short-term memory.
 # Created at `databricks bundle deploy` (the bootstrap runs that), so anyone who sets up
-# the workshop gets it. Lab 3's app binds to it by name (`sunny-bay-lakebase`).
+# the workshop gets it. Lab 3's app binds to it by name (`sunny-bay-roastery-lakebase`).
 resources:
   database_instances:
     lakebase:
-      name: sunny-bay-lakebase
+      name: sunny-bay-roastery-lakebase
       capacity: CU_1

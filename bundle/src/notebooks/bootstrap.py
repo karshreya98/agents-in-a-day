@@ -6,7 +6,7 @@
 # MAGIC 1. **Creates the catalog** (default `sunny_bay_roastery`) — or reuses it if it
 # MAGIC    already exists / an admin pre-created it.
 # MAGIC 2. **Deploys the bundle** — the setup job, both Lakeflow pipelines, and the
-# MAGIC    **`sunny-bay-lakebase`** Lakebase instance that Lab 3's agent uses for durable
+# MAGIC    **`sunny-bay-roastery-lakebase`** Lakebase instance that Lab 3's agent uses for durable
 # MAGIC    short-term memory.
 # MAGIC 3. **Runs the setup job** end-to-end (maintenance tables, sales star schema +
 # MAGIC    metric view, pre-built Sales Genie, dashboard, and the fault-report PDFs +
@@ -177,13 +177,13 @@ except Exception as e:
 
 # MAGIC %md ## 5. Deploy the bundle
 # MAGIC Creates the setup job, both Lakeflow pipelines, and the **Lakebase instance**
-# MAGIC (`sunny-bay-lakebase`) that Lab 3 uses for durable short-term memory. Passes the
+# MAGIC (`sunny-bay-roastery-lakebase`) that Lab 3 uses for durable short-term memory. Passes the
 # MAGIC catalog you chose above so the pipelines target the catalog we just created.
 
 # COMMAND ----------
 
 run_cli(["bundle", "deploy", "-t", target, "--var", f"catalog={catalog}", "--force-lock"])
-print("✅ Bundle deployed (including the sunny-bay-lakebase Lakebase instance).")
+print("✅ Bundle deployed (including the sunny-bay-roastery-lakebase Lakebase instance).")
 
 # COMMAND ----------
 

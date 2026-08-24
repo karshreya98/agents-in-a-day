@@ -10,7 +10,7 @@ approval — from the in-memory `MemorySaver()` to **Lakebase** so it survives a
 
 > **Almost everything is already wired in this repo. Make ONE change.**
 > - `pyproject.toml` already has `databricks-langchain[memory]`.
-> - `databricks.yml` already declares the Lakebase instance `sunny-bay-lakebase` as an app
+> - `databricks.yml` already declares the Lakebase instance `sunny-bay-roastery-lakebase` as an app
 >   resource.
 > - `agent_server/dispatch.py` already exposes `build_graph(checkpointer)` and runs the
 >   graph async.
@@ -42,7 +42,7 @@ async def _lifespan(app):
             yield
         return
     # Deployed: durable short-term memory on the pre-created Lakebase instance.
-    async with AsyncCheckpointSaver(instance_name="sunny-bay-lakebase") as checkpointer:
+    async with AsyncCheckpointSaver(instance_name="sunny-bay-roastery-lakebase") as checkpointer:
         await checkpointer.setup()                           # REQUIRED — creates the tables
         dispatch.GRAPH = dispatch.build_graph(checkpointer)  # rebind graph to Lakebase memory
         async with _original_lifespan(app):
@@ -59,7 +59,7 @@ Two things that MUST be right, or it silently fails:
 2. **Enter it with `async with`** (that opens the connection pool). Never build a bare/lazy
    singleton — it has no open pool.
 
-> The app must have `sunny-bay-lakebase` attached as a resource so its service principal can
+> The app must have `sunny-bay-roastery-lakebase` attached as a resource so its service principal can
 > connect. The user attaches it in the app UI (**Edit → App resources → Add resource →
 > Database instance → CAN_CONNECT_AND_CREATE**) — that's a UI step, not a code change, so
 > don't try to do it from code.
