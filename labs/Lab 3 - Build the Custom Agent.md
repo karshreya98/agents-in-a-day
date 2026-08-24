@@ -189,8 +189,8 @@ list — the agent remembers it already acted, straight from Lakebase, and won't
 
 #### Step 5 — See it recorded in Lakebase
 
-Switch to the **Lakebase** experience from the **product switcher** (the kebab / menu at the
-**top of the left sidebar** — Lakebase is a separate experience, not under *Compute*), then
+Switch to the **Lakebase** experience from the **product switcher** (the menu on the
+**right side of the top bar** — Lakebase is a separate experience, not under *Compute*), then
 open **Database instances → `sunny-bay-roastery-lakebase`**. In the Lakebase view, click
 **SQL Editor** in the left nav, make sure the database dropdown shows
 **`databricks_postgres`**, then paste this query and click **Run** (it reads the checkpoint
