@@ -87,7 +87,25 @@ A custom agent is just an app you deploy on Databricks. Let's stand this one up 
 2. **Create the app**: **Compute → Apps → Create app → Custom**, name it
    `marc-dispatch-agent`, **Create**.
 
-3. **Deploy it**: open the app → **Deploy** → set the source path to the `app/` folder →
+3. **Grant the app permission to record traces** *(do this before you deploy)*. The agent
+   logs every message as an MLflow trace (you'll explore these in Task 4), and it stores the
+   trace data in **Unity Catalog** (`sunny_bay_roastery.gold`) — a deployed app can't reach
+   the default trace storage, so UC is where the traces live. The app runs as its own
+   **service principal**, which needs write access to that schema. On the app's page, copy
+   its **App ID** (shown under *About the App*), then open a **SQL editor** and run once
+   (replace `<APP_ID>`):
+
+   ```sql
+   GRANT USE CATALOG ON CATALOG sunny_bay_roastery TO `<APP_ID>`;
+   GRANT USE SCHEMA, CREATE TABLE, MODIFY, SELECT ON SCHEMA sunny_bay_roastery.gold TO `<APP_ID>`;
+   ```
+
+   > [!IMPORTANT]
+   > Run this **before the first deploy**. The app links its experiment to UC storage on
+   > startup, and that link only takes if it happens before any trace is recorded — so the
+   > grant needs to be in place first.
+
+4. **Deploy it**: open the app → **Deploy** → set the source path to the `app/` folder →
    **Deploy**, and wait for **Running**.
 
 The app ships in **sample-data mode**, so it deploys with **no resources to attach**. Open
@@ -213,12 +231,14 @@ Every message is logged as an **MLflow trace** — the full record of the routin
 tool call.
 
 1. Sidebar → **Experiments** → open **`/Shared/marc-dispatch-agent`**. The app creates and
-   connects this experiment for you on deploy (it's set in `app.yaml` — no setup needed); it's
-   owned by the app's **service principal**, so you'll find it under the shared experiments,
-   not under experiments you own. Click the **Traces** tab, open a dispatch-plan trace, and
-   explore the **span waterfall** — one span per LangGraph node: `assess` → `score` →
-   `approval_gate`. Click a span to see its exact inputs and outputs (what the Genie tool
-   returned, the priority score, the Lakebase checkpoint read/write).
+   connects this experiment on deploy (set in `app.yaml`), and stores the trace data in Unity
+   Catalog (`sunny_bay_roastery.gold` — the write access you granted in Task 1). It's owned by
+   the app's **service principal**, so you'll find it under the shared experiments, not under
+   experiments you own. Click the **Traces** tab, open a dispatch-plan trace, and click
+   **See detailed trace view** to explore the **span waterfall** — one span per LangGraph
+   node: `assess` → `score` → `approval_gate`. Click a span to see its exact inputs and
+   outputs (what the Genie tool returned, the priority score, the Lakebase checkpoint
+   read/write).
 
 2. **Stand up a Review App** so domain experts grade real output:
    - In your experiment: **Labeling → Labeling schemas → Create schema**. Add a
