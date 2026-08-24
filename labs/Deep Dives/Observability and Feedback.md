@@ -47,9 +47,14 @@ managed-storage workspace.
 
 Create a notebook in your workspace (in the same Git folder as the app) and run these cells.
 
+> **Prefer to just run it?** A ready-to-run version of these cells is checked in at
+> **[`explore_agent_traces.py`](./explore_agent_traces.py)** — open it as a notebook, paste
+> your Git-folder path where marked, and **Run All**. The cells below are the same thing,
+> explained.
+
 **Cell 1 — install the (light) dependencies**
 ```python
-%pip install -q "mlflow>=3.10" "langgraph>=1.1.0"
+%pip install -q "mlflow>=3.10" "langgraph>=1.1.0" nest_asyncio
 dbutils.library.restartPython()
 ```
 > We import the agent's **pipeline** (`dispatch.py`) directly — not the full app server. That
@@ -76,6 +81,10 @@ print("dispatch imported")
 
 **Cell 3 — drive the agent (this is what records the traces)**
 ```python
+# Databricks notebooks already run inside an event loop, so allow nesting before asyncio.run:
+import nest_asyncio
+nest_asyncio.apply()
+
 # A root AGENT span per message, mirroring what the deployed app's build_reply does — the
 # graph nodes and tool calls nest underneath it into one trace.
 @mlflow.trace(span_type="AGENT", name="dispatch_agent")
@@ -92,8 +101,7 @@ async def go():
     print(await dispatch_agent("Why is CBM-003 ranked first?")); print("---")
     print(await dispatch_agent("approve CBM-003"))
 
-asyncio.run(go())          # if this errors "running event loop":
-                           #   %pip install nest_asyncio → import nest_asyncio; nest_asyncio.apply()
+asyncio.run(go())
 mlflow.flush_trace_async_logging()
 print("traces flushed")
 ```
