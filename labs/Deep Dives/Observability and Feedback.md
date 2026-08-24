@@ -47,13 +47,16 @@ managed-storage workspace.
 
 Create a notebook in your workspace (in the same Git folder as the app) and run these cells.
 
-**Cell 1 — install the agent's dependencies**
+**Cell 1 — install the (light) dependencies**
 ```python
-%pip install -q "mlflow>=3.10" "databricks-agents>=1.9.3" "databricks-langchain[memory]" "langgraph>=1.1.0" langchain-core python-dotenv
+%pip install -q "mlflow>=3.10" "langgraph>=1.1.0"
 dbutils.library.restartPython()
 ```
+> We import the agent's **pipeline** (`dispatch.py`) directly — not the full app server. That
+> keeps the import light; pulling in the whole server stack (`databricks-agents`, FastAPI) can
+> make a Free-Edition serverless kernel go unresponsive.
 
-**Cell 2 — point MLflow at an experiment and import the agent**
+**Cell 2 — point MLflow at an experiment and import the pipeline**
 ```python
 import os, sys, asyncio, mlflow
 
@@ -67,25 +70,27 @@ mlflow.set_experiment("/Shared/dispatch-agent-observability")
 APP_DIR = "/Workspace/Users/<you>@example.com/agents-in-a-day/app"
 sys.path.insert(0, APP_DIR)
 
-from agent_server import agent
-from mlflow.types.responses import ResponsesAgentRequest
-print("agent imported")
+from agent_server import dispatch   # the LangGraph pipeline — light, no server deps
+print("dispatch imported")
 ```
 
 **Cell 3 — drive the agent (this is what records the traces)**
 ```python
-def ask(text):
-    return ResponsesAgentRequest(
-        input=[{"role": "user", "content": text}],
-        custom_inputs={"user_id": "observability-lab"},
-    )
+# A root AGENT span per message, mirroring what the deployed app's build_reply does — the
+# graph nodes and tool calls nest underneath it into one trace.
+@mlflow.trace(span_type="AGENT", name="dispatch_agent")
+async def dispatch_agent(text, thread="observability-lab"):
+    t = text.lower()
+    if "approve" in t:
+        return dispatch.format_order(await dispatch.approve_machine(thread, text))
+    if t.startswith("why") or "explain" in t:
+        return await dispatch.explain_ranking(thread, text)
+    return dispatch.format_plan(await dispatch.build_plan(thread))
 
 async def go():
-    print(await agent.build_reply(ask("Build my dispatch plan")))
-    print("---")
-    print(await agent.build_reply(ask("Why is CBM-003 ranked first?")))
-    print("---")
-    print(await agent.build_reply(ask("approve CBM-003")))
+    print(await dispatch_agent("Build my dispatch plan")); print("---")
+    print(await dispatch_agent("Why is CBM-003 ranked first?")); print("---")
+    print(await dispatch_agent("approve CBM-003"))
 
 asyncio.run(go())          # if this errors "running event loop":
                            #   %pip install nest_asyncio → import nest_asyncio; nest_asyncio.apply()
