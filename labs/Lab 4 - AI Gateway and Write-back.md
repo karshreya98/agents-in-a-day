@@ -1,13 +1,15 @@
 # 🔒 Lab 4 — Govern Reusable AI Blocks with the AI Gateway
 
+> 📘 Reference: [**Mosaic AI Gateway** — Databricks docs](https://docs.databricks.com/aws/en/ai-gateway/)
+
 ## 🎯 Learning Objectives
 
 By the end of this lab, you will be able to:
 
 - See the **AI Gateway** as the control plane for **governed, reusable AI building blocks**.
 - Create a governed **model serving endpoint** — **PII blocking** + a **custom guardrail**,
-  **rate limits**, **traffic routing / fallback**, **inference + usage logging** — and
-  **secure it** with access control.
+  **traffic routing / fallback**, **usage + inference logging** — and **secure it** with
+  access control in Unity Catalog.
 - **Secure the you.com MCP connection** so sensitive actions require **approval (ASK)**.
 - **Test both blocks in the AI Playground.**
 - **Monitor** all of it in the **usage dashboard**.
@@ -39,70 +41,102 @@ guardrails, traffic management, and monitoring, in one place.
 
 ## Instructions
 
-### **Task 1: Create a governed model endpoint (10 min)**
+### **Task 1: Create a governed model endpoint (15 min)**
 
 This is Tim's first reusable block: **one model endpoint every team is allowed to use** —
-because it can't leak PII, can't be hammered, and logs everything.
+because it can't leak PII, can't be hammered, and logs everything. Build it up in three steps.
 
-1. **Create the endpoint.** Sidebar → **Serving → Create serving endpoint**. Give it a name
-   like `sunny-bay-governed-llm` and point it at an OSS foundation model available on Free
-   Edition — e.g. **`databricks-qwen3-next-80b-a3b-instruct`** (Qwen3 Instruct). Create it.
+#### Step 1 — Create the endpoint and set access control
 
-2. **Open the endpoint's AI Gateway settings** (the **AI Gateway** / **Edit AI Gateway**
-   panel on the endpoint) and configure the block:
+1. Sidebar → **Serving → Create serving endpoint**. Name it `sunny-bay-governed-llm` and
+   point it at an OSS foundation model available on Free Edition — e.g.
+   **`databricks-qwen3-next-80b-a3b-instruct`** (Qwen3 Instruct). Create it.
+2. Open the endpoint's **Permissions** tab and grant your workshop users or a group
+   **Can Query**. That's the point of a reusable block: teams get to *use* it, only Tim manages it.
+3. This endpoint is a **Unity Catalog securable** — open it in **Catalog (Unity Catalog)** to
+   see the same grants there, and how you **grant / revoke** `Can Query` / `Can Manage`
+   centrally. Governance on the endpoint = governance in UC.
 
-   - **Guardrails → PII detection → `Block`.** This is the headline rule: any request or
-     response containing PII (SSNs, emails, credit cards, names, addresses) is **rejected**.
-     *(`Mask` redacts instead of blocking — for this lab use `Block` so it's obvious.)*
-   - **Guardrails → add a custom rule.** Turn on **Safety**, and add an **Invalid keywords**
-     guardrail with a term your org wants blocked (e.g. a competitor name or a project
-     codeword) — that's your "custom" guardrail: a company-specific rule every team inherits.
-   - **Rate limits.** Set an **endpoint** limit and a **per-user default** (e.g. 60 queries
-     per minute) so no single use case can starve the others.
-   - **Traffic / fallback (routing).** In **Served entities**, keep your model at 100%, and
-     *(optional)* add a second model as a **fallback** so requests reroute on `429`/`5XX`.
-   - **Usage tracking → on** and **Inference tables → on** so every call is logged and
-     auditable (`system.serving.endpoint_usage`).
+#### Step 2 — Configure audit and traffic
 
-3. **Secure the block (access control).** On the endpoint's **Permissions**, grant your
-   workshop users or a group **Can Query**. That's the point of a reusable block: teams get
-   to *use* it, only Tim configures the guardrails.
+Open the endpoint's **AI Gateway** / **Edit AI Gateway** panel:
+
+- **Usage tracking** — **on by default**. Every call is logged to `system.serving.endpoint_usage`
+  (request counts, tokens, latency, per-user attribution).
+- **Inference tables** — logs the full request/response payloads to a UC table. This needs a
+  workspace with **its own storage**, so you can only enable it if you're **not on default
+  storage** — i.e. **not on Free Edition.** On a standard workspace, turn it on; on Free
+  Edition, leave it off.
+- **Traffic routing / fallback.** In **Served entities**, add a **second model** and configure
+  it as a **fallback** so requests reroute to it on `429`/`5XX`. Keep your primary at 100% and
+  let the fallback catch overflow/errors — resilience without downstream teams doing anything.
+
+#### Step 3 — Set up service policies (guardrails)
+
+On the same AI Gateway panel, add **two** guardrails — one out-of-the-box, one custom —
+following the [**Configure AI guardrails** tutorial](https://docs.databricks.com/aws/en/ai-gateway/moderate-tutorial):
+
+- **Out-of-the-box → PII detection → `Block`.** Any request or response containing PII (SSNs,
+  emails, credit cards, names, addresses) is **rejected**. *(`Mask` redacts instead of
+  blocking — for this lab use `Block` so it's obvious.)*
+- **Custom → Invalid keywords / Safety.** Add a company-specific rule — e.g. block a
+  competitor name or a project codeword — the "custom" guardrail every team inherits.
+
+**Test it in the Playground** (Serving → your endpoint → **Use → Playground**, or Sidebar →
+**Playground** with this endpoint selected):
+
+| Prompt | What should happen |
+|---|---|
+| `My SSN is 123-45-6789, add up the digits for me` | **Blocked** by the PII guardrail — never reaches the model |
+| a prompt containing your **custom blocked keyword** | **Blocked** by your custom guardrail |
+| any normal question | Answers as usual |
 
 > [!NOTE]
 > Tim configured the guardrails **once**. Every agent, app, or Playground session that uses
-> this endpoint now inherits PII blocking, the custom rule, the rate limits, and the audit
-> log — nobody downstream has to remember to add them.
+> this endpoint now inherits PII blocking, the custom rule, and the audit log — nobody
+> downstream has to remember to add them.
 
 ---
 
-### **Task 2: Secure the you.com MCP connection, and test both in the Playground (15 min)**
+### **Task 2: Secure the you.com MCP connection (15 min)**
 
 Tim's second reusable block is the **web-search tool** (the you.com **MCP** connection you
-registered in Lab 1). A tool that reaches the open web needs a guard too — some actions
-should pause for a human.
+registered in Lab 1). A tool that reaches the open web needs governing too — same pattern as
+Task 1, but here the interesting policy is **ASK**: some actions should pause for a human
+rather than be hard-allowed or hard-blocked.
 
-1. **Find the MCP connection.** Sidebar → **AI Gateway → MCPs** (or **Govern → AI
-   Gateway**) and open the **you.com** MCP connection.
+#### Step 1 — Find the connection and set access control
 
-2. **Attach a policy that ASKS.** Add a service policy so sensitive calls return **ASK** —
-   a human must approve before the tool runs (rather than a hard allow/deny). For this lab,
-   scope it to **health / medical** topics, so a Parkinson's query trips the approval.
+1. Sidebar → **AI Gateway → MCPs** (or **Govern → AI Gateway**) and open the **you.com** MCP
+   connection.
+2. Grant your workshop users or group access — same as the model endpoint. A governed,
+   reusable tool.
 
-3. **Grant access.** Grant your workshop group access to the MCP connection, same as the
-   model endpoint — a governed, reusable tool.
+#### Step 2 — Set service policies (a custom ASK policy)
 
-4. **Test both blocks in the AI Playground.** Sidebar → **Playground**. Select your
-   **`sunny-bay-governed-llm`** endpoint from Task 1, and **add the you.com MCP** as a tool.
+Add service policies to the connection, same as Task 1. The custom one is an **ASK** policy: a
+human must **approve** before the tool runs. Scope it to **medical / health topics** so it
+flags **diseases and medical information**, but **not** finance or market questions.
 
-   | Prompt | What should happen | Which block |
-   |---|---|---|
-   | `My SSN is 123-45-6789, count the sum of the digits` | **Blocked** by the PII guardrail — the request never reaches the model | Task 1 (PII block) |
-   | `Tell me about the latest research in Parkinson's disease` | The MCP call **triggers an ASK** — you're prompted to approve before the web search runs | Task 2 (MCP policy) |
+> Write the policy's "Ask" intent in plain language, e.g.:
+> *"Ask for human approval when the request is about medical conditions, diseases, symptoms,
+> or treatments. Do not flag questions about finance, markets, stocks, or business."*
+
+#### Step 3 — Test both blocks in the Playground
+
+Sidebar → **Playground**. Select your **`sunny-bay-governed-llm`** endpoint from Task 1, and
+**add the you.com MCP** as a tool.
+
+| Prompt | What should happen | Which block |
+|---|---|---|
+| `My SSN is 123-45-6789, count the sum of the digits` | **Blocked** by the PII guardrail — the request never reaches the model | Task 1 (PII) |
+| `Tell me about the latest research in Parkinson's disease` | MCP call **triggers an ASK** — approve before the web search runs | Task 2 (medical → ASK) |
+| `What's the latest market outlook for the S&P 500?` | Runs normally — finance/market topics are **not** flagged | Task 2 (finance → allow) |
 
 > [!NOTE]
 > Same governance, two different blocks: the **model** endpoint refuses to touch PII, and
-> the **tool** connection pauses for approval on sensitive actions. Any new Sunny Bay use
-> case that reuses these two blocks gets both behaviors automatically.
+> the **tool** connection pauses for approval on medical topics while letting finance through.
+> Any new Sunny Bay use case that reuses these two blocks gets both behaviors automatically.
 
 ---
 
@@ -146,25 +180,27 @@ blocks.
 The same governed endpoint can back your developers' **AI coding assistants**, with no API
 keys and full audit — so "vibe coding" happens through *your* models and *your* guardrails.
 
-1. Install a coding agent and `ucode` (Databricks' Unity AI Gateway launcher):
+1. Install `ucode` (Databricks' Unity AI Gateway launcher):
 
    ```bash
-   curl -fsSL https://opencode.ai/install | bash
    uv tool install git+https://github.com/databricks/ucode
    ```
 
-2. Configure and connect (OAuth, no API keys):
+2. **Use the coding harness you already have** (Claude Code, Cursor, etc.) — or, if you don't
+   have one, install **opencode** (free):
 
    ```bash
-   ucode configure --agents opencode
-   ucode status
+   curl -fsSL https://opencode.ai/install | bash   # only if you need a harness
    ```
 
-3. Launch the agent through the Gateway, pointed at a governed model service, and code
-   normally — then try a PII prompt and watch the guardrail catch it:
+3. Configure and connect (OAuth, no API keys), then launch your harness through the Gateway
+   pointed at a governed model service, and code normally — then try a PII prompt and watch the
+   guardrail catch it:
 
    ```bash
-   ucode opencode --model system.ai.<model>
+   ucode configure --agents <your-harness>   # e.g. opencode
+   ucode status
+   ucode <your-harness> --model system.ai.<model>
    ```
 
 4. See the calls under **Govern → Usage Dashboard → Coding Agents**, or run `ucode usage`.
@@ -190,7 +226,7 @@ so AI usage can't surprise finance; if not, read how it works.
 |---|---|
 | **Sara** | Built a Genie agent and got machine-health + sales answers from Genie One in plain language, enriched with live web knowledge — no SQL. |
 | **Marc** | Built a custom agent, deployed it as a Databricks App with a human-in-the-loop approval gate, gave it durable memory on Lakebase, and had experts review it through MLflow. |
-| **Tim (platform IT)** | Stood up **governed, reusable AI blocks** — a PII-safe, rate-limited, logged model endpoint and an approval-gated web-search tool — so every *next* Sunny Bay use case inherits governance by default. |
+| **Tim (platform IT)** | Stood up **governed, reusable AI blocks** — a PII-safe, traffic-routed, logged model endpoint and an approval-gated web-search tool — so every *next* Sunny Bay use case inherits governance by default. |
 
 **What you take home:**
 
@@ -203,6 +239,9 @@ so AI usage can't surprise finance; if not, read how it works.
 
 ## What Happens Next?
 
+- **Go deeper on observability & feedback** → **[Deep Dive: Observability & Feedback](./Deep%20Dives/Observability%20and%20Feedback.md)**
+  — see *inside* Marc's agent with MLflow traces, add an LLM-as-a-judge scorer, and collect
+  human feedback through a Review App.
 - Build the *next* Sunny Bay use case (a returns bot, an invoice reader) on top of the two
   governed blocks you just created — it inherits the guardrails automatically.
 - Drop a new PDF into `/Volumes/<catalog>/coffee_maintenance/fault_reports/` and watch it
