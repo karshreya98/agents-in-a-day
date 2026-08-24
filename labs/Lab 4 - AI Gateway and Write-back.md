@@ -10,7 +10,8 @@ By the end of this lab, you will be able to:
 - Create a governed **model serving endpoint** — **contextual service policies** (PII
   blocking + a custom rule), **traffic routing / fallback**, **usage + inference logging** —
   and **secure it** with access control in Unity Catalog.
-- **Secure the you.com MCP connection** so sensitive actions require **approval (ASK)**.
+- **Register and secure a governed you.com MCP service** so sensitive actions require
+  **approval (ASK)**.
 - **Test both blocks in the AI Playground.**
 - **Monitor** all of it in the **usage dashboard**.
 - *(Bonus)* Route a coding agent through the Gateway with `ucode`; set spend **budgets**.
@@ -102,25 +103,36 @@ following the [**AI Gateway moderation tutorial**](https://docs.databricks.com/a
 
 ---
 
-### **Task 2: Secure the you.com MCP connection (15 min)**
+### **Task 2: Build & secure the you.com MCP service (20 min)**
 
-Tim's second reusable block is the **web-search tool** (the you.com **MCP** connection you
-registered in Lab 1). A tool that reaches the open web needs governing too — same pattern as
-Task 1, but here the interesting policy is **ASK**: some actions should pause for a human
-rather than be hard-allowed or hard-blocked.
+Tim's second reusable block is the **web-search tool**. In Lab 1 you created the metastore
+**HTTP connection** `youcom_http` (raw you.com credentials). That connection is *not* something
+teams should touch directly — so Tim now wraps it in a **governed MCP service** inside the AI
+Gateway, and applies a policy. Same pattern as Task 1, but here the interesting policy is
+**ASK**: some actions should pause for a human rather than be hard-allowed or hard-blocked.
 
-#### Step 1 — Find the connection and set access control
+#### Step 1 — Register the governed MCP service (on the existing HTTP connection)
 
-1. Sidebar → **AI Gateway → MCPs** (or **Govern → AI Gateway**) and open the **you.com** MCP
-   connection.
-2. Grant your workshop users or group access — same as the model endpoint. A governed,
-   reusable tool.
+Turn the raw `youcom_http` connection from Lab 1 into a governed, reusable tool.
+
+1. Sidebar → **AI Gateway → MCPs** → **Register MCP Server**.
+2. Give the service a name (e.g. `youcom-web-search`), select the **`youcom_http`** connection
+   created in Lab 1, pick the **Tools** to expose (web search), and click **Create**.
+3. Open the new MCP service → **Permissions → Grant**, add your workshop users or group, and
+   grant **`EXECUTE`**.
+
+> [!WARNING]
+> Grant participants **`EXECUTE` on the MCP service only — never `USE CONNECTION`**.
+> `USE CONNECTION` would let them call you.com directly or register their own MCP services,
+> bypassing governance. `EXECUTE` is all they need to use the tool.
+>
+> Full reference: [Register an MCP service](https://docs.databricks.com/aws/en/ai-gateway/register-mcp-service).
 
 #### Step 2 — Set service policies (a custom ASK policy)
 
-Add service policies to the connection, same as Task 1. The custom one is an **ASK** policy: a
-human must **approve** before the tool runs. Scope it to **medical / health topics** so it
-flags **diseases and medical information**, but **not** finance or market questions.
+On the MCP service, add service policies the same way as Task 1. The custom one is an **ASK**
+policy: a human must **approve** before the tool runs. Scope it to **medical / health topics**
+so it flags **diseases and medical information**, but **not** finance or market questions.
 
 > Write the policy's "Ask" intent in plain language, e.g.:
 > *"Ask for human approval when the request is about medical conditions, diseases, symptoms,
@@ -129,7 +141,7 @@ flags **diseases and medical information**, but **not** finance or market questi
 #### Step 3 — Test both blocks in the Playground
 
 Sidebar → **Playground**. Select your **`sunny-bay-governed-llm`** endpoint from Task 1, and
-**add the you.com MCP** as a tool.
+**add the `youcom-web-search` MCP service** as a tool.
 
 | Prompt | What should happen | Which block |
 |---|---|---|
