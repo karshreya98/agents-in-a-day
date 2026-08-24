@@ -106,7 +106,8 @@ Reply **"approve CBM-003"** and the agent raises the order — but only *after* 
 
 ### **Task 2: Find where the control flow is defined (5 min)**
 
-Open **`app/agent_server/dispatch.py`** — this is the agent's brain. Two things to spot:
+On the app's page, click **View source** to open its code, then open
+**`agent_server/dispatch.py`** — this is the agent's brain. Two things to spot:
 
 1. **`build_graph()`** — the four nodes and edges *are* the control flow:
    `assess → score → approval_gate ⇄ execute`. The `approval_gate` node calls
