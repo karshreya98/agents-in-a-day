@@ -7,9 +7,9 @@
 By the end of this lab, you will be able to:
 
 - See the **AI Gateway** as the control plane for **governed, reusable AI building blocks**.
-- Create a governed **model serving endpoint** — **PII blocking** + a **custom guardrail**,
-  **traffic routing / fallback**, **usage + inference logging** — and **secure it** with
-  access control in Unity Catalog.
+- Create a governed **model serving endpoint** — **contextual service policies** (PII
+  blocking + a custom rule), **traffic routing / fallback**, **usage + inference logging** —
+  and **secure it** with access control in Unity Catalog.
 - **Secure the you.com MCP connection** so sensitive actions require **approval (ASK)**.
 - **Test both blocks in the AI Playground.**
 - **Monitor** all of it in the **usage dashboard**.
@@ -30,7 +30,7 @@ new agent inherits governance for free.
 
 The **AI Gateway** is how you build those blocks. It's Databricks' governance layer for the
 runtime interactions between models, agents, MCP servers, and tools — access control,
-guardrails, traffic management, and monitoring, in one place.
+**contextual service policies**, traffic management, and monitoring, in one place.
 
 > [!NOTE]
 > **Free Edition friendly.** Tasks 1–3 are all done in the **UI** and work on Databricks
@@ -71,28 +71,32 @@ Open the endpoint's **AI Gateway** / **Edit AI Gateway** panel:
   it as a **fallback** so requests reroute to it on `429`/`5XX`. Keep your primary at 100% and
   let the fallback catch overflow/errors — resilience without downstream teams doing anything.
 
-#### Step 3 — Set up service policies (guardrails)
+#### Step 3 — Set up contextual service policies
 
-On the same AI Gateway panel, add **two** guardrails — one out-of-the-box, one custom —
-following the [**Configure AI guardrails** tutorial](https://docs.databricks.com/aws/en/ai-gateway/moderate-tutorial):
+On the same AI Gateway panel, add **two service policies** — one out-of-the-box, one custom —
+following the [**AI Gateway moderation tutorial**](https://docs.databricks.com/aws/en/ai-gateway/moderate-tutorial):
 
 - **Out-of-the-box → PII detection → `Block`.** Any request or response containing PII (SSNs,
   emails, credit cards, names, addresses) is **rejected**. *(`Mask` redacts instead of
   blocking — for this lab use `Block` so it's obvious.)*
 - **Custom → Invalid keywords / Safety.** Add a company-specific rule — e.g. block a
-  competitor name or a project codeword — the "custom" guardrail every team inherits.
+  competitor name or a project codeword — the "custom" policy every team inherits.
+
+> This is the novel bit: service policies are **contextual**, not static allow/deny lists.
+> They evaluate the *meaning* of each request and response, so the same policy catches PII or a
+> sensitive topic however it's phrased — no regex list to maintain.
 
 **Test it in the Playground** (Serving → your endpoint → **Use → Playground**, or Sidebar →
 **Playground** with this endpoint selected):
 
 | Prompt | What should happen |
 |---|---|
-| `My SSN is 123-45-6789, add up the digits for me` | **Blocked** by the PII guardrail — never reaches the model |
-| a prompt containing your **custom blocked keyword** | **Blocked** by your custom guardrail |
+| `My SSN is 123-45-6789, add up the digits for me` | **Blocked** by the PII service policy — never reaches the model |
+| a prompt containing your **custom blocked keyword** | **Blocked** by your custom service policy |
 | any normal question | Answers as usual |
 
 > [!NOTE]
-> Tim configured the guardrails **once**. Every agent, app, or Playground session that uses
+> Tim configured the service policies **once**. Every agent, app, or Playground session that uses
 > this endpoint now inherits PII blocking, the custom rule, and the audit log — nobody
 > downstream has to remember to add them.
 
@@ -129,7 +133,7 @@ Sidebar → **Playground**. Select your **`sunny-bay-governed-llm`** endpoint fr
 
 | Prompt | What should happen | Which block |
 |---|---|---|
-| `My SSN is 123-45-6789, count the sum of the digits` | **Blocked** by the PII guardrail — the request never reaches the model | Task 1 (PII) |
+| `My SSN is 123-45-6789, count the sum of the digits` | **Blocked** by the PII service policy — the request never reaches the model | Task 1 (PII) |
 | `Tell me about the latest research in Parkinson's disease` | MCP call **triggers an ASK** — approve before the web search runs | Task 2 (medical → ASK) |
 | `What's the latest market outlook for the S&P 500?` | Runs normally — finance/market topics are **not** flagged | Task 2 (finance → allow) |
 
@@ -147,7 +151,7 @@ blocks.
 
 1. Open the **AI Gateway → Usage dashboard** (**Govern → AI Gateway → Usage**). You'll see
    request counts, tokens, latency, and per-user attribution across your governed blocks —
-   including the requests that were **blocked** by the PII guardrail.
+   including the requests that were **blocked** by the PII service policy.
 
 2. For a workspace-wide view, query the usage system table in a SQL editor:
 
@@ -213,7 +217,7 @@ Governed blocks should also have a **budget**. If you have admin access, set a s
 so AI usage can't surprise finance; if not, read how it works.
 
 - **Budgets** let you track and cap AI/compute spend and alert or act when a threshold is
-  hit — the financial guardrail that complements the safety guardrails above.
+  hit — the financial guardrail that complements the service policies above.
 - Docs: **[Databricks budgets & budget policies](https://docs.databricks.com/aws/en/admin/account-settings/budgets)**.
 
 ---
@@ -231,9 +235,10 @@ so AI usage can't surprise finance; if not, read how it works.
 **What you take home:**
 
 - The Genie agents and the custom agent — point them at your own data next week.
-- The MLflow trace + Review App loop — the way to harden any agent with expert feedback.
 - The **AI Gateway blocks pattern** — govern models and tools once, reuse everywhere, on
   *your* terms.
+- *(If you do the deep dive)* the MLflow trace + Review App loop — how to harden any agent
+  with expert feedback.
 
 ---
 
