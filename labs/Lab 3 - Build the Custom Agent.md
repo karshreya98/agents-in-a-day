@@ -1,5 +1,7 @@
 # 🤖 Lab 3 — Build & Deploy Marc's Custom Agent
 
+> 📘 Reference: [**Author a custom agent** — Databricks docs](https://docs.databricks.com/aws/en/agents/custom-agents/author-agent)
+
 ## 🎯 Learning Objectives
 
 By the end of this lab you will be able to:
@@ -35,8 +37,9 @@ across twelve locations.
 > then does the agent raise the actual service order. **The manager keeps the judgement;
 > the agent does the legwork.**
 
-That last part — *the agent takes an action, but only after a human approves* — is the
-thing a chat assistant can't do and why Marc needs a **custom agent**, not just a chatbot.
+That last part — *the agent takes an action, but only after a human approves* — is what
+makes this a **custom agent**: it doesn't just surface an answer, it carries the workflow
+through to a real write-back and waits for Marc's go-ahead before it acts.
 
 ---
 
@@ -134,10 +137,12 @@ Do these four steps **in order** — the attach (step 2) must happen **before** 
 
 #### Step 1 — Wire the checkpointer with Genie Code
 
-Open the app's code in the workspace editor, open **Genie Code**, and paste this short prompt:
+Open the app's code in the workspace editor, open **Genie Code**, and paste this short prompt.
+Type **`@`** before the skill name so Genie Code attaches the skill folder as context —
+without the `@` it may not find the skill:
 
 > *"Add short-term memory to this app using our Lakebase instance `sunny-bay-roastery-lakebase`,
-> following the `add-lakebase-short-term-memory` skill."*
+> following the `@add-lakebase-short-term-memory` skill."*
 
 Genie Code loads the **`add-lakebase-short-term-memory`** skill (the bootstrap installed it
 into your `.assistant/skills/` folder) and makes the one change it needs — wiring the Lakebase
@@ -184,8 +189,10 @@ list — the agent remembers it already acted, straight from Lakebase, and won't
 
 #### Step 5 — See it recorded in Lakebase
 
-Open **Compute → Database instances → `sunny-bay-roastery-lakebase`**. In the Lakebase view,
-click **SQL Editor** in the left nav, make sure the database dropdown shows
+Switch to the **Lakebase** experience from the **product switcher** (the kebab / menu at the
+**top of the left sidebar** — Lakebase is a separate experience, not under *Compute*), then
+open **Database instances → `sunny-bay-roastery-lakebase`**. In the Lakebase view, click
+**SQL Editor** in the left nav, make sure the database dropdown shows
 **`databricks_postgres`**, then paste this query and click **Run** (it reads the checkpoint
 table the app created in the `agent_memory` schema):
 
