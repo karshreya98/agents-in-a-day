@@ -7,8 +7,10 @@ read node-by-node, with a **human-in-the-loop `interrupt`** as the approval gate
     assess → score → approval_gate ⇄ execute
                         (interrupt)   (write-back)
 
-`mlflow.langchain.autolog()` (enabled in agent.py) traces every node automatically. A
-MemorySaver checkpointer lets the graph pause at the interrupt and resume when the manager
+Each node and every tool it calls is captured as one nested **MLflow trace** (see the
+`_traced_node` helper below and the root span opened in `agent.build_reply`), so the
+experiment shows a real span waterfall: AGENT → assess → (Genie tools) → score → …
+A MemorySaver checkpointer lets the graph pause at the interrupt and resume when the manager
 approves — the canonical LangGraph HITL pattern. The chat surface (agent.py) keys the
 thread to the signed-in user (not the chat id), so "build my plan" pauses at the gate and a
 later "approve CBM-003" resumes it. That per-user key is stable across an app restart, which
@@ -17,10 +19,13 @@ swapping in the Lakebase checkpointer makes it survive.
 """
 from __future__ import annotations
 
+import functools
 import re
 from typing import Any, Optional, TypedDict
 
+import mlflow
 from langgraph.checkpoint.memory import MemorySaver
+from langgraph.errors import GraphInterrupt
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Command, interrupt
 
@@ -43,7 +48,35 @@ class PlanState(TypedDict, total=False):
     pending: Optional[str]
 
 
+# --- Tracing: one span per node, with the tool calls nested underneath -----
+# LangGraph runs each node with the request's MLflow span already active (it copies the
+# execution context into its worker), so opening a span here nests the node under the request
+# root (the AGENT span from `agent.build_reply`), and every tool the node calls nests under
+# the node — the whole message renders as one waterfall: AGENT → assess → (Genie tools) → …
+# The `approval_gate` node calls `interrupt()`, which raises `GraphInterrupt` as *normal*
+# control flow to pause the graph. We catch it inside the span so the pause isn't logged as a
+# span error, then re-raise it outside so LangGraph can still pause.
+def _traced_node(name: str):
+    def decorator(fn):
+        @functools.wraps(fn)
+        def wrapper(state: PlanState) -> dict:
+            with mlflow.start_span(name=name, span_type="CHAIN") as span:
+                span.set_inputs(dict(state))
+                try:
+                    out = fn(state)
+                except GraphInterrupt as pause:
+                    span.set_outputs({"status": "paused for human approval"})
+                    _pause = pause
+                else:
+                    span.set_outputs(out)
+                    return out
+            raise _pause
+        return wrapper
+    return decorator
+
+
 # --- Nodes -----------------------------------------------------------------
+@_traced_node("assess")
 def assess(state: PlanState) -> dict:
     """Ask the Genies which machines have unresolved faults and each store's revenue."""
     maintenance = tools.GenieTool(tools.config.MAINTENANCE_GENIE_SPACE_ID, "Maintenance Genie")
@@ -57,6 +90,7 @@ def assess(state: PlanState) -> dict:
     return {"fleet": fleet}
 
 
+@_traced_node("score")
 def score(state: PlanState) -> dict:
     """Rank machines by priority and draft a message for the ones worth dispatching.
 
@@ -87,6 +121,7 @@ def _priority(row: dict[str, Any]) -> float:
                  + REVENUE_WEIGHT * row["revenue_at_risk"] / 1000, 2)
 
 
+@_traced_node("approval_gate")
 def approval_gate(state: PlanState) -> dict:
     """HITL interrupt — the graph pauses here until the manager approves a machine."""
     decision = interrupt({
@@ -98,6 +133,7 @@ def approval_gate(state: PlanState) -> dict:
     return {"pending": (decision or {}).get("machine_id")}
 
 
+@_traced_node("execute")
 def execute(state: PlanState) -> dict:
     """The accountable action — reached only after the manager approves at the gate."""
     mid = state.get("pending")

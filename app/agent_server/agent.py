@@ -1,9 +1,10 @@
 """Marc's dispatch agent, authored on the agent-langgraph template's server surface.
 
 The template ships a generic tool-calling `create_agent` loop. We keep the template's
-`ResponsesAgent` handlers, MLflow autolog, and session handling, but drive an **explicit
-LangGraph pipeline with a human-in-the-loop approval gate** (see `dispatch.py`) — the whole
-point of Lab 3. The graph's thread is keyed by the signed-in user (see `_thread_id`), so a
+`ResponsesAgent` handlers and session handling, but drive an **explicit LangGraph pipeline
+with a human-in-the-loop approval gate** (see `dispatch.py`) — the whole point of Lab 3. Each
+message is traced as one MLflow span tree (a root AGENT span here, node/tool spans in
+`dispatch.py`). The graph's thread is keyed by the signed-in user (see `_thread_id`), so a
 plan pauses at the gate and a later "approve CBM-003" resumes it — and, because that key is
 stable across restarts, the Lakebase checkpointer swap makes the plan survive one.
 """
@@ -24,19 +25,12 @@ from agent_server import dispatch
 from agent_server.utils import get_session_id
 
 logger = logging.getLogger(__name__)
-mlflow.langchain.autolog()
-logging.getLogger("mlflow.utils.autologging_utils").setLevel(logging.ERROR)
 
-# langgraph fires an `on_interrupt` callback that some mlflow tracer versions don't yet
-# implement — add a no-op so the HITL interrupt doesn't log a spurious error.
-try:
-    from mlflow.langchain.langchain_tracer import MlflowLangchainTracer
-
-    for _cb in ("on_interrupt", "on_resume"):
-        if not hasattr(MlflowLangchainTracer, _cb):
-            setattr(MlflowLangchainTracer, _cb, lambda self, *a, **k: None)
-except Exception:  # pragma: no cover
-    pass
+# We trace the agent EXPLICITLY: a root span per message (see `build_reply` below) plus one
+# span per LangGraph node and tool call (see dispatch.py). We deliberately do NOT use
+# `mlflow.langchain.autolog()` here — its callback-based spans would duplicate our explicit
+# node spans, and our sync graph nodes run in a worker thread that autolog's tracing context
+# doesn't stitch together cleanly. Explicit tracing yields one clean AGENT → nodes → tools tree.
 
 HELP = (
     "I'm Marc's dispatch agent. Try:\n"
@@ -110,7 +104,6 @@ def _route(text: str) -> str:
     return "help"
 
 
-@mlflow.trace(span_type="AGENT")
 def _thread_id(request: ResponsesAgentRequest) -> str:
     """Stable memory key across app restarts, so durable memory is demonstrable. Prefer the
     signed-in user (per-user working memory); fall back to a fixed key. We deliberately do
@@ -124,6 +117,7 @@ def _thread_id(request: ResponsesAgentRequest) -> str:
     return f"user:{uid}" if uid else "default"
 
 
+@mlflow.trace(span_type="AGENT", name="dispatch_agent")
 async def build_reply(request: ResponsesAgentRequest) -> str:
     if _is_title_request(request):        # the chat UI naming the conversation
         return _title_from(request)
