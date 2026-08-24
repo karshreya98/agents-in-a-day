@@ -144,9 +144,8 @@ without the `@` it may not find the skill:
 > *"Add short-term memory to this app using our Lakebase instance `sunny-bay-roastery-lakebase`,
 > following the `@add-lakebase-short-term-memory` skill."*
 
-Genie Code loads the **`add-lakebase-short-term-memory`** skill (the bootstrap installed it
-into your `.assistant/skills/` folder) and makes the one change it needs — wiring the Lakebase
-checkpointer into **`start_server.py`**. The `databricks-langchain[memory]` dependency and the
+Genie Code loads the **`add-lakebase-short-term-memory`** skill and makes the one change it
+needs — wiring the Lakebase checkpointer into **`start_server.py`**. The `databricks-langchain[memory]` dependency and the
 Lakebase app resource are already declared in the repo, so that's the **only file it edits**;
 it doesn't touch the graph or the approval gate. Confirm the change landed only in
 `start_server.py`.
