@@ -187,9 +187,10 @@ list — the agent remembers it already acted, straight from Lakebase, and won't
 
 #### Step 5 — See it recorded in Lakebase
 
-Open **Compute → Database instances → `sunny-bay-roastery-lakebase`**, connect to the
-`databricks_postgres` database, and query the checkpoint table the agent writes to (it lives in
-the `agent_memory` schema the app created):
+Open **Compute → Database instances → `sunny-bay-roastery-lakebase`**. In the Lakebase view,
+click **SQL Editor** in the left nav, make sure the database dropdown shows
+**`databricks_postgres`**, then paste this query and click **Run** (it reads the checkpoint
+table the app created in the `agent_memory` schema):
 
 ```sql
 SELECT thread_id, checkpoint_id, type
