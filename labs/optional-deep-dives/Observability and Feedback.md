@@ -1,6 +1,6 @@
-# 🔬 Deep Dive — Observability & Feedback
+# 🔬 Observability and Feedback
 
-> Pairs with **[Lab 3 — Build the Custom Agent](../Lab%203%20-%20Build%20the%20Custom%20Agent.md)**.
+> Pairs with **[Lab 3 — Build & Deploy Marc's Custom Agent](../Lab%203%20-%20Build%20%26%20Deploy%20Marc's%20Custom%20Agent.md)**.
 > Do Lab 3 first, then come here to see *inside* the agent and build the loop that hardens it.
 
 ## What you'll do
@@ -8,6 +8,14 @@
 1. **Generate the agent's traces** and read the **span waterfall** — the routing, every node, every tool call.
 2. **Add an LLM-as-a-judge scorer** that grades every trace automatically, from the UI.
 3. **Collect human feedback** with a **Review App**, from the UI.
+
+## Key concepts
+
+| Term | What it means here |
+|---|---|
+| **Trace / span waterfall** | One run of the agent, broken into nested steps (nodes, tool calls). The waterfall is that tree in the UI. |
+| **Scorer** | An automated grade on each trace — here an **LLM-as-a-judge** that reads the trace and scores it. |
+| **Review App** | A UI for experts to label traces (thumbs, comments) so you can improve the agent from real feedback. |
 
 ---
 

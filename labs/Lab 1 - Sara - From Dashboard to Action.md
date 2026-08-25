@@ -1,4 +1,4 @@
-# 🗣️ Lab 1 — Sara: From Dashboard to Action
+# 🗣️ Lab 1 - Sara - From Dashboard to Action
 
 ## 🎯 Learning Objectives
 
@@ -8,6 +8,15 @@ By the end of Lab 1, you will be able to:
 - Use **Genie One** as a business-user interface, driven by that Genie agent.
 - Connect an external **MCP tool** (you.com) to enrich Genie One conversations with live web knowledge.
 - Package a repeated question as a reusable **skill** and put it on a **schedule**, so Genie One briefs Sara automatically.
+
+## Key concepts
+
+| Term | What it means here |
+|---|---|
+| **Genie agent** | A governed natural-language interface over specific Unity Catalog tables (menus may still say *Genie space* — same thing). You build the Maintenance one; Sales is pre-built. |
+| **Genie One** | The chat front door. It **routes** each question to the Genie agent whose description matches — you don't pick a space first. |
+| **MCP** | *Model Context Protocol* — a standard way to plug an external tool (here, you.com web search) into Genie One or the AI Gateway. |
+| **Skill** | A saved prompt/capability in Genie One so Sara doesn't re-type the same question. You can **schedule** a skill to run on a cadence. |
 
 ## Introduction
 
@@ -424,5 +433,5 @@ You have built a Genie agent, driven it from Genie One as a business user, enric
 live web knowledge — and, optionally, packaged Sara's weekly check as a scheduled skill that
 briefs her automatically — all on governed data that never left Unity Catalog.
 
-➡️ Continue to **[Lab 2 — Document Intelligence](./Lab%202%20-%20Document%20Intelligence.md)**
-   to start building Marc's Maintenance Agent.
+➡️ Continue to **[Lab 2 — Document Intelligence](./Lab%202%20-%20Marc%20-%20Document%20Intelligence.md)**
+  to start building Marc's manager analysis.

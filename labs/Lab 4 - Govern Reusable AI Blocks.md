@@ -1,4 +1,4 @@
-# 🔒 Lab 4 — Govern Reusable AI Blocks with the AI Gateway
+# 🔒 Lab 4 - Govern Reusable AI Blocks
 
 > 📘 Reference: [**Mosaic AI Gateway** — Databricks docs](https://docs.databricks.com/aws/en/ai-gateway/)
 
@@ -15,6 +15,15 @@ By the end of this lab, you will be able to:
 - **Test both blocks in the AI Playground.**
 - **Monitor** all of it in the **usage dashboard**.
 - *(Bonus)* Route a coding agent through the Gateway with `ucode`; set spend **budgets**.
+
+## Key concepts
+
+| Term | What it means here |
+|---|---|
+| **AI Gateway** | Control plane for models and tools: permissions, policies, routing, and usage logs in one place. |
+| **Model service** | A Unity Catalog object that wraps a foundation model so teams **query** it without each one holding a provider key. |
+| **Service policy** | A rule on that service — block, allow, or **ASK** (pause for a human) based on the request content. |
+| **MCP service** | A governed UC wrapper around an MCP connection (the you.com tool from Lab 1). Policies apply to the *service*, not the raw connection. |
 
 ## Introduction — meet Tim
 
@@ -299,14 +308,14 @@ so AI usage can't surprise finance; if not, read how it works.
 - The Genie agents and the custom agent — point them at your own data next week.
 - The **AI Gateway blocks pattern** — govern models and tools once, reuse everywhere, on
   *your* terms.
-- *(If you do the deep dive)* the MLflow trace + Review App loop — how to harden any agent
+- *(If you do the optional deep dive)* the MLflow trace + Review App loop — how to harden any agent
   with expert feedback.
 
 ---
 
 ## What Happens Next?
 
-- **Go deeper on observability & feedback** → **[Deep Dive: Observability & Feedback](./Deep%20Dives/Observability%20and%20Feedback.md)**
+- **Optional — observability & feedback** → **[Observability & Feedback](./optional-deep-dives/Observability%20and%20Feedback.md)**
   — see *inside* Marc's agent with MLflow traces, add an LLM-as-a-judge scorer, and collect
   human feedback through a Review App.
 - Build the *next* Sunny Bay use case (a returns bot, an invoice reader) on top of the two

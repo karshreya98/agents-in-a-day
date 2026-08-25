@@ -1,4 +1,4 @@
-# 🔍 Lab 2 — Document Intelligence
+# 🔍 Lab 2 - Marc - Document Intelligence
 
 ## 🎯 Learning Objectives
 
@@ -8,6 +8,13 @@ By the end of this lab you will be able to:
 - Use the **Information Extraction** agent in Agent Bricks to define a schema in plain English and extract fields — no code.
 - Turn that agent into a **Lakeflow pipeline** in one click, so new reports are extracted automatically.
 - Recognise where `ai_extract()` and `ai_parse_document()` fit underneath the UI.
+
+## Key concepts
+
+| Term | What it means here |
+|---|---|
+| **Agent Bricks** | A no-code agent builder. This lab uses the **Information Extraction** type: you describe fields in English; it runs parse + extract for you. |
+| **Lakeflow pipeline** | A scheduled data job. One click turns your extraction agent into a pipeline over the whole PDF volume, so new reports land as table rows automatically. |
 
 ---
 
@@ -261,4 +268,4 @@ Marc now has clean, structured fault data flowing out of raw PDFs. In **Lab 3** 
 build a **custom agent** — deployed as a Databricks App — that reasons over this data
 alongside sales and the web, then observe and review it.
 
-➡️ Continue to **[Lab 3 — Build the Custom Agent](./Lab%203%20-%20Build%20the%20Custom%20Agent.md)**
+➡️ Continue to **[Lab 3 — Build & Deploy Marc's Custom Agent](./Lab%203%20-%20Build%20%26%20Deploy%20Marc's%20Custom%20Agent.md)**
