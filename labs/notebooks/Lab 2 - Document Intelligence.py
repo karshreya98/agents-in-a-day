@@ -247,15 +247,16 @@
 # MAGIC agent produces in Lab 3. Here you'll build it **once, by hand**, using a reusable **skill** —
 # MAGIC so Lab 3's agent stops feeling like magic and starts feeling like *this logic, deployed*.
 # MAGIC
-# MAGIC The workshop repo ships a **`dispatch-plan` skill** that encodes Marc's scoring policy — the
-# MAGIC *same* deterministic formula the Lab 3 agent runs in code (`app/agent_server/dispatch.py`):
+# MAGIC The workshop repo ships a **`dispatch-plan` skill** that encodes a scoring policy in the same
+# MAGIC spirit as Marc's Lab 3 agent — unresolved faults weighed against the revenue at risk (Lab 3
+# MAGIC tunes its own numbers in `app/agent_server/dispatch.py`):
 
 # COMMAND ----------
 
 # MAGIC %md-sandbox
 # MAGIC <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;text-align:center;border:1px solid #D9C9B0;border-radius:12px;background:#FAF4EA;padding:18px 20px;max-width:760px">
-# MAGIC   <div style="font:600 clamp(15px,2.6vw,19px) ui-monospace,monospace;color:#1f2937">priority = <span style="color:#B45309">4</span> · unresolved_faults + revenue_at_risk_per_week / <span style="color:#B45309">1000</span></div>
-# MAGIC   <div style="font:500 13px ui-monospace,monospace;color:#6b7280;margin-top:8px">a machine must score ≥ 10, and have an unresolved fault, to make the plan</div>
+# MAGIC   <div style="font:600 clamp(15px,2.6vw,19px) ui-monospace,monospace;color:#1f2937">priority = <span style="color:#B45309">5</span> · unresolved_faults + revenue_at_risk_per_week / <span style="color:#B45309">100</span></div>
+# MAGIC   <div style="font:500 13px ui-monospace,monospace;color:#6b7280;margin-top:8px">always dispatch a machine with 2+ unresolved faults; for a single fault, dispatch where the store has real revenue at risk (score ≥ 6)</div>
 # MAGIC </div>
 
 # COMMAND ----------
