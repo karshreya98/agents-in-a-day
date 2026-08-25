@@ -117,7 +117,8 @@ function.)*
 > and response, so the same policy catches a topic however it's phrased.
 
 **Test it in the Playground** (open the model service → **Chat in playground**, or Sidebar →
-**Playground** with `sunny-bay-governed-llm` selected). Ask about the codename:
+**Playground** and pick **Qwen3 Next Instruct** — the model your service serves). Ask about the
+codename:
 
 > *"Tell me about project aurora"*
 
@@ -183,16 +184,15 @@ and give it a plain-language classifier **Prompt**:
 
 <img src="./artifacts/Lab%204/lab_4_task_2_create_governed_mcp_service_policy.png" alt="MCP service policy: Custom LLM-as-a-judge, Action Ask, classifier prompt" width="720">
 
-#### Step 3 — Test both blocks in the Playground
+#### Step 3 — Test the MCP ASK policy in the Playground
 
-Sidebar → **Playground**. Select your **`sunny-bay-governed-llm`** model service from Task 1,
-and under **Tools**, **add the `you_web_search_mcp` service**.
+Sidebar → **Playground**. Pick **Qwen3 Next Instruct** as the model, and under **Tools**,
+**add the `you_web_search_mcp` service**.
 
-| Prompt | What should happen | Which block |
-|---|---|---|
-| `Tell me about project aurora` | **Blocked** by the `block-codename` service policy — the request never reaches the model | Task 1 (model policy) |
-| `Tell me about the latest research in Parkinson's disease` | MCP call **triggers an ASK** — a *"Tool requires your approval"* dialog with **Allow / Deny** | Task 2 (medical → ASK) |
-| `What's the latest market outlook for the S&P 500?` | Runs normally — finance/market topics are **not** flagged | Task 2 (finance → allow) |
+| Prompt | What should happen |
+|---|---|
+| `Tell me about the latest research in Parkinson's disease` | MCP call **triggers an ASK** — a *"Tool requires your approval"* dialog with **Allow / Deny** |
+| `What's the latest market outlook for the S&P 500?` | Runs normally — finance/market topics are **not** flagged |
 
 The medical prompt pauses the `you-search` tool for your approval before it runs:
 
