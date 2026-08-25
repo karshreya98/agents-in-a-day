@@ -12,8 +12,8 @@
   and governed AI-assisted coding through the Unity AI Gateway with `ucode`/OpenCode (Lab 4).
 - **Personas:** **Sara** is a location manager (Mission); **Marc** is the operations
   manager over all 12 locations. Field technicians (generic, unnamed) fill out the fault
-  reports. The old "Supervisor Agent" (Agent Bricks) is deprecated — Lab 3 now teaches a
-  custom code agent instead.
+  reports. Lab 3 teaches a **custom code agent** — an explicit LangGraph control-flow
+  pipeline with a human-in-the-loop approval gate.
 - Tone should be clear, encouraging, and beginner-friendly. Avoid jargon unless
   it is explained.
 - **Platform:** Databricks with Unity Catalog + serverless compute (no clusters

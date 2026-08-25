@@ -208,10 +208,10 @@ CREATE TABLE IF NOT EXISTS `{catalog}`.`{MAINT}`.`service_orders` (
   status            STRING   -- 'pending', 'dispatched', 'completed'
 )
 USING DELTA
-COMMENT 'Service orders created by Marc via the Supervisor agent  -  populated in Lab 5'
+COMMENT 'Service orders created by Marc via the custom agent  -  populated in Lab 3'
 """)
 
-print(f"✅ Service orders table ready (empty  -  Lab 5 populates it)")
+print(f"✅ Service orders table ready (empty  -  Lab 3 populates it)")
 print(f"   → {catalog}.{MAINT}.service_orders")
 
 # COMMAND ----------
@@ -254,7 +254,7 @@ print(f"\n✅ {len(pdfs)} fault report PDFs → {VOLUME_PATH}")
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## 🔩 Step 7 — Register `create_service_order` UC function (Lab 5)
+# MAGIC ## 🔩 Step 7 — Register `create_service_order` UC function (Lab 3)
 
 # COMMAND ----------
 
@@ -266,7 +266,7 @@ CREATE OR REPLACE FUNCTION `{catalog}`.`{MAINT}`.`create_service_order`(
   technician_notes STRING COMMENT 'Free-text notes for the technician'
 )
 RETURNS STRING
-COMMENT 'Creates a service order and returns the new order ID. Used by Marc\\'s Supervisor agent in Lab 5.'
+COMMENT 'Creates a service order and returns the new order ID. Used by Marc\\'s custom agent in Lab 3.'
 LANGUAGE PYTHON
 AS $$
 import random
