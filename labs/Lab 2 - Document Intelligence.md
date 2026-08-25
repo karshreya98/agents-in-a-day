@@ -278,26 +278,19 @@ So why did we extract to a table instead? It comes down to what you're asking:
 |---|---|---|
 | **Setup** | None — just attach the volume | A pipeline + a schema |
 | **Best at** | Ad-hoc "what does *this* report say?" | Precise, repeated, **aggregate** queries |
-| **Across many docs** | **~5 files per question** today — until you enable content search (see below) | Full table: `GROUP BY`, joins, counts over *all* reports |
+| **Across many docs** | **~5 files per question** by default | Full table: `GROUP BY`, joins, counts over *all* reports |
 | **Freshness** | Always reads the live file | As fresh as the last pipeline run |
 | **Cost** | Parses on every question | Parses once per file |
 
-> [!IMPORTANT]
-> **The ~5-files limit applies only until you turn on content search.** By default a Genie
-> agent reads up to ~5 files per question, so with 10 reports, *"across all our reports,
-> which machines have recurring pressure faults?"* would answer from at most half of them
-> and quietly miss the rest. Enabling **content search** — currently in **Beta**, switched
-> on by a workspace admin — indexes the volume (up to 10,000 files) so the agent can reason
-> across the *whole* set, lifting that limit. The extracted table gives you that breadth
-> today, plus exact `GROUP BY` / join / count semantics.
+> [!NOTE]
+> **Content search (Beta) lifts the ~5-file limit.** With it turned on, a Genie agent indexes
+> the whole volume and can reason across *all* your files, not just ~5 per question. It's in
+> **Beta** — if you're on a paid workspace, ask your admin to enable it and give it a try.
 
 > [!TIP]
 > **Rule of thumb:** attach the volume for exploratory Q&A over a *handful* of documents;
-> extract to a table when you need reliable answers *across* the whole set. Marc's
-> custom agent has to reason over every report ("which machines need attention this
-> week?"), so the extracted table is the right foundation. (You could still attach the
-> volume too, for a deep dive into a single report — and as content search matures,
-> attaching the volume becomes viable for across-the-set questions as well.)
+> extract to a table when you need reliable answers *across* the whole set. Marc's custom
+> agent has to reason over every report, so the extracted table is the right foundation.
 
 ---
 
