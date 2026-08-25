@@ -85,9 +85,9 @@ The bootstrap creates:
 
 ## Workshop Labs
 
-All labs are step-by-step markdown in the **`labs/`** folder — start with
-**Lab 1** and follow the ➡️ links at the bottom of each. (See the *What you'll build*
-table above for the arc.)
+All labs are **Databricks notebooks** in **`labs/notebooks/`** — import that folder into
+your workspace (or open it from the cloned Git folder) and start with **Lab 1**, then work
+through Lab 2 → 3 → 4. (See the *What you'll build* table above for the arc.)
 
 ---
 
@@ -125,10 +125,12 @@ agents-in-a-day/
 │   ├── scripts/                ← template quickstart / start-app / deploy helpers
 │   └── tests/                  ← offline dry-run smoke tests (AGENT_DRY_RUN=1)
 ├── labs/
-│   ├── Lab 1 - Sara - Genie One.md
-│   ├── Lab 2 - Document Intelligence.md
-│   ├── Lab 3 - Build the Custom Agent.md      ← deploy the agent app + Lakebase memory + MLflow/Review App
-│   └── Lab 4 - AI Gateway and Write-back.md   ← govern reusable AI blocks (model endpoint + MCP) with the AI Gateway
-│   (artifacts/ holds per-lab screenshots)
+│   ├── notebooks/                ← the four labs as Databricks notebooks (import these)
+│   │   ├── Lab 1 - Sara - Genie One.py
+│   │   ├── Lab 2 - Document Intelligence.py
+│   │   ├── Lab 3 - Build the Custom Agent.py
+│   │   └── Lab 4 - AI Gateway and Write-back.py
+│   ├── artifacts/                ← per-lab screenshots (referenced by the notebooks)
+│   └── Deep Dives/               ← optional deep dives (e.g. Observability & Feedback)
 └── README.md
 ```

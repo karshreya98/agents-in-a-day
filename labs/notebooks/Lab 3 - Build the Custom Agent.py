@@ -119,7 +119,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC <img src="../artifacts/Lab%203/lab_3_task_1_create_custom_app.png" width="560" style="border-radius:8px" alt="Create a custom app from the Apps UI">
+# MAGIC <img src="../artifacts/Lab%203/lab_3_task_1_create_custom_app.png" width="680" style="border-radius:8px" alt="Create a custom app from the Apps UI">
 
 # COMMAND ----------
 
@@ -154,7 +154,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC <img src="../artifacts/Lab%203/lab_3_task_2_view_source_code.png" width="560" style="border-radius:8px" alt="View source on the app page">
+# MAGIC <img src="../artifacts/Lab%203/lab_3_task_2_view_source_code.png" width="680" style="border-radius:8px" alt="View source on the app page">
 
 # COMMAND ----------
 
@@ -229,7 +229,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC <img src="../artifacts/Lab%203/lab_3_task_3_step_2_add_lakebase.png" width="560" style="border-radius:8px" alt="Attach the Lakebase instance as an app resource">
+# MAGIC <img src="../artifacts/Lab%203/lab_3_task_3_step_2_add_lakebase.png" width="680" style="border-radius:8px" alt="Attach the Lakebase instance as an app resource">
 
 # COMMAND ----------
 
