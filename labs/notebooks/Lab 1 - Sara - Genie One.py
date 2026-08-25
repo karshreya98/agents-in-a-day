@@ -276,13 +276,11 @@
 # MAGIC > 💡 &nbsp;No credit card required. The free plan gives 100 web-search calls/day — more
 # MAGIC > than enough for this workshop. You keep this key after the session.
 # MAGIC
-# MAGIC **Step 4b — Check whether the you.com MCP service already exists**
+# MAGIC **Step 4b — Check whether the you.com connection already exists**
 # MAGIC
-# MAGIC **1.** In the workspace sidebar, open **AI Gateway** → **MCPs**.
+# MAGIC In the workspace sidebar, open **Catalog** → **Connections** and look for a **you.com** HTTP connection (e.g. `youcom_http`).
 # MAGIC
-# MAGIC **2.** Look for a **you.com** MCP service.
-# MAGIC
-# MAGIC - **It's there** → skip to **Step 4c**. Someone already registered it.
+# MAGIC - **It's there** → skip to **Step 4c**. Someone already created it.
 # MAGIC - **It's not there** → do **Step 4b-1** below to create it yourself.
 
 # COMMAND ----------

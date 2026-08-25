@@ -61,7 +61,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ![AI Gateway Models tab, + Model button](../artifacts/Lab%204/lab_4_task_1_a_click_create_model.png)
+# MAGIC <img src="../artifacts/Lab%204/lab_4_task_1_a_click_create_model.png" width="560" style="border-radius:8px" alt="AI Gateway Models tab, + Model button">
 
 # COMMAND ----------
 
@@ -77,7 +77,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ![Create Model Service: catalog, schema, name, provider, destination](../artifacts/Lab%204/lab_4_task_1_b_configure_model_service.png)
+# MAGIC <img src="../artifacts/Lab%204/lab_4_task_1_b_configure_model_service.png" width="560" style="border-radius:8px" alt="Create Model Service: catalog, schema, name, provider, destination">
 
 # COMMAND ----------
 
@@ -92,7 +92,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ![Model service opened in Catalog Explorer, Permissions tab](../artifacts/Lab%204/lab_4_task_1_c_navigate_uc_permissions_tab.png)
+# MAGIC <img src="../artifacts/Lab%204/lab_4_task_1_c_navigate_uc_permissions_tab.png" width="560" style="border-radius:8px" alt="Model service opened in Catalog Explorer, Permissions tab">
 
 # COMMAND ----------
 
@@ -109,7 +109,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ![Routing tab: primary model with Add fallback](../artifacts/Lab%204/lab_4_task_1_step_2_a_configure_traffic_ai_gateway_tab.png)
+# MAGIC <img src="../artifacts/Lab%204/lab_4_task_1_step_2_a_configure_traffic_ai_gateway_tab.png" width="560" style="border-radius:8px" alt="Routing tab: primary model with Add fallback">
 
 # COMMAND ----------
 
@@ -134,7 +134,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ![New policy: custom SQL-function guardrail](../artifacts/Lab%204/lab_4_task_1_step_3_add_custom_policy.png)
+# MAGIC <img src="../artifacts/Lab%204/lab_4_task_1_step_3_add_custom_policy.png" width="560" style="border-radius:8px" alt="New policy: custom SQL-function guardrail">
 
 # COMMAND ----------
 
@@ -154,7 +154,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ![Playground: request blocked by the block-codename service policy](../artifacts/Lab%204/lab_4_task_1_step_3_example_service_policy_output_playground.png)
+# MAGIC <img src="../artifacts/Lab%204/lab_4_task_1_step_3_example_service_policy_output_playground.png" width="560" style="border-radius:8px" alt="Playground: request blocked by the block-codename service policy">
 
 # COMMAND ----------
 
@@ -190,7 +190,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ![Create MCP Service: catalog, schema, name, existing connection, tools](../artifacts/Lab%204/lab_4_task_2_create_mcp_service_governed.png)
+# MAGIC <img src="../artifacts/Lab%204/lab_4_task_2_create_mcp_service_governed.png" width="560" style="border-radius:8px" alt="Create MCP Service: catalog, schema, name, existing connection, tools">
 
 # COMMAND ----------
 
@@ -227,7 +227,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ![MCP service policy: Custom LLM-as-a-judge, Action Ask, classifier prompt](../artifacts/Lab%204/lab_4_task_2_create_governed_mcp_service_policy.png)
+# MAGIC <img src="../artifacts/Lab%204/lab_4_task_2_create_governed_mcp_service_policy.png" width="560" style="border-radius:8px" alt="MCP service policy: Custom LLM-as-a-judge, Action Ask, classifier prompt">
 
 # COMMAND ----------
 
@@ -247,7 +247,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ![Playground: Tool requires your approval dialog for you-search](../artifacts/Lab%204/lab_4_task_2_mcp_playground_ask_example.png)
+# MAGIC <img src="../artifacts/Lab%204/lab_4_task_2_mcp_playground_ask_example.png" width="560" style="border-radius:8px" alt="Playground: Tool requires your approval dialog for you-search">
 
 # COMMAND ----------
 
@@ -303,7 +303,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ![AI Gateway Govern menu, Usage Dashboard](../artifacts/Lab%204/lab_4_task_4_see_usage_dashboard.png)
+# MAGIC <img src="../artifacts/Lab%204/lab_4_task_4_see_usage_dashboard.png" width="560" style="border-radius:8px" alt="AI Gateway Govern menu, Usage Dashboard">
 
 # COMMAND ----------
 

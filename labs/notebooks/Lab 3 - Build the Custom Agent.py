@@ -119,7 +119,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ![Create a custom app from the Apps UI](../artifacts/Lab%203/lab_3_task_1_create_custom_app.png)
+# MAGIC <img src="../artifacts/Lab%203/lab_3_task_1_create_custom_app.png" width="560" style="border-radius:8px" alt="Create a custom app from the Apps UI">
 
 # COMMAND ----------
 
@@ -154,7 +154,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ![View source on the app page](../artifacts/Lab%203/lab_3_task_2_view_source_code.png)
+# MAGIC <img src="../artifacts/Lab%203/lab_3_task_2_view_source_code.png" width="560" style="border-radius:8px" alt="View source on the app page">
 
 # COMMAND ----------
 
@@ -205,7 +205,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ![Genie Code with the skill folder attached via @](../artifacts/Lab%203/lab_3_task_3_step_1_genie_code_skill.png)
+# MAGIC <img src="../artifacts/Lab%203/lab_3_task_3_step_1_genie_code_skill.png" width="380" style="border-radius:8px" alt="Genie Code with the skill folder attached via @">
 
 # COMMAND ----------
 
@@ -229,7 +229,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ![Attach the Lakebase instance as an app resource](../artifacts/Lab%203/lab_3_task_3_step_2_add_lakebase.png)
+# MAGIC <img src="../artifacts/Lab%203/lab_3_task_3_step_2_add_lakebase.png" width="560" style="border-radius:8px" alt="Attach the Lakebase instance as an app resource">
 
 # COMMAND ----------
 
