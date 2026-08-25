@@ -88,6 +88,9 @@ A custom agent is just an app you deploy on Databricks. Let's stand this one up 
 2. **Create the app**: **Compute → Apps → Create app → Custom**, name it
    `marc-dispatch-agent`, **Create**.
 
+   <img src="./artifacts/Lab%203/lab_3_task_1_create_custom_app.png" alt="Create a custom app from the Apps UI" width="680">
+
+
 3. **Deploy it**: open the app → **Deploy** → set the source path to the `app/` folder →
    **Deploy**, and wait for **Running**.
 
@@ -107,7 +110,11 @@ Reply **"approve CBM-003"** and the agent raises the order — but only *after* 
 ### **Task 2: Find where the control flow is defined (5 min)**
 
 On the app's page, click **View source** to open its code, then open
-**`agent_server/dispatch.py`** — this is the agent's brain. Two things to spot:
+**`agent_server/dispatch.py`** — this is the agent's brain.
+
+<img src="./artifacts/Lab%203/lab_3_task_2_view_source_code.png" alt="View source on the app page" width="680">
+
+Two things to spot:
 
 1. **`build_graph()`** — the four nodes and edges *are* the control flow:
    `assess → score → approval_gate ⇄ execute`. The `approval_gate` node calls
@@ -144,6 +151,8 @@ without the `@` it may not find the skill:
 > *"Add short-term memory to this app using our Lakebase instance `sunny-bay-roastery-lakebase`,
 > following the `@add-lakebase-short-term-memory` skill."*
 
+<img src="./artifacts/Lab%203/lab_3_task_3_step_1_genie_code_skill.png" alt="Genie Code with the skill folder attached via @" width="380">
+
 Genie Code loads the **`add-lakebase-short-term-memory`** skill and makes the one change it
 needs — wiring the Lakebase checkpointer into **`start_server.py`**. The `databricks-langchain[memory]` dependency and the
 Lakebase app resource are already declared in the repo, so that's the **only file it edits**;
@@ -154,6 +163,8 @@ it doesn't touch the graph or the approval gate. Confirm the change landed only 
 
 On the app's page → **Edit → App resources → Add resource → Database instance** → pick
 **`sunny-bay-roastery-lakebase`** → set the permission to **`CAN_CONNECT_AND_CREATE`** → **Save**.
+
+<img src="./artifacts/Lab%203/lab_3_task_3_step_2_add_lakebase.png" alt="Attach the Lakebase instance as an app resource" width="680">
 
 This grants the app's **service principal** access to the database — the one thing the code
 change can't do for you.

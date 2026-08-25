@@ -7,9 +7,9 @@
 By the end of this lab, you will be able to:
 
 - See the **AI Gateway** as the control plane for **governed, reusable AI building blocks**.
-- Create a governed **model serving endpoint** — **contextual service policies** (PII
-  blocking + a custom rule), **traffic routing / fallback**, **usage + inference logging** —
-  and **secure it** with access control in Unity Catalog.
+- Create a governed **model service** — **contextual service policies** (a built-in content
+  guardrail + a custom function), **traffic routing / fallback**, **usage + inference
+  logging** — and **secure it** with access control in Unity Catalog.
 - **Register and secure a governed you.com MCP service** so sensitive actions require
   **approval (ASK)**.
 - **Test both blocks in the AI Playground.**
@@ -42,64 +42,93 @@ runtime interactions between models, agents, MCP servers, and tools — access c
 
 ## Instructions
 
-### **Task 1: Create a governed model endpoint (15 min)**
+### **Task 1: Create a governed model service (15 min)**
 
-This is Tim's first reusable block: **one model endpoint every team is allowed to use** —
-because it can't leak PII, can't be hammered, and logs everything. Build it up in three steps.
+This is Tim's first reusable block: **one model service every team is allowed to use** —
+because it enforces content policies, can't be hammered, and logs everything. Build it up in
+three steps.
 
-#### Step 1 — Create the endpoint and set access control
+#### Step 1 — Create the model service (in the AI Gateway)
 
-1. Sidebar → **Serving → Create serving endpoint**. Name it `sunny-bay-governed-llm` and
-   point it at an OSS foundation model available on Free Edition — e.g.
-   **`databricks-qwen3-next-80b-a3b-instruct`** (Qwen3 Instruct). Create it.
-2. Open the endpoint's **Permissions** tab and grant your workshop users or a group
-   **Can Query**. That's the point of a reusable block: teams get to *use* it, only Tim manages it.
-3. This endpoint is a **Unity Catalog securable** — open it in **Catalog (Unity Catalog)** to
-   see the same grants there, and how you **grant / revoke** `Can Query` / `Can Manage`
-   centrally. Governance on the endpoint = governance in UC.
+1. Sidebar → **AI Gateway → Models** tab → click **+ Model** (top right) to open
+   **Create Model Service**.
+
+   <img src="./artifacts/Lab%204/lab_4_task_1_a_click_create_model.png" alt="AI Gateway Models tab, + Model button" width="720">
+
+2. A model service is now a **Unity Catalog object** — pick a **Catalog** and **Schema**
+   (e.g. `sunny_bay_roastery` / `coffee_maintenance`) and **Name** it `sunny-bay-governed-llm`
+   (the name can't be changed after creation).
+3. **Provider → Databricks hosted** (pay-per-token, no credentials). Under **Destination**,
+   pick an OSS foundation model available on Free Edition — e.g. **Qwen3 Next Instruct**
+   (`system.ai.qwen3-next-80b-a3b-instruct`) — then **Create**.
+
+   <img src="./artifacts/Lab%204/lab_4_task_1_b_configure_model_service.png" alt="Create Model Service: catalog, schema, name, provider, destination" width="720">
+
+4. Because it's a UC securable, you can open the model service **two ways** — from
+   **AI Gateway → Models** (the gateway view) or from **Catalog Explorer**
+   (`sunny_bay_roastery → coffee_maintenance → Services → sunny-bay-governed-llm`, the UC
+   view). It's the same object; you'll toggle between the two views through this lab. Either
+   way, open its **Permissions** tab and grant your workshop users or group **Can Query** —
+   grant / revoke centrally, the same as any UC object. Teams get to *use* it, only Tim
+   manages it.
+
+   <img src="./artifacts/Lab%204/lab_4_task_1_c_navigate_uc_permissions_tab.png" alt="Model service opened in Catalog Explorer, Permissions tab" width="720">
 
 #### Step 2 — Configure audit and traffic
 
-Open the endpoint's **AI Gateway** / **Edit AI Gateway** panel:
+Open the model service. Its **Overview** tab shows a **Governance setup** checklist, and the
+**Routing** tab controls traffic:
 
-- **Usage tracking** — **on by default**. Every call is logged to `system.serving.endpoint_usage`
-  (request counts, tokens, latency, per-user attribution).
-- **Inference tables** — logs the full request/response payloads to a UC table. This needs a
+- **Usage tracking** — **on by default**. Every call's token usage is recorded to the
+  `system.ai_gateway.usage` system table (per-user, per-model attribution).
+- **Inference table** — logs the full request/response payloads to a UC table. This needs a
   workspace with **its own storage**, so you can only enable it if you're **not on default
-  storage** — i.e. **not on Free Edition.** On a standard workspace, turn it on; on Free
+  storage** — i.e. **not on Free Edition.** On a standard workspace click **Set up**; on Free
   Edition, leave it off.
-- **Traffic routing / fallback.** In **Served entities**, add a **second model** and configure
-  it as a **fallback** so requests reroute to it on `429`/`5XX`. Keep your primary at 100% and
-  let the fallback catch overflow/errors — resilience without downstream teams doing anything.
+- **Traffic routing / fallback** — open the **Routing** tab. Your Qwen3 model is the
+  **Primary**; click **Add fallback** to add a second model that requests reroute to on
+  `429`/`5XX` — resilience without downstream teams doing anything.
+
+<img src="./artifacts/Lab%204/lab_4_task_1_step_2_a_configure_traffic_ai_gateway_tab.png" alt="Routing tab: primary model with Add fallback" width="720">
 
 #### Step 3 — Set up contextual service policies
 
-On the same AI Gateway panel, add **two service policies** — one out-of-the-box, one custom —
-following the [**AI Gateway moderation tutorial**](https://docs.databricks.com/aws/en/ai-gateway/moderate-tutorial):
+Open the model service's **Policies** tab → **New policy → Service policy**
+(*"control how interactions with this service proceed"*). Add **two** — one out-of-the-box,
+one custom — following the
+[**AI Gateway moderation tutorial**](https://docs.databricks.com/aws/en/ai-gateway/moderate-tutorial).
+Both apply to **All account users** and are scoped to this model service.
 
-- **Out-of-the-box → PII detection → `Block`.** Any request or response containing PII (SSNs,
-  emails, credit cards, names, addresses) is **rejected**. *(`Mask` redacts instead of
-  blocking — for this lab use `Block` so it's obvious.)*
-- **Custom → Invalid keywords / Safety.** Add a company-specific rule — e.g. block a
-  competitor name or a project codeword — the "custom" policy every team inherits.
+**a) Out-of-the-box guardrail.** Name it `block-unsafe-content` and pick the built-in
+**Unsafe Content** guardrail (the **Guardrail type** dropdown also offers PII, prompt
+injection, and more). It inspects requests and responses and blocks harmful content.
+
+**b) Custom guardrail.** Name it `block-codename`, set **Guardrail type → Custom**, choose
+**Custom function**, and point it at the pre-created SQL function
+`block_confidential_codename` — a `CASE` expression that **denies** any request mentioning your
+confidential project codeword (here, *"project aurora"*). That's the company-specific rule
+every team inherits. *(A custom guardrail can also be an **LLM-as-a-judge** instead of a SQL
+function.)*
+
+<img src="./artifacts/Lab%204/lab_4_task_1_step_3_add_custom_policy.png" alt="New policy: custom SQL-function guardrail" width="720">
 
 > This is the novel bit: service policies are **contextual**, not static allow/deny lists.
-> They evaluate the *meaning* of each request and response, so the same policy catches PII or a
-> sensitive topic however it's phrased — no regex list to maintain.
+> A custom policy can be a **SQL function** or an **LLM-as-a-judge** that inspects each request
+> and response, so the same policy catches a topic however it's phrased.
 
-**Test it in the Playground** (Serving → your endpoint → **Use → Playground**, or Sidebar →
-**Playground** with this endpoint selected):
+**Test it in the Playground** (open the model service → **Chat in playground**, or Sidebar →
+**Playground** with `sunny-bay-governed-llm` selected). Ask about the codename:
 
-| Prompt | What should happen |
-|---|---|
-| `My SSN is 123-45-6789, add up the digits for me` | **Blocked** by the PII service policy — never reaches the model |
-| a prompt containing your **custom blocked keyword** | **Blocked** by your custom service policy |
-| any normal question | Answers as usual |
+> *"Tell me about project aurora"*
+
+The response is refused: **"This request was blocked by the 'block-codename' service policy."**
+
+<img src="./artifacts/Lab%204/lab_4_task_1_step_3_example_service_policy_output_playground.png" alt="Playground: request blocked by the block-codename service policy" width="720">
 
 > [!NOTE]
 > Tim configured the service policies **once**. Every agent, app, or Playground session that uses
-> this endpoint now inherits PII blocking, the custom rule, and the audit log — nobody
-> downstream has to remember to add them.
+> this model service now inherits the unsafe-content guardrail, the custom codename rule, and
+> the audit log — nobody downstream has to remember to add them.
 
 ---
 
@@ -111,47 +140,72 @@ teams should touch directly — so Tim now wraps it in a **governed MCP service*
 Gateway, and applies a policy. Same pattern as Task 1, but here the interesting policy is
 **ASK**: some actions should pause for a human rather than be hard-allowed or hard-blocked.
 
-#### Step 1 — Register the governed MCP service (on the existing HTTP connection)
+#### Step 1 — Register the governed MCP service (on the existing connection)
 
-Turn the raw `youcom_http` connection from Lab 1 into a governed, reusable tool.
+Turn the raw you.com connection from Lab 1 into a governed, reusable tool. Like the model
+service, an MCP service is a **Unity Catalog object**.
 
-1. Sidebar → **AI Gateway → MCPs** → **Register MCP Server**.
-2. Give the service a name (e.g. `youcom-web-search`), select the **`youcom_http`** connection
-   created in Lab 1, pick the **Tools** to expose (web search), and click **Create**.
-3. Open the new MCP service → **Permissions → Grant**, add your workshop users or group, and
+1. Sidebar → **AI Gateway → MCPs** → **Create MCP Service**.
+2. Pick a **Catalog** and **Schema** (`sunny_bay_roastery` / `coffee_maintenance`) and **Name**
+   it `you_web_search_mcp` (the name can't be changed after creation).
+3. Under **Connection**, choose **Use existing connection** and select the **you.com connection
+   from Lab 1**. Under **Tools**, keep the **`you-search`** tool selected, then **Create MCP
+   Service**.
+
+<img src="./artifacts/Lab%204/lab_4_task_2_create_mcp_service_governed.png" alt="Create MCP Service: catalog, schema, name, existing connection, tools" width="720">
+
+4. Open the new MCP service → **Permissions → Grant**, add your workshop users or group, and
    grant **`EXECUTE`**.
 
 > [!WARNING]
-> Grant participants **`EXECUTE` on the MCP service only — never `USE CONNECTION`**.
-> `USE CONNECTION` would let them call you.com directly or register their own MCP services,
-> bypassing governance. `EXECUTE` is all they need to use the tool.
+> Grant participants **`EXECUTE` on the MCP service only — never `USE CONNECTION`**. As the
+> create screen warns, **service policies only govern the MCP service, not the connection** —
+> anyone with `USE CONNECTION` can reach you.com directly and bypass your policy. `EXECUTE` is
+> all they need to use the tool.
 >
 > Full reference: [Register an MCP service](https://docs.databricks.com/aws/en/ai-gateway/register-mcp-service).
 
-#### Step 2 — Set service policies (a custom ASK policy)
+#### Step 2 — Add a service policy that ASKS
 
-On the MCP service, add service policies the same way as Task 1. The custom one is an **ASK**
-policy: a human must **approve** before the tool runs. Scope it to **medical / health topics**
-so it flags **diseases and medical information**, but **not** finance or market questions.
+On the MCP service, open the **Policies** tab → **New policy → Service policy**, same as Task 1.
+Name it `approve-medical-info`, set **Guardrail type → Custom**, and choose **LLM-as-a-judge**
+(a small model reads each request and decides). Set **Action → Ask** — *pause and ask a person
+to approve before continuing* — pick an **Evaluator model service** (e.g. `system.ai.gemma-3-12b`),
+and give it a plain-language classifier **Prompt**:
 
-> Write the policy's "Ask" intent in plain language, e.g.:
-> *"Ask for human approval when the request is about medical conditions, diseases, symptoms,
-> or treatments. Do not flag questions about finance, markets, stocks, or business."*
+> *You are a content classifier. Flag content that contains:*
+> - *diseases*
+> - *medical terms*
+>
+> *DO NOT flag:*
+> - *financial news*
+> - *market research*
+
+<img src="./artifacts/Lab%204/lab_4_task_2_create_governed_mcp_service_policy.png" alt="MCP service policy: Custom LLM-as-a-judge, Action Ask, classifier prompt" width="720">
 
 #### Step 3 — Test both blocks in the Playground
 
-Sidebar → **Playground**. Select your **`sunny-bay-governed-llm`** endpoint from Task 1, and
-**add the `youcom-web-search` MCP service** as a tool.
+Sidebar → **Playground**. Select your **`sunny-bay-governed-llm`** model service from Task 1,
+and under **Tools**, **add the `you_web_search_mcp` service**.
 
 | Prompt | What should happen | Which block |
 |---|---|---|
-| `My SSN is 123-45-6789, count the sum of the digits` | **Blocked** by the PII service policy — the request never reaches the model | Task 1 (PII) |
-| `Tell me about the latest research in Parkinson's disease` | MCP call **triggers an ASK** — approve before the web search runs | Task 2 (medical → ASK) |
+| `Tell me about project aurora` | **Blocked** by the `block-codename` service policy — the request never reaches the model | Task 1 (model policy) |
+| `Tell me about the latest research in Parkinson's disease` | MCP call **triggers an ASK** — a *"Tool requires your approval"* dialog with **Allow / Deny** | Task 2 (medical → ASK) |
 | `What's the latest market outlook for the S&P 500?` | Runs normally — finance/market topics are **not** flagged | Task 2 (finance → allow) |
 
+The medical prompt pauses the `you-search` tool for your approval before it runs:
+
+<img src="./artifacts/Lab%204/lab_4_task_2_mcp_playground_ask_example.png" alt="Playground: Tool requires your approval dialog for you-search" width="720">
+
 > [!NOTE]
-> Same governance, two different blocks: the **model** endpoint refuses to touch PII, and
-> the **tool** connection pauses for approval on medical topics while letting finance through.
+> If the MCP tool response misbehaves in the Playground (e.g. the tool call hangs or the
+> approval doesn't render), run the same prompt from a **notebook** against the model service
+> instead — the policy and approval behave the same, and it sidesteps Playground quirks.
+
+> [!NOTE]
+> Same governance, two different blocks: the **model** service refuses the blocked topic, and
+> the **tool** service pauses for approval on medical topics while letting finance through.
 > Any new Sunny Bay use case that reuses these two blocks gets both behaviors automatically.
 
 ---
@@ -161,28 +215,24 @@ Sidebar → **Playground**. Select your **`sunny-bay-governed-llm`** endpoint fr
 Every call you just made is logged — this is Tim's audit trail across all the reusable
 blocks.
 
-1. Open the **AI Gateway → Usage dashboard** (**Govern → AI Gateway → Usage**). You'll see
+1. In **AI Gateway**, open the **Govern** menu (top right) → **Usage Dashboard**. You'll see
    request counts, tokens, latency, and per-user attribution across your governed blocks —
-   including the requests that were **blocked** by the PII service policy.
+   including the requests that were **blocked** by a service policy.
 
-2. For a workspace-wide view, query the usage system table in a SQL editor:
+   <img src="./artifacts/Lab%204/lab_4_task_4_see_usage_dashboard.png" alt="AI Gateway Govern menu, Usage Dashboard" width="720">
+
+2. For a workspace-wide view, query the usage system table (the one the model service's
+   **Usage tracking** writes to) in a SQL editor:
 
    ```sql
-   SELECT
-     date_trunc('hour', request_time) AS hour,
-     requester,
-     count(*)               AS requests,
-     sum(input_token_count) AS input_tokens,
-     sum(output_token_count) AS output_tokens
-   FROM system.serving.endpoint_usage
-   WHERE endpoint_name = 'sunny-bay-governed-llm'
-   GROUP BY ALL
-   ORDER BY hour DESC
+   SELECT * FROM system.ai_gateway.usage
+   ORDER BY 1 DESC
+   LIMIT 50;
    ```
 
 > [!NOTE]
 > This is the platform team's payoff: every call, from every team, through governed blocks —
-> with PII protection, approvals, rate limits, and full usage attribution, in one place.
+> with content policies, approvals, rate limits, and full usage attribution, in one place.
 
 ---
 
@@ -210,8 +260,8 @@ keys and full audit — so "vibe coding" happens through *your* models and *your
    ```
 
 3. Configure and connect (OAuth, no API keys), then launch your harness through the Gateway
-   pointed at a governed model service, and code normally — then try a PII prompt and watch the
-   guardrail catch it:
+   pointed at a governed model service, and code normally — then try a prompt that trips one of
+   your policies and watch the guardrail catch it:
 
    ```bash
    ucode configure --agents <your-harness>   # e.g. opencode
@@ -242,7 +292,7 @@ so AI usage can't surprise finance; if not, read how it works.
 |---|---|
 | **Sara** | Built a Genie agent and got machine-health + sales answers from Genie One in plain language, enriched with live web knowledge — no SQL. |
 | **Marc** | Built a custom agent, deployed it as a Databricks App with a human-in-the-loop approval gate, gave it durable memory on Lakebase, and had experts review it through MLflow. |
-| **Tim (platform IT)** | Stood up **governed, reusable AI blocks** — a PII-safe, traffic-routed, logged model endpoint and an approval-gated web-search tool — so every *next* Sunny Bay use case inherits governance by default. |
+| **Tim (platform IT)** | Stood up **governed, reusable AI blocks** — a policy-governed, traffic-routed, logged model service and an approval-gated web-search tool — so every *next* Sunny Bay use case inherits governance by default. |
 
 **What you take home:**
 
