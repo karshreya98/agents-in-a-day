@@ -1,4 +1,4 @@
-# 🔍 Lab 2 — Document Intelligence
+# 🔍 Lab 2 - Marc - Document Intelligence
 
 ## 🎯 Learning Objectives
 
@@ -8,6 +8,13 @@ By the end of this lab you will be able to:
 - Use the **Information Extraction** agent in Agent Bricks to define a schema in plain English and extract fields — no code.
 - Turn that agent into a **Lakeflow pipeline** in one click, so new reports are extracted automatically.
 - Recognise where `ai_extract()` and `ai_parse_document()` fit underneath the UI.
+
+## Key concepts
+
+| Term | What it means here |
+|---|---|
+| **Agent Bricks** | A no-code agent builder. This lab uses the **Information Extraction** type: you describe fields in English; it runs parse + extract for you. |
+| **Lakeflow pipeline** | A scheduled data job. One click turns your extraction agent into a pipeline over the whole PDF volume, so new reports land as table rows automatically. |
 
 ---
 
@@ -201,7 +208,7 @@ can answer about what the reports actually say.
 
 > [!NOTE]
 > Same Genie agent Sara already uses — it just got smarter. This is also the agent
-> Marc's Supervisor calls in Lab 3, so wiring the reports in here means the Supervisor
+> Marc's custom agent calls in Lab 3, so wiring the reports in here means the agent
 > gets them for free.
 
 ---
@@ -216,9 +223,9 @@ can answer about what the reports actually say.
 | **Trigger** | Scheduled by the generated pipeline | Auto-triggered on new file arrival |
 | **Code you wrote** | **None** | The whole pipeline |
 
-Marc's Supervisor (Lab 3) queries `fault_reports_structured` as one of its tools. When
-Sara drops a new PDF into the Volume, it's extracted automatically and the Supervisor
-can act on it without any manual step.
+Marc's custom agent (Lab 3) queries `fault_reports_structured` through the Maintenance
+Genie. When Sara drops a new PDF into the Volume, it's extracted automatically and the
+agent can act on it without any manual step.
 
 ---
 
@@ -249,7 +256,7 @@ So why did we extract to a table instead? It comes down to what you're asking:
 > [!TIP]
 > **Rule of thumb:** attach the volume for exploratory Q&A over a *handful* of documents;
 > extract to a table when you need reliable answers *across* the whole set. Marc's
-> Supervisor has to reason over every report ("which machines need attention this
+> custom agent has to reason over every report ("which machines need attention this
 > week?"), so the extracted table is the right foundation. (You could still attach the
 > volume too, for a deep dive into a single report.)
 
@@ -258,7 +265,7 @@ So why did we extract to a table instead? It comes down to what you're asking:
 ## What Happens Next?
 
 Marc now has clean, structured fault data flowing out of raw PDFs. In **Lab 3** you'll
-build the **Supervisor Agent** that queries this table — alongside machine telemetry
-and the web — to give Marc a single field-ready briefing.
+build a **custom agent** — deployed as a Databricks App — that reasons over this data
+alongside sales and the web, then observe and review it.
 
-➡️ Continue to **[Lab 3 — Build the Supervisor](./Lab%203%20-%20Build%20the%20Supervisor.md)**
+➡️ Continue to **[Lab 3 — Build & Deploy Marc's Custom Agent](./Lab%203%20-%20Build%20%26%20Deploy%20Marc's%20Custom%20Agent.md)**

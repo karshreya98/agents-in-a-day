@@ -1,0 +1,28 @@
+command: ["uv", "run", "start-app"]
+# databricks apps listen by default on port 8000
+
+env:
+  # Trace to a shared MLflow experiment (Task 5). No experiment resource required.
+  - name: MLFLOW_TRACKING_URI
+    value: "databricks"
+  - name: MLFLOW_EXPERIMENT_NAME
+    value: "/Shared/marc-dispatch-agent"
+  # Store trace span data in Unity Catalog (a deployed app can't reach the default trace blob
+  # storage, so the span waterfall would be dropped). agent.py reads these and points MLflow
+  # tracing at <catalog>.<schema>. UC links only to an experiment with no traces yet, so this
+  # takes effect on the app's first deploy (before any trace is logged).
+  - name: MLFLOW_TRACE_CATALOG
+    value: "sunny_bay_roastery"
+  - name: MLFLOW_TRACE_SCHEMA
+    value: "gold"
+  - name: API_PROXY
+    value: "http://localhost:8000/invocations"
+  - name: CHAT_APP_PORT
+    value: "3000"
+  - name: CHAT_PROXY_TIMEOUT_SECONDS
+    value: "300"
+  # Sample-data mode: the agent runs on built-in Sunny Bay data, so the app deploys with
+  # no resources or config to wire up. Wiring the real Genie spaces + write-back is the
+  # live-data follow-on after Lab 3. Governed model and MCP blocks are Lab 4.
+  - name: AGENT_DRY_RUN
+    value: "1"

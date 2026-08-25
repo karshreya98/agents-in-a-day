@@ -1,0 +1,41 @@
+bundle:
+  name: marc_dispatch_agent
+
+# Only sync the app source — never the local venv or generated artifacts.
+sync:
+  exclude:
+    - .venv/**
+    - "**/__pycache__/**"
+    - .pytest_cache/**
+    - mlruns/**
+    - mlflow.db
+    - .env
+
+resources:
+  apps:
+    marc_dispatch_agent:
+      name: "marc-dispatch-agent"
+      description: "Marc's dispatch agent (Agents in a Day, Lab 3)"
+      # Points at the folder holding app.yaml (this bundle root). app.yaml drives the
+      # command + env, so there is no `config` block here to drift out of sync.
+      source_code_path: ./
+      # Lakebase instance (created by the workshop bundle) — Lab 3's durable short-term
+      # memory. Pre-declared so the only change Lab 3 needs is the start_server lifespan.
+      resources:
+        - name: 'lakebase'
+          database:
+            instance_name: "sunny-bay-roastery-lakebase"
+            database_name: "databricks_postgres"
+            permission: 'CAN_CONNECT_AND_CREATE'
+
+targets:
+  dev:
+    mode: development
+    default: true
+
+  prod:
+    mode: production
+    resources:
+      apps:
+        marc_dispatch_agent:
+          name: marc-dispatch-agent

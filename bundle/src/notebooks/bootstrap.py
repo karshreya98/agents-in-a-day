@@ -5,10 +5,13 @@
 # MAGIC Run this **once** to stand up the whole workshop. It:
 # MAGIC 1. **Creates the catalog** (default `sunny_bay_roastery`) — or reuses it if it
 # MAGIC    already exists / an admin pre-created it.
-# MAGIC 2. **Deploys the bundle** (the setup job + both Lakeflow pipelines).
+# MAGIC 2. **Deploys the bundle** — the setup job, both Lakeflow pipelines, and the
+# MAGIC    **`sunny-bay-roastery-lakebase`** Lakebase instance that Lab 3's agent uses for durable
+# MAGIC    short-term memory.
 # MAGIC 3. **Runs the setup job** end-to-end (maintenance tables, sales star schema +
 # MAGIC    metric view, pre-built Sales Genie, dashboard, and the fault-report PDFs +
 # MAGIC    `fault_reports_structured`).
+# MAGIC 4. **Installs the Lab 3 Genie Code skill** into your `.assistant/skills/` folder.
 # MAGIC
 # MAGIC **Why a bootstrap notebook and not just "Deploy"?** A Lakeflow pipeline's target
 # MAGIC `catalog` is validated by Unity Catalog **at bundle-deploy time** — which is
@@ -147,17 +150,44 @@ run_cli(["current-user", "me", "-o", "json"])
 
 # COMMAND ----------
 
-# MAGIC %md ## 4. Deploy the bundle
-# MAGIC Passes the catalog you chose above so the pipelines target the catalog we just created.
+# MAGIC %md ## 4. Install the Lab 3 memory skill for Genie Code
+# MAGIC Genie Code loads skills from your **`.assistant/skills/`** folder. Copy the repo's
+# MAGIC `add-lakebase-short-term-memory` skill there so Lab 3's one-line prompt just works.
+
+# COMMAND ----------
+
+# Non-fatal: if this can't write, Lab 3 tells you how to add the skill by hand.
+import pathlib
+import shutil
+
+_user = spark.sql("SELECT current_user()").first()[0]
+_skill = "add-lakebase-short-term-memory"
+_src = pathlib.Path(bundle_root).parent / "app" / ".claude" / "skills" / _skill / "SKILL.md"
+_dst = pathlib.Path(f"/Workspace/Users/{_user}/.assistant/skills/{_skill}")
+try:
+    _dst.mkdir(parents=True, exist_ok=True)
+    shutil.copy(_src, _dst / "SKILL.md")
+    print(f"✅ Installed Genie Code skill '{_skill}' at {_dst}")
+except Exception as e:
+    print(f"⚠️  Could not install the Genie Code skill: {e}\n"
+          f"    In Lab 3, open Genie Code → Settings → 'Open skills folder' and copy "
+          f"app/.claude/skills/{_skill}/SKILL.md into it manually.")
+
+# COMMAND ----------
+
+# MAGIC %md ## 5. Deploy the bundle
+# MAGIC Creates the setup job, both Lakeflow pipelines, and the **Lakebase instance**
+# MAGIC (`sunny-bay-roastery-lakebase`) that Lab 3 uses for durable short-term memory. Passes the
+# MAGIC catalog you chose above so the pipelines target the catalog we just created.
 
 # COMMAND ----------
 
 run_cli(["bundle", "deploy", "-t", target, "--var", f"catalog={catalog}", "--force-lock"])
-print("✅ Bundle deployed.")
+print("✅ Bundle deployed (including the sunny-bay-roastery-lakebase Lakebase instance).")
 
 # COMMAND ----------
 
-# MAGIC %md ## 5. Run the setup job end-to-end
+# MAGIC %md ## 6. Run the setup job end-to-end
 # MAGIC This is the long one (~15–20 min): it builds every table, the metric view, the
 # MAGIC Sales Genie, the dashboard, and parses the fault-report PDFs. When this cell
 # MAGIC finishes green, the whole workshop is ready.
