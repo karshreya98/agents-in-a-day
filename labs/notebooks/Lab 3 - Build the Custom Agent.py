@@ -2,7 +2,7 @@
 # MAGIC %md
 # MAGIC # 🤖 Lab 3 — Build & Deploy Marc's Custom Agent
 # MAGIC
-# MAGIC **Persona: Marc** &nbsp;·&nbsp; ~25 min &nbsp;·&nbsp; **Databricks Apps · LangGraph · Lakebase · Genie Code**
+# MAGIC **Persona: Marc** &nbsp;·&nbsp; **Databricks Apps · LangGraph · Lakebase · Genie Code**
 # MAGIC
 # MAGIC Deploy a custom agent as a Databricks App, read where its control flow lives, and add durable
 # MAGIC short-term memory on Lakebase — without writing the code yourself.
@@ -104,7 +104,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### Task 1 — Create the app in the UI &nbsp; `~10 min`
+# MAGIC ### Task 1 — Create the app in the UI
 # MAGIC
 # MAGIC A custom agent is just an app you deploy on Databricks. Let's stand this one up first.
 # MAGIC
@@ -145,7 +145,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### Task 2 — Find where the control flow is defined &nbsp; `~5 min`
+# MAGIC ### Task 2 — Find where the control flow is defined
 # MAGIC
 # MAGIC On the app's page, click **View source** to open its code, then open **`agent_server/dispatch.py`** —
 # MAGIC this is the agent's brain.
@@ -180,7 +180,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### Task 3 — Add short-term memory with Lakebase, using Genie Code &nbsp; `~10 min`
+# MAGIC ### Task 3 — Add short-term memory with Lakebase, using Genie Code
 # MAGIC
 # MAGIC A **Lakebase** instance (Databricks' managed Postgres) named **`sunny-bay-roastery-lakebase`** has been
 # MAGIC **pre-created for you**. You won't write any code — you'll let **Genie Code** (the in-product

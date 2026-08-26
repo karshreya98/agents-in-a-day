@@ -2,10 +2,12 @@
 # MAGIC %md
 # MAGIC # 🔍 Lab 2 — Document Intelligence
 # MAGIC
-# MAGIC **Persona: Marc** &nbsp;·&nbsp; ~40 min &nbsp;·&nbsp; **No code required** &nbsp;·&nbsp; builds on Lab 1
+# MAGIC **Persona: Marc** &nbsp;·&nbsp; **No code required** &nbsp;·&nbsp; builds on Lab 1
 # MAGIC
 # MAGIC Turn a pile of unstructured **PDF fault reports** into clean, queryable data — with Databricks
 # MAGIC AI functions and Agent Bricks. No model to train, no glue code, no SQL to hand-write.
+# MAGIC
+# MAGIC 📘 Reference: [**Information Extraction (Agent Bricks)** — Databricks docs](https://docs.databricks.com/aws/en/generative-ai/agent-bricks/info-extraction)
 
 # COMMAND ----------
 
@@ -33,8 +35,8 @@
 # MAGIC
 # MAGIC | Function | What it does |
 # MAGIC |---|---|
-# MAGIC | **`ai_parse_document()`** | Reads a PDF (or image, Word doc, slide deck) and returns its text and layout — titles, tables, paragraphs. |
-# MAGIC | **`ai_extract()`** | Takes that text and pulls out the fields you name in plain English, returning a clean struct. |
+# MAGIC | [**`ai_parse_document()`**](https://docs.databricks.com/aws/en/sql/language-manual/functions/ai_parse_document) | Reads a PDF (or image, Word doc, slide deck) and returns its text and layout — titles, tables, paragraphs. |
+# MAGIC | [**`ai_extract()`**](https://docs.databricks.com/aws/en/sql/language-manual/functions/ai_extract) | Takes that text and pulls out the fields you name in plain English, returning a clean struct. |
 # MAGIC
 # MAGIC You won't write either one by hand. **Agent Bricks** — Databricks' enterprise platform for
 # MAGIC building AI agents, spanning low-code agents like this one through fully custom code (the
@@ -206,7 +208,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### Step 4: Add the extracted reports to the Maintenance Genie (5 min)
+# MAGIC ### Step 4: Add the extracted reports to the Maintenance Genie
 # MAGIC
 # MAGIC In Lab 1 you built the **Sunny Bay Maintenance Genie** agent — the one Sara drives through
 # MAGIC **Genie One** — over the structured maintenance tables. Now that the fault-report
@@ -239,7 +241,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### Bonus: Build Marc's dispatch plan — a preview of Lab 3 (optional, 10 min)
+# MAGIC ### Bonus: Build Marc's dispatch plan — a preview of Lab 3 (optional)
 # MAGIC
 # MAGIC You now have the fault reports as a clean table. So what would Marc actually *do* with it? He'd
 # MAGIC rank the fleet: which machines to service this week, weighed against the revenue each store puts

@@ -2,10 +2,12 @@
 # MAGIC %md
 # MAGIC # 🗣️ Lab 1 — Sara · Genie One
 # MAGIC
-# MAGIC **Persona: Sara** &nbsp;·&nbsp; ~35 min (+ optional 15) &nbsp;·&nbsp; **No code required** &nbsp;·&nbsp; Genie One + Genie agents
+# MAGIC **Persona: Sara** &nbsp;·&nbsp; **No code required** &nbsp;·&nbsp; Genie One + Genie agents
 # MAGIC
 # MAGIC Sara just wants answers. Build a governed **Genie agent** over the maintenance data, drive it from
 # MAGIC **Genie One**, enrich it with live web knowledge, then package her weekly check as a scheduled **skill**.
+# MAGIC
+# MAGIC 📘 Reference: [**Genie One** — Databricks docs](https://docs.databricks.com/aws/en/genie-one/)
 
 # COMMAND ----------
 
@@ -59,7 +61,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### Step 1: Build the Maintenance Genie agent (10 min)
+# MAGIC ### Step 1: Build the Maintenance Genie agent
 # MAGIC
 # MAGIC The Lab 0 setup job already created the core maintenance tables. Now you'll put a Genie
 # MAGIC agent in front of them.
@@ -115,7 +117,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### Step 2: Ask maintenance questions in the Genie agent (5 min)
+# MAGIC ### Step 2: Ask maintenance questions in the Genie agent
 # MAGIC
 # MAGIC **1.** In the Genie agent you just built, start a conversation and try:
 # MAGIC ```
@@ -172,7 +174,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### Step 3: Talk to your Genie agents through Genie One (5 min)
+# MAGIC ### Step 3: Talk to your Genie agents through Genie One
 # MAGIC
 # MAGIC Genie One is the business-user front door. Every Genie agent in the workspace shows
 # MAGIC up here as an **agent** — including the **Sunny Bay Maintenance Genie** you just built
@@ -257,7 +259,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### Step 4: Connect you.com for live web knowledge (15 min)
+# MAGIC ### Step 4: Connect you.com for live web knowledge
 # MAGIC
 # MAGIC The telemetry tells Sara *what* is happening. It cannot tell her *why*, or what the
 # MAGIC manufacturer recommends. An external **MCP service** (you.com), registered in the Unity
@@ -333,7 +335,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### Step 5: Turn Sara's weekly check into a skill — and schedule it (optional, 15 min)
+# MAGIC ### Step 5: Turn Sara's weekly check into a skill — and schedule it (optional)
 # MAGIC
 # MAGIC Sara keeps asking the same weekly question: *which machines need attention, and why?*
 # MAGIC Genie One lets her stop re-typing it. Two features turn a repeated question into something

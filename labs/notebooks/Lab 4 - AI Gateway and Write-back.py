@@ -2,7 +2,7 @@
 # MAGIC %md
 # MAGIC # 🔒 Lab 4 — Govern Reusable AI Blocks with the AI Gateway
 # MAGIC
-# MAGIC **Persona: Tim (Platform IT)** &nbsp;·&nbsp; ~45 min &nbsp;·&nbsp; **AI Gateway · service policies · MCP · Playground**
+# MAGIC **Persona: Tim (Platform IT)** &nbsp;·&nbsp; **AI Gateway · service policies · MCP · Playground**
 # MAGIC
 # MAGIC Stand up governed, reusable AI building blocks — a policy-governed model service and an approval-gated
 # MAGIC web-search tool — so every next Sunny Bay use case inherits governance by default.
@@ -48,7 +48,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### Task 1: Create a governed model service (15 min)
+# MAGIC ### Task 1: Create a governed model service
 # MAGIC
 # MAGIC This is Tim's first reusable block: **one model service every team is allowed to use** — because it
 # MAGIC enforces content policies, can't be hammered, and logs everything. Build it up in three steps.
@@ -166,7 +166,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### Task 2: Build & secure the you.com MCP service (20 min)
+# MAGIC ### Task 2: Build & secure the you.com MCP service
 # MAGIC
 # MAGIC Tim's second reusable block is the **web-search tool**. In Lab 1 you created the metastore **HTTP
 # MAGIC connection** `youcom_http` (raw you.com credentials). That connection is *not* something teams should
@@ -291,7 +291,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### Task 3: Monitor in the usage dashboard (5 min)
+# MAGIC ### Task 3: Monitor in the usage dashboard
 # MAGIC
 # MAGIC Every call you just made is logged — this is Tim's audit trail across all the reusable
 # MAGIC blocks.
