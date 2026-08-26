@@ -113,6 +113,8 @@
 # MAGIC > Field descriptions are instructions: *"the machine ID, in the form CBM-000"* extracts far
 # MAGIC > more reliably than *"machine"*. Iterating here in the UI is much faster than debugging
 # MAGIC > SQL later.
+# MAGIC
+# MAGIC <img src="../artifacts/Lab%202/lab_2_step_1_extraction_workbench.png" width="680" style="border-radius:8px" alt="Information Extraction agent Workbench: machine_id and location fields defined in plain English, source PDF loaded, Run extraction">
 
 # COMMAND ----------
 
@@ -251,7 +253,8 @@
 # MAGIC
 # MAGIC The workshop repo ships a **`dispatch-plan` skill** that encodes a scoring policy in the same
 # MAGIC spirit as Marc's Lab 3 agent — unresolved faults weighed against the revenue at risk (Lab 3
-# MAGIC tunes its own numbers in `app/agent_server/dispatch.py`):
+# MAGIC tunes its own numbers in `app/agent_server/dispatch.py`). The Lab 0 setup job already
+# MAGIC **installed this skill into your Genie Code**, so you can run it as a one-word slash command:
 
 # COMMAND ----------
 
@@ -267,15 +270,13 @@
 # MAGIC **1.** Open **Genie Code** (the in-product assistant) in the workspace, over the repo you cloned in
 # MAGIC setup — the same place you'll use it in Lab 3.
 # MAGIC
-# MAGIC **2.** Type **`@`** before the skill name so Genie Code attaches the skill folder as context, then
-# MAGIC paste this prompt:
-# MAGIC > *"Build Marc's weekly dispatch plan over `<catalog>.coffee_maintenance.fault_reports_structured`,
-# MAGIC > following the `@dispatch-plan` skill. Show the ranked plan and the draft messages."*
+# MAGIC **2.** In the chat box, type **`/dispatch-plan`** and send it. That's the whole prompt — the slash
+# MAGIC command runs the skill the setup job installed for you; there's no long instruction to write.
 # MAGIC
 # MAGIC **3.** Genie Code discovers the table shapes, applies the scoring policy, and returns a **ranked
 # MAGIC plan** — each machine with its location, unresolved-fault count, fault code, revenue at risk,
-# MAGIC priority score, and a **draft message** to that store's manager. Ask it to **show its SQL** so
-# MAGIC you can see the ranking is deterministic, not guessed.
+# MAGIC priority score, and a **draft message** to that store's manager. It runs the calculation itself
+# MAGIC (ask it to **show its SQL** if you want to confirm the ranking is deterministic, not guessed).
 # MAGIC
 # MAGIC > ⚠️ &nbsp;**Important** — **This analysis writes nothing.** It ranks and drafts — it does not raise a service order.
 # MAGIC > That write-back, *and the human-in-the-loop approval gate in front of it*, is what Lab 3 adds

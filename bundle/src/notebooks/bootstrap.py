@@ -150,28 +150,30 @@ run_cli(["current-user", "me", "-o", "json"])
 
 # COMMAND ----------
 
-# MAGIC %md ## 4. Install the Lab 3 memory skill for Genie Code
+# MAGIC %md ## 4. Install the Genie Code skills
 # MAGIC Genie Code loads skills from your **`.assistant/skills/`** folder. Copy the repo's
-# MAGIC `add-lakebase-short-term-memory` skill there so Lab 3's one-line prompt just works.
+# MAGIC `dispatch-plan` skill (Lab 2 · Bonus) and `add-lakebase-short-term-memory` skill (Lab 3)
+# MAGIC there so their one-word slash commands (`/dispatch-plan`, and Lab 3's prompt) just work.
 
 # COMMAND ----------
 
-# Non-fatal: if this can't write, Lab 3 tells you how to add the skill by hand.
+# Non-fatal: if this can't write, the labs tell you how to add the skills by hand.
 import pathlib
 import shutil
 
 _user = spark.sql("SELECT current_user()").first()[0]
-_skill = "add-lakebase-short-term-memory"
-_src = pathlib.Path(bundle_root).parent / "app" / ".claude" / "skills" / _skill / "SKILL.md"
-_dst = pathlib.Path(f"/Workspace/Users/{_user}/.assistant/skills/{_skill}")
-try:
-    _dst.mkdir(parents=True, exist_ok=True)
-    shutil.copy(_src, _dst / "SKILL.md")
-    print(f"✅ Installed Genie Code skill '{_skill}' at {_dst}")
-except Exception as e:
-    print(f"⚠️  Could not install the Genie Code skill: {e}\n"
-          f"    In Lab 3, open Genie Code → Settings → 'Open skills folder' and copy "
-          f"app/.claude/skills/{_skill}/SKILL.md into it manually.")
+_skills = ["dispatch-plan", "add-lakebase-short-term-memory"]
+for _skill in _skills:
+    _src = pathlib.Path(bundle_root).parent / "app" / ".claude" / "skills" / _skill / "SKILL.md"
+    _dst = pathlib.Path(f"/Workspace/Users/{_user}/.assistant/skills/{_skill}")
+    try:
+        _dst.mkdir(parents=True, exist_ok=True)
+        shutil.copy(_src, _dst / "SKILL.md")
+        print(f"✅ Installed Genie Code skill '{_skill}' at {_dst}")
+    except Exception as e:
+        print(f"⚠️  Could not install the Genie Code skill '{_skill}': {e}\n"
+              f"    Open Genie Code → Settings → 'Open skills folder' and copy "
+              f"app/.claude/skills/{_skill}/SKILL.md into it manually.")
 
 # COMMAND ----------
 
