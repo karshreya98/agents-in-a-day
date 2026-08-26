@@ -153,7 +153,7 @@ run_cli(["current-user", "me", "-o", "json"])
 # MAGIC %md ## 4. Install the Genie Code skills
 # MAGIC Genie Code loads skills from your **`.assistant/skills/`** folder. Copy the repo's
 # MAGIC `dispatch-plan` skill (Lab 2 · Bonus) and `add-lakebase-short-term-memory` skill (Lab 3)
-# MAGIC there so their one-word slash commands (`/dispatch-plan`, and Lab 3's prompt) just work.
+# MAGIC there so participants can pick them from Genie Code's `@` Skills menu.
 
 # COMMAND ----------
 

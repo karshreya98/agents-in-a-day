@@ -194,9 +194,9 @@
 # MAGIC %md
 # MAGIC #### Step 1 — Wire the checkpointer with Genie Code
 # MAGIC
-# MAGIC Open the app's code in the workspace editor, open **Genie Code**, and paste this short prompt. Type
-# MAGIC **`@`** before the skill name so Genie Code attaches the skill folder as context — without the `@` it
-# MAGIC may not find the skill:
+# MAGIC Open the app's code in the workspace editor, open **Genie Code**, and write this short prompt. Where
+# MAGIC the skill is named, type **`@`** and pick **`add-lakebase-short-term-memory`** from the **Skills** menu
+# MAGIC that pops up — selecting it attaches the skill so Genie Code follows it (without it, it may not find the skill):
 # MAGIC
 # MAGIC > *"Add short-term memory to this app using our Lakebase instance `sunny-bay-roastery-lakebase`,
 # MAGIC > following the `@add-lakebase-short-term-memory` skill."*

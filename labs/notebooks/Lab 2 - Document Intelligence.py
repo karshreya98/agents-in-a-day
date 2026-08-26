@@ -254,7 +254,7 @@
 # MAGIC The workshop repo ships a **`dispatch-plan` skill** that encodes a scoring policy in the same
 # MAGIC spirit as Marc's Lab 3 agent — unresolved faults weighed against the revenue at risk (Lab 3
 # MAGIC tunes its own numbers in `app/agent_server/dispatch.py`). The Lab 0 setup job already
-# MAGIC **installed this skill into your Genie Code**, so you can run it as a one-word slash command:
+# MAGIC **installed this skill into your Genie Code**, so you can pick it straight from the skills menu:
 
 # COMMAND ----------
 
@@ -270,8 +270,9 @@
 # MAGIC **1.** Open **Genie Code** (the in-product assistant) in the workspace, over the repo you cloned in
 # MAGIC setup — the same place you'll use it in Lab 3.
 # MAGIC
-# MAGIC **2.** In the chat box, type **`/dispatch-plan`** and send it. That's the whole prompt — the slash
-# MAGIC command runs the skill the setup job installed for you; there's no long instruction to write.
+# MAGIC **2.** In the chat box, type **`@`** — a **Skills** menu pops up. Select **`dispatch-plan`** from the
+# MAGIC list and send it. That's the whole prompt — the skill the setup job installed carries the scoring
+# MAGIC policy, so there's no long instruction to write.
 # MAGIC
 # MAGIC **3.** Genie Code discovers the table shapes, applies the scoring policy, and returns a **ranked
 # MAGIC plan** — each machine with its location, unresolved-fault count, fault code, revenue at risk,
