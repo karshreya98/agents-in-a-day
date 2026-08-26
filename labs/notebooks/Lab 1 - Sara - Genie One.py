@@ -82,12 +82,7 @@
 # MAGIC
 # MAGIC **4.** Name the space **`Sunny Bay Maintenance Genie`** and give it a description:
 # MAGIC ```
-# MAGIC Natural-language Q&A over Sunny Bay espresso machine maintenance: machine
-# MAGIC registry, fault event history, and service orders. Use for questions about a
-# MAGIC machine's faults, fault codes, locations, and service history. Covers
-# MAGIC machines CBM-001 to CBM-012, fault codes such as E-07 pressure faults,
-# MAGIC the 12 Sunny Bay locations including Mission District, and open or
-# MAGIC completed service orders.
+# MAGIC Natural-language Q&A over Sunny Bay espresso machine maintenance: machine registry, fault event history, and service orders. Use for questions about a machine's faults, fault codes, locations, and service history. Covers machines CBM-001 to CBM-012, fault codes such as E-07 pressure faults, the 12 Sunny Bay locations including Mission District, and open or completed service orders.
 # MAGIC ```
 # MAGIC > ⚠️ &nbsp;**Important** — **Be generous and specific in this description.** Genie One uses it to decide
 # MAGIC > whether *this* agent is the right one to answer a question. Name the actual
@@ -97,10 +92,6 @@
 # MAGIC > agent (see the callout in Step 3).
 # MAGIC
 # MAGIC **5.** Click **Save**.
-# MAGIC
-# MAGIC > 📝 &nbsp;Right now this agent answers from the structured maintenance tables. In **Lab 2**
-# MAGIC > you'll turn the raw PDF fault reports into a `fault_reports_structured` table and add
-# MAGIC > it to *this same agent* — so it can also answer about what's written in the reports.
 # MAGIC
 # MAGIC > 💡 &nbsp;You'll reuse this exact Genie agent in **Lab 3** as one of the tools Marc's custom
 # MAGIC > agent composes — building it once here means it's ready when you get there.
@@ -130,8 +121,10 @@
 # MAGIC Which machines are due for service?
 # MAGIC ```
 # MAGIC
-# MAGIC **2.** Click **Show code** beneath any answer to see the SQL Genie generated — no one
-# MAGIC wrote it by hand.
+# MAGIC **2.** Make sure you're in **chat mode** (use the mode selector in the conversation box —
+# MAGIC the two modes are explained just below). In chat mode, click **Show code** beneath any
+# MAGIC answer to see the SQL Genie generated — no one wrote it by hand. *(Agent mode doesn't
+# MAGIC expose the SQL this way.)*
 # MAGIC
 # MAGIC **A Genie agent has two modes — chat and agent.** Look for the mode selector in the
 # MAGIC conversation box and try the same question in each.
@@ -316,9 +309,19 @@
 # MAGIC > You need `CREATE CONNECTION` to do this. If the option is greyed out, you don't have
 # MAGIC > the privilege — ask your facilitator or a metastore admin to create it.
 # MAGIC
+# MAGIC <img src="../artifacts/Lab%201/lab_1_step_4_create_mcp_connection.png" width="620" style="border-radius:8px" alt="Set up connection: name youcom_http, type HTTP, created at the metastore level, Bearer token auth">
+# MAGIC
 # MAGIC **Step 4c — Ask enriched questions**
 # MAGIC
 # MAGIC In Genie One, enable the you.com connection you created `Customizations > Connections > Toggle youcom_http`.
+# MAGIC
+# MAGIC > ⚠️ &nbsp;**On your own workspace** — connectors in Genie One are a **Beta**. If you don't see the
+# MAGIC > **Customizations > Connections** tab, a **workspace admin** must enable **"Third Party Connectors
+# MAGIC > for Agents"** on the **Previews** page first. See
+# MAGIC > [Connect to external tools and sources](https://docs.databricks.com/aws/en/genie-one/external-sources).
+# MAGIC
+# MAGIC <img src="../artifacts/Lab%201/lab_1_step_4c_enable_youcom_in_genie_one.png" width="620" style="border-radius:8px" alt="Genie One → Customizations → Connections with the you.com MCP connection toggled on">
+# MAGIC
 # MAGIC You can now ask questions that combine your governed data with the web:
 # MAGIC ```
 # MAGIC What does Siemens recommend when a repeated E-07 pressure error appears on
