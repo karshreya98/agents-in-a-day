@@ -15,7 +15,7 @@ infrastructure to provision.
 | Lab | Persona | What you build |
 |-----|---------|----------------|
 | **Lab 1** | Sara | A **Maintenance Genie** agent, driven from Genie One alongside the pre-built Sales Genie, enriched with a you.com MCP tool |
-| **Lab 2** | Marc | Manager analysis — `ai_parse_document()` + `ai_extract()` turn technicians' fault-report PDFs into a table |
+| **Lab 2** | Marc | Manager analysis — `ai_parse_document()` + `ai_extract()` turn technicians' fault-report PDFs into insights |
 | **Lab 3** | Marc | A **custom agent** deployed as a **Databricks App** with a human-in-the-loop approval gate; add durable **short-term memory on Lakebase** via the AI assistant, then observe with **MLflow traces** and a **Review App** |
 | **Lab 4** | Tim (Platform) | Govern **reusable AI blocks** with the **AI Gateway** — a PII-blocking, rate-limited, logged model endpoint + an approval-gated you.com MCP tool; tested in the Playground |
 
@@ -80,6 +80,8 @@ The bootstrap creates:
 - `fault_reports_structured` table — the Lakeflow pipeline runs `ai_parse_document()`
   + `ai_extract()` across all 10 PDFs (used in Lab 2)
 - `create_service_order` UC function
+- **`sunny-bay-roastery-lakebase`** — a pre-provisioned **Lakebase** instance (`CU_1`) that
+  Lab 3's agent binds to by name for durable short-term memory
 
 ---
 
