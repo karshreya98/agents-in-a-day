@@ -321,11 +321,13 @@ durable:
 - A **scheduled task** — a question (or skill) Genie One re-runs on a cadence and emails to
   her as a briefing, no prompting required.
 
-Sara wants to send the results of her findings to her maintenance team. Genie One supports managed connections 
+Additionally, Sara wants to send the results of her findings to her maintenance team. Genie One supports managed connections 
 with GSuite and MS365. For this Lab, we will use Gmail.  
 
-**Enable the connector click on the `+` sign on the below the text box and enable the connection
-with Gmail (credentials will be communicated by the instructor).**
+
+> [!IMPORTANT]
+> **Enable the connector: click the `+` below the text box and toggle on Gmail.**
+> You can connect any Gmail account, personal or provided by the instructor. The agent will only create a draft there.
 
 > [!NOTE]
 > **Skills and scheduled tasks are personal to you.** A skill you create lives in your own
