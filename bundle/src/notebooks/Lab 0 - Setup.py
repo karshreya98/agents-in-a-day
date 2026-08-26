@@ -12,29 +12,8 @@
 # MAGIC - Fault report PDFs in a UC Volume
 # MAGIC - `create_service_order` UC function (Lab 5)
 # MAGIC
-# MAGIC > ✏️ **Only one thing to configure:** the `catalog` widget. Don't know which
-# MAGIC > catalog to use? The first cell lists the ones you can write to.
-
-# COMMAND ----------
-# MAGIC %md
-# MAGIC ## 🔍 Step 1 — Which catalog can I use?
-# MAGIC
-# MAGIC Run this cell to list every catalog you can write to, then set the `catalog`
-# MAGIC widget at the top of the notebook to one of the ✅ names.
-# MAGIC
-# MAGIC *(Already know your catalog? Set the widget and skip straight to Run All.)*
-
-# COMMAND ----------
-
-print("Catalogs you can access:\n")
-for r in spark.sql("SHOW CATALOGS").collect():
-    name = r[0]
-    try:
-        spark.sql(f"USE CATALOG `{name}`")
-        print(f"  ✅  {name}")
-    except Exception:
-        print(f"  ❌  {name}  (no access)")
-print('\n👉 Put a ✅ name in the "catalog" widget at the top, then Run All.')
+# MAGIC > ✏️ **Only one thing to configure:** the `catalog` widget. When run as a job it's
+# MAGIC > passed in from `databricks.yml`; set it to a catalog you can write to.
 
 # COMMAND ----------
 # MAGIC %md
@@ -51,8 +30,8 @@ catalog = dbutils.widgets.get("catalog").strip()
 
 if not catalog:
     raise ValueError(
-        "No catalog set. Run Step 1 above to see the catalogs you can write to, "
-        'then type one into the "catalog" widget at the top of the notebook.'
+        "No catalog set. Type a catalog you can write to into the \"catalog\" widget "
+        "at the top of the notebook (or pass --var catalog=... via the bundle)."
     )
 
 # ── Derived names (do not edit) ─────────────────────────────────────────────
@@ -65,7 +44,7 @@ print(f"maint   : {catalog}.{MAINT}")
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## ☕ Step 2 — Create `coffee_maintenance` schema
+# MAGIC ## ☕ Step 1 — Create `coffee_maintenance` schema
 
 # COMMAND ----------
 
@@ -74,7 +53,7 @@ print(f"✅ Schema ready: {catalog}.{MAINT}")
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## 🔧 Step 3 — Machines table (12 Sunny Bay espresso machines)
+# MAGIC ## 🔧 Step 2 — Machines table (12 Sunny Bay espresso machines)
 
 # COMMAND ----------
 
@@ -113,7 +92,7 @@ print(f"✅ Machines: {count} rows → {catalog}.{MAINT}.machines")
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## 👥 Step 3b — Location managers roster
+# MAGIC ## 👥 Step 2b — Location managers roster
 # MAGIC
 # MAGIC Marc is a **manager** over 12 location managers. His custom agent (Lab 3) maps a
 # MAGIC flagged machine → its location → the manager to notify, so it can draft an addressed
@@ -152,7 +131,7 @@ print(f"✅ Location managers: {count} rows → {catalog}.{MAINT}.location_manag
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## ⚡ Step 4 — Fault events table (telemetry history)
+# MAGIC ## ⚡ Step 3 — Fault events table (telemetry history)
 
 # COMMAND ----------
 
@@ -193,7 +172,7 @@ print(f"✅ Fault events: {count} rows → {catalog}.{MAINT}.fault_events")
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## 📝 Step 5 — Service orders table (Lab 5 write-back target)
+# MAGIC ## 📝 Step 4 — Service orders table (Lab 5 write-back target)
 
 # COMMAND ----------
 
@@ -216,7 +195,7 @@ print(f"   → {catalog}.{MAINT}.service_orders")
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## 📂 Step 6 — Fault reports Volume + upload PDFs
+# MAGIC ## 📂 Step 5 — Fault reports Volume + upload PDFs
 # MAGIC
 # MAGIC The 10 fault-report PDFs ship with this repo (`bundle/src/data/fault_reports/`)
 # MAGIC and were deployed to your workspace alongside this notebook. This step just
@@ -254,7 +233,7 @@ print(f"\n✅ {len(pdfs)} fault report PDFs → {VOLUME_PATH}")
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## 🔩 Step 7 — Register `create_service_order` UC function (Lab 3)
+# MAGIC ## 🔩 Step 6 — Register `create_service_order` UC function (Lab 3)
 
 # COMMAND ----------
 
