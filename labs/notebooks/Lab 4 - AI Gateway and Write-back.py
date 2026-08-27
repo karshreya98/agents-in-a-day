@@ -7,7 +7,7 @@
 # MAGIC Stand up governed, reusable AI building blocks — a policy-governed model service and an approval-gated
 # MAGIC web-search tool — so every next Sunny Bay use case inherits governance by default.
 # MAGIC
-# MAGIC 📘 Reference: [**Mosaic AI Gateway** — Databricks docs](https://docs.databricks.com/aws/en/ai-gateway/)
+# MAGIC 📘 Reference: [**Unity AI Gateway** — Databricks docs](https://docs.databricks.com/aws/en/ai-gateway/)
 
 # COMMAND ----------
 
