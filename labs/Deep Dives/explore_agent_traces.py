@@ -7,7 +7,7 @@
 # MAGIC **span waterfall**, on **any** workspace including Free Edition.
 # MAGIC
 # MAGIC *(A deployed app on Free Edition can't store span data — see the
-# MAGIC [Observability & Feedback](./Observability%20and%20Feedback.md) optional deep dive. A notebook can,
+# MAGIC [Observability & Feedback](./Observability%20and%20Feedback.md) deep dive. A notebook can,
 # MAGIC which is why we trace from here.)*
 # MAGIC
 # MAGIC **To run:** set `APP_DIR` in Cmd 3 to your Git-folder `app/` path, then **Run All**.
@@ -85,4 +85,4 @@ show(None, 0)
 # MAGIC    open the **"Build my dispatch plan"** trace → **See detailed trace view** and walk the
 # MAGIC    waterfall (`dispatch_agent → assess → Genie tools → score → approval_gate`).
 # MAGIC 2. Build the feedback loop (labeling schemas + Review App) — see **Part 3** of the
-# MAGIC    [Observability & Feedback](./Observability%20and%20Feedback.md) optional deep dive.
+# MAGIC    [Observability & Feedback](./Observability%20and%20Feedback.md) deep dive.

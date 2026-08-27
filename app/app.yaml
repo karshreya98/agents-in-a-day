@@ -22,7 +22,7 @@ env:
   - name: CHAT_PROXY_TIMEOUT_SECONDS
     value: "300"
   # Sample-data mode: the agent runs on built-in Sunny Bay data, so the app deploys with
-  # no resources or config to wire up. Wiring the real Genie spaces + write-back is the
-  # live-data follow-on after Lab 3. Governed model and MCP blocks are Lab 4.
+  # no resources or config to wire up. Wiring the real Genie spaces + governed write-back
+  # is Lab 4 (AI Gateway and Write-back).
   - name: AGENT_DRY_RUN
     value: "1"

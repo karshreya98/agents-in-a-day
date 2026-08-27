@@ -222,6 +222,8 @@ sketch
 !.claude/skills/load-testing/
 !.claude/skills/supervisor-api/
 !.claude/skills/supervisor-api-background-mode/
+!.claude/skills/add-lakebase-short-term-memory/
+!.claude/skills/dispatch-plan/
 
 **/.env
 **/.env.local

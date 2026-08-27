@@ -15,7 +15,7 @@ infrastructure to provision.
 | Lab | Persona | What you build |
 |-----|---------|----------------|
 | **Lab 1** | Sara | A **Maintenance Genie** agent, driven from Genie One alongside the pre-built Sales Genie, enriched with a you.com MCP tool |
-| **Lab 2** | Marc | Manager analysis — `ai_parse_document()` + `ai_extract()` turn technicians' fault-report PDFs into a table |
+| **Lab 2** | Marc | Manager analysis — `ai_parse_document()` + `ai_extract()` turn technicians' fault-report PDFs into insights |
 | **Lab 3** | Marc | A **custom agent** deployed as a **Databricks App** with a human-in-the-loop approval gate; add durable **short-term memory on Lakebase** via the AI assistant, then observe with **MLflow traces** and a **Review App** |
 | **Lab 4** | Tim (Platform) | Govern **reusable AI blocks** with the **AI Gateway** — a PII-blocking, rate-limited, logged model endpoint + an approval-gated you.com MCP tool; tested in the Playground |
 
@@ -25,9 +25,9 @@ infrastructure to provision.
   running serverless **SQL warehouse**. The bundle looks this warehouse up by name —
   it defaults to **"Serverless Starter Warehouse"** (present on Free Edition). On a shared
   workspace with a different name, update the `warehouse_id` lookup in `bundle/databricks.yml`.
-- A region that supports **AI Functions** (`ai_parse_document`, `ai_extract`) (Lab 2),
-  **Databricks Apps** (Lab 3), and — for Lab 4 — the **Unity AI Gateway (Beta)** plus a
-  **Foundation Model serving endpoint**.
+- A region that supports **AI Functions** (`ai_parse_document`, `ai_extract`), **Agent
+  Bricks** (Lab 2), **Databricks Apps** + a **Foundation Model serving endpoint** (Lab 3),
+  and — for Lab 4 — the **Unity AI Gateway (Beta)**.
 - Permission to **create a Unity Catalog catalog** (or an existing catalog you can write
   to). The bootstrap notebook creates the catalog for you — default `sunny_bay_roastery` —
   and seeds all the data, so there's no other workshop to install. If catalog creation is
@@ -80,21 +80,16 @@ The bootstrap creates:
 - `fault_reports_structured` table — the Lakeflow pipeline runs `ai_parse_document()`
   + `ai_extract()` across all 10 PDFs (used in Lab 2)
 - `create_service_order` UC function
+- **`sunny-bay-roastery-lakebase`** — a pre-provisioned **Lakebase** instance (`CU_1`) that
+  Lab 3's agent binds to by name for durable short-term memory
 
 ---
 
 ## Workshop Labs
 
-All labs are step-by-step markdown in the **`labs/`** folder — start with
-**[Lab 1 — Sara: From Dashboard to Action](labs/Lab%201%20-%20Sara%20-%20From%20Dashboard%20to%20Action.md)**
-and follow the ➡️ links at the bottom of each. (See the *What you'll build* table above
-for the arc.)
-
-- [Lab 1 — Sara: From Dashboard to Action](labs/Lab%201%20-%20Sara%20-%20From%20Dashboard%20to%20Action.md)
-- [Lab 2 — Document Intelligence](labs/Lab%202%20-%20Marc%20-%20Document%20Intelligence.md)
-- [Lab 3 — Build & Deploy Marc's Custom Agent](labs/Lab%203%20-%20Build%20%26%20Deploy%20Marc's%20Custom%20Agent.md)
-- [Lab 4 — Govern Reusable AI Blocks](labs/Lab%204%20-%20Govern%20Reusable%20AI%20Blocks.md)
-- [Optional: Observability & Feedback](labs/optional-deep-dives/Observability%20and%20Feedback.md)
+All labs are **Databricks notebooks** in **`labs/notebooks/`** — import that folder into
+your workspace (or open it from the cloned Git folder) and start with **Lab 1**, then work
+through Lab 2 → 3 → 4. (See the *What you'll build* table above for the arc.)
 
 ---
 
@@ -132,11 +127,12 @@ agents-in-a-day/
 │   ├── scripts/                ← template quickstart / start-app / deploy helpers
 │   └── tests/                  ← offline dry-run smoke tests (AGENT_DRY_RUN=1)
 ├── labs/
-│   ├── Lab 1 - Sara - From Dashboard to Action.md
-│   ├── Lab 2 - Marc - Document Intelligence.md
-│   ├── Lab 3 - Build & Deploy Marc's Custom Agent.md  ← deploy the agent app + Lakebase memory
-│   ├── Lab 4 - Govern Reusable AI Blocks.md           ← AI Gateway model + MCP blocks
-│   ├── optional-deep-dives/Observability and Feedback.md
-│   └── artifacts/                    ← per-lab screenshots
+│   ├── notebooks/                ← the four labs as Databricks notebooks (import these)
+│   │   ├── Lab 1 - Sara - Genie One.py
+│   │   ├── Lab 2 - Document Intelligence.py
+│   │   ├── Lab 3 - Build the Custom Agent.py
+│   │   └── Lab 4 - AI Gateway and Write-back.py
+│   ├── artifacts/                ← per-lab screenshots (referenced by the notebooks)
+│   └── Deep Dives/               ← optional deep dives (e.g. Observability & Feedback)
 └── README.md
 ```

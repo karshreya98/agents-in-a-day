@@ -64,7 +64,7 @@ def fault_reports_raw():
 
 @dlt.table(
     name="fault_reports_structured",
-    comment="Structured fault report fields extracted by ai_extract — source for Marc Supervisor",
+    comment="Structured fault report fields extracted by ai_extract — source for Marc's custom agent",
     table_properties={"quality": "gold"},
 )
 def fault_reports_structured():

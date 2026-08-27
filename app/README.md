@@ -51,7 +51,7 @@ MLflow experiment in `MLFLOW_EXPERIMENT_NAME`.
 
 Drop `AGENT_DRY_RUN`, set the two Genie space IDs + `CATALOG`, and add a **SQL warehouse**
 (for the `create_service_order` write-back) and your **Genie spaces** as app resources —
-that's the live-data follow-on after **Lab 3**. Governed model and MCP blocks are **Lab 4**.
+this is **Lab 4 (AI Gateway and Write-back)**.
 
 ## Test
 
