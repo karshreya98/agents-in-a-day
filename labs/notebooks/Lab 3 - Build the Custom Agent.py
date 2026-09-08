@@ -1,6 +1,7 @@
 # Databricks notebook source
+# DBTITLE 1,Cell 1
 # MAGIC %md
-# MAGIC # 🤖 Lab 3 — Build & Deploy Marc's Custom Agent
+# MAGIC # 🤖 Lab 3 — Build the Custom Agent
 # MAGIC
 # MAGIC **Persona: Marc** &nbsp;·&nbsp; **Databricks Apps · LangGraph · Lakebase · Genie Code**
 # MAGIC
@@ -22,8 +23,17 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 3
 # MAGIC %md
 # MAGIC ### 📖 Introduction
+# MAGIC
+# MAGIC > 💡 &nbsp;**The app is already running.** A pre-deployed **`marc-dispatch-agent`** is live
+# MAGIC > on the **Apps** page — open it any time to see the finished agent in action.
+# MAGIC >
+# MAGIC > **We encourage you to build your own copy** by following the tasks below (append your
+# MAGIC > name, e.g. `marc-dispatch-agent-sara`). If time is short, skip Task 1 and use the
+# MAGIC > pre-deployed app instead — **Task 2** (read the code) and **Task 3** (add Lakebase
+# MAGIC > memory) are the most important parts of this lab and work with either copy.
 # MAGIC
 # MAGIC Sara manages one store. **Marc runs all 12.**
 # MAGIC
@@ -103,6 +113,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 9
 # MAGIC %md
 # MAGIC ### Task 1 — Create the app in the UI
 # MAGIC
@@ -112,7 +123,7 @@
 # MAGIC Git folder**, paste this repo's URL, **Create**. The app lives in the `app/` folder (that's where
 # MAGIC `app.yaml` is).
 # MAGIC
-# MAGIC **2.** **Create the app**: **Compute → Apps → Create app → Custom**, name it `marc-dispatch-agent`,
+# MAGIC **2.** **Create the app**: **Compute → Apps → Create app → Custom**, name it `marc-dispatch-agent-<your name>` (e.g. `marc-dispatch-agent-sara`),
 # MAGIC **Create**.
 # MAGIC
 
@@ -219,11 +230,19 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Step 2 — Attach Lakebase
 # MAGIC %md
 # MAGIC #### Step 2 — Attach the Lakebase instance to the app *(before redeploying)*
 # MAGIC
-# MAGIC On the app's page → **Edit → App resources → Add resource → Database instance** → pick
-# MAGIC **`sunny-bay-roastery-lakebase`** → set the permission to **`CAN_CONNECT_AND_CREATE`** → **Save**.
+# MAGIC On the app's page → **Edit → App resources → Add resource**:
+# MAGIC
+# MAGIC **1.** Under **Type**, select **Database** (this is the Lakebase resource type).
+# MAGIC
+# MAGIC **2.** In the dropdown that appears underneath, pick **`sunny-bay-roastery-lakebase`**.
+# MAGIC
+# MAGIC **3.** Set the permission to **`CAN_CONNECT_AND_CREATE`** → **Save**.
+# MAGIC
+# MAGIC <img src="../artifacts/Lab%203/lakebase.png" width="620" style="border-radius:8px" alt="Add resource dialog: Type = Database, pick sunny-bay-roastery-lakebase, permission CAN_CONNECT_AND_CREATE">
 # MAGIC
 
 # COMMAND ----------
@@ -289,6 +308,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 27
 # MAGIC %md
 # MAGIC Those rows **are** the agent's memory — a checkpoint per step of your conversation, written straight to
 # MAGIC governed Postgres. That's your direct proof it's being recorded.
@@ -299,19 +319,22 @@
 # MAGIC > template ships.
 # MAGIC
 # MAGIC > 📝 &nbsp;**Note** — Observing the agent with **MLflow traces** and hardening it with a **Review App** is
-# MAGIC > its own topic — see the **[Deep Dive: Observability & Feedback](./Deep%20Dives/Observability%20and%20Feedback.md)**.
+# MAGIC > its own topic — see the **Deep Dive: Observability & Feedback**.
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 28
 # MAGIC %md
 # MAGIC ### 💡 Key takeaways
 # MAGIC
-# MAGIC - **A custom agent is just an app** you create and deploy from the Databricks Apps UI.
+# MAGIC - **A custom agent is just an app** you create and deploy from the Databricks Apps UI — stood up in minutes, not days.
 # MAGIC - **The control flow lives in code you can read** — an explicit pipeline with a human-in-the-loop approval gate before it acts.
 # MAGIC - **You extend the agent with Databricks capabilities, by prompting Genie Code** — you added durable **short-term memory on Lakebase** without writing the code yourself.
+# MAGIC - **AI-assisted from start to finish** — the app was scaffolded from a template, deployed from the UI, and extended with Genie Code. No boilerplate, no infrastructure to provision.
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 29
 # MAGIC %md
 # MAGIC ### What happens next?
 # MAGIC
@@ -320,4 +343,4 @@
 # MAGIC agents. In the final lab you step into the platform team's shoes and use the **AI Gateway** to create
 # MAGIC **governed, reusable AI blocks** so every next use case inherits governance by default.
 # MAGIC
-# MAGIC ➡️ **Continue to [Lab 4 — Govern Reusable AI Blocks with the AI Gateway](./Lab%204%20-%20AI%20Gateway%20and%20Write-back.md)**
+# MAGIC ➡️ Continue to Lab 4 — Unity Gateway and Write-back

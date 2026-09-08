@@ -1,6 +1,7 @@
 # Databricks notebook source
+# DBTITLE 1,Cell 1
 # MAGIC %md
-# MAGIC # 🔒 Lab 4 — Govern Reusable AI Blocks with the AI Gateway
+# MAGIC # 🔒 Lab 4 — Unity Gateway and Write-back
 # MAGIC
 # MAGIC **Persona: Tim (Platform IT)** &nbsp;·&nbsp; **AI Gateway · service policies · MCP · Playground**
 # MAGIC
@@ -25,6 +26,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 3
 # MAGIC %md
 # MAGIC ### Introduction — meet Tim
 # MAGIC
@@ -41,17 +43,34 @@
 # MAGIC interactions between models, agents, MCP servers, and tools — access control, **contextual service
 # MAGIC policies**, traffic management, and monitoring, in one place.
 # MAGIC
-# MAGIC > 📝 &nbsp;**Free Edition friendly.** Tasks 1–3 are all done in the **UI** and work on Databricks Free
-# MAGIC > Edition. Tasks 4–5 are **bonus** and need a non-Free workspace / admin rights — do them if you can,
-# MAGIC > otherwise read along.
+# MAGIC > 💡 &nbsp;**See the app that started it all.** Before you begin, take a look at Marc's dispatch
+# MAGIC > agent on the **Apps** page: sidebar → **Compute → Apps** → **`marc-dispatch-agent`**.
+# MAGIC > This is the agent you (or the setup job) deployed in Lab 3 — and the reason Tim needs
+# MAGIC > governed building blocks underneath.
+# MAGIC
+# MAGIC <img src="../artifacts/Lab%204/apps.png" width="620" style="border-radius:8px" alt="Sidebar navigation: Compute → Apps, showing the marc-dispatch-agent">
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 4
 # MAGIC %md
 # MAGIC ### Task 1: Create a governed model service
 # MAGIC
 # MAGIC This is Tim's first reusable block: **one model service every team is allowed to use** — because it
 # MAGIC enforces content policies, can't be hammered, and logs everything. Build it up in three steps.
+# MAGIC
+# MAGIC #### Step 0 — Create your schema (if you haven't already)
+# MAGIC
+# MAGIC The model service is a **Unity Catalog object** and needs a schema to live in. If you
+# MAGIC haven't created your dedicated schema yet, do it now:
+# MAGIC
+# MAGIC Sidebar → **Catalog** → browse to **`sunny_bay_roastery`** → click **Create schema** →
+# MAGIC name it **`<your_name>`** (e.g. `sunny_bay_roastery.sara`) → **Create**.
+# MAGIC
+# MAGIC > ⚠️ &nbsp;**Do this first.** If your schema doesn't exist yet, the schema dropdown in the
+# MAGIC > model-service creation form will be empty and you won't be able to proceed:
+# MAGIC
+# MAGIC <img src="../artifacts/Lab%204/image.png" width="620" style="border-radius:8px" alt="Model Service creation form with an empty schema dropdown because no schema exists yet">
 # MAGIC
 # MAGIC #### Step 1 — Create the model service (in the AI Gateway)
 # MAGIC
@@ -65,13 +84,14 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 6
 # MAGIC %md
-# MAGIC **2.** A model service is now a **Unity Catalog object** — pick a **Catalog** and **Schema** (e.g.
-# MAGIC `sunny_bay_roastery` / `coffee_maintenance`) and **Name** it `sunny-bay-governed-llm` (the name can't be
+# MAGIC **2.** A model service is now a **Unity Catalog object** — use the shared `sunny_bay_roastery` catalog and **your schema** (the one you
+# MAGIC created in Step 0, e.g. `sunny_bay_roastery.<your_name>`), and **Name** it `sunny-bay-governed-llm` (the name can't be
 # MAGIC changed after creation).
 # MAGIC
-# MAGIC **3.** **Provider → Databricks hosted** (pay-per-token, no credentials). Under **Destination**, pick an
-# MAGIC OSS foundation model available on Free Edition — e.g. **Qwen3 Next Instruct**
+# MAGIC **3.** **Provider → Databricks hosted** (pay-per-token, no credentials). Under **Destination**, pick
+# MAGIC an available foundation model — e.g. **Qwen3 Next Instruct**
 # MAGIC (`system.ai.qwen3-next-80b-a3b-instruct`) — then **Create**.
 
 # COMMAND ----------
@@ -81,9 +101,10 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 8
 # MAGIC %md
 # MAGIC **4.** Because it's a UC securable, you can open the model service **two ways** — from **AI Gateway →
-# MAGIC Models** (the gateway view) or from **Catalog Explorer** (`sunny_bay_roastery → coffee_maintenance →
+# MAGIC Models** (the gateway view) or from **Catalog Explorer** (`sunny_bay_roastery → <your_schema> →
 # MAGIC Services → sunny-bay-governed-llm`, the UC view). It's the same object; you'll toggle between the two
 # MAGIC views through this lab. Either way, open its **Permissions** tab and grant your workshop users or group
 # MAGIC **Can Query** — grant / revoke centrally, the same as any UC object. Teams get to *use* it, only Tim
@@ -165,27 +186,20 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 17
 # MAGIC %md
 # MAGIC ### Task 2: Build & secure the you.com MCP service
 # MAGIC
-# MAGIC Tim's second reusable block is the **web-search tool**. In Lab 1 you created the metastore **HTTP
-# MAGIC connection** `youcom_http` (raw you.com credentials). That connection is *not* something teams should
-# MAGIC touch directly — so Tim now wraps it in a **governed MCP service** inside the AI Gateway, and applies a
+# MAGIC Tim's second reusable block is the **web-search tool**. In Lab 1 you confirmed (or created) the
+# MAGIC **`you_web_search_mcp`** MCP service in the AI Gateway. That service wraps the raw you.com
+# MAGIC credentials — teams never touch them directly. Tim now adds **governance**: access control and a
 # MAGIC policy. Same pattern as Task 1, but here the interesting policy is **ASK**: some actions should pause
 # MAGIC for a human rather than be hard-allowed or hard-blocked.
 # MAGIC
-# MAGIC #### Step 1 — Register the governed MCP service (on the existing connection)
+# MAGIC #### Step 1 — Grant access to the MCP service
 # MAGIC
-# MAGIC Turn the raw you.com connection from Lab 1 into a governed, reusable tool. Like the model service, an
-# MAGIC MCP service is a **Unity Catalog object**.
-# MAGIC
-# MAGIC **1.** Sidebar → **AI Gateway → MCPs** → **Create MCP Service**.
-# MAGIC
-# MAGIC **2.** Pick a **Catalog** and **Schema** (`sunny_bay_roastery` / `coffee_maintenance`) and **Name** it
-# MAGIC `you_web_search_mcp` (the name can't be changed after creation).
-# MAGIC
-# MAGIC **3.** Under **Connection**, choose **Use existing connection** and select the **you.com connection from
-# MAGIC Lab 1**. Under **Tools**, keep the **`you-search`** tool selected, then **Create MCP Service**.
+# MAGIC The MCP service is already a **Unity Catalog object** — you confirmed (or created) it in Lab 1. Open it from
+# MAGIC **AI Gateway → MCPs → `you_web_search_mcp`**.
 
 # COMMAND ----------
 
@@ -194,8 +208,9 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 19
 # MAGIC %md
-# MAGIC **4.** Open the new MCP service → **Permissions → Grant**, add your workshop users or group, and
+# MAGIC Open the MCP service → **Permissions → Grant**, add your workshop users or group, and
 # MAGIC grant **`EXECUTE`**.
 # MAGIC
 # MAGIC > ⚠️ &nbsp;**Warning** — Grant participants **`EXECUTE` on the MCP service only — never `USE CONNECTION`**.
@@ -326,12 +341,9 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 31
 # MAGIC %md
-# MAGIC ### Task 4: *(Bonus — non-Free Edition)* Govern a coding agent with `ucode`
-# MAGIC
-# MAGIC > ⚠️ &nbsp;**Skip on Free Edition.** `ucode` routes coding agents through governed model services,
-# MAGIC > but the models available on Free Edition can't be driven by a coding harness. Do this on a
-# MAGIC > standard workspace only.
+# MAGIC ### Task 4: *(Bonus)* Govern a coding agent with `ucode`
 # MAGIC
 # MAGIC The same governed endpoint can back your developers' **AI coding assistants**, with no API
 # MAGIC keys and full audit — so "vibe coding" happens through *your* models and *your* guardrails.
@@ -378,6 +390,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 34
 # MAGIC %md-sandbox
 # MAGIC <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:flex;flex-wrap:wrap;gap:14px;max-width:940px">
 # MAGIC   <div style="flex:1;min-width:250px;border:1px solid #E3D6C2;border-top:4px solid #C77D2A;border-radius:14px;padding:18px;background:#fff">
@@ -396,6 +409,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 35
 # MAGIC %md
 # MAGIC **What you take home:**
 # MAGIC
@@ -407,15 +421,16 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 36
 # MAGIC %md
 # MAGIC ### What Happens Next?
 # MAGIC
-# MAGIC - **Go deeper on observability & feedback** → **[Deep Dive: Observability & Feedback](./Deep%20Dives/Observability%20and%20Feedback.md)**
+# MAGIC - **Go deeper on observability & feedback** → **Deep Dive: Observability & Feedback**
 # MAGIC   — see *inside* Marc's agent with MLflow traces, add an LLM-as-a-judge scorer, and collect
 # MAGIC   human feedback through a Review App.
 # MAGIC - Build the *next* Sunny Bay use case (a returns bot, an invoice reader) on top of the two
 # MAGIC   governed blocks you just created — it inherits the guardrails automatically.
-# MAGIC - Drop a new PDF into `/Volumes/<catalog>/coffee_maintenance/fault_reports/` and watch it
+# MAGIC - Drop a new PDF into `/Volumes/sunny_bay_roastery/coffee_maintenance/fault_reports/` and watch it
 # MAGIC   flow into `fault_reports_structured` via the Lab 0 Lakeflow pipeline.
 # MAGIC
 # MAGIC > 💡 &nbsp;**Tip** — Ask your facilitator about follow-up deep-dive sessions on **Agent Bricks**,

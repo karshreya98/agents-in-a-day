@@ -1,4 +1,8 @@
 # Databricks notebook source
+# /// script
+# [tool.databricks.environment]
+# environment_version = "5"
+# ///
 # MAGIC %md
 # MAGIC # 🔍 Lab 2 — Document Intelligence
 # MAGIC
@@ -23,6 +27,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 3
 # MAGIC %md
 # MAGIC ### 📖 Introduction
 # MAGIC
@@ -61,6 +66,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 6
 # MAGIC %md
 # MAGIC ### Step 1: Extract the fields you need — no code
 # MAGIC
@@ -73,9 +79,9 @@
 # MAGIC
 # MAGIC **1.** In the workspace sidebar open **Catalog** and browse to:
 # MAGIC ```
-# MAGIC <catalog> → coffee_maintenance → Volumes → fault_reports
+# MAGIC sunny_bay_roastery → coffee_maintenance → Volumes → fault_reports
 # MAGIC ```
-# MAGIC > 📝 &nbsp;**Note** — Replace `<catalog>` with the catalog name you used in Lab 0 (e.g. `sunny_bay_roastery`).
+# MAGIC > 📝 &nbsp;**Note** — Use the shared `sunny_bay_roastery` catalog.
 # MAGIC
 # MAGIC **2.** Click **`FR-2026-001.pdf`** and **download** it. Open it and skim what the technician
 # MAGIC wrote about CBM-003 — you'll be checking the extracted fields against it shortly.
@@ -118,6 +124,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 7
 # MAGIC %md
 # MAGIC ### Step 2: Turn it into a pipeline — one click
 # MAGIC
@@ -131,7 +138,7 @@
 # MAGIC
 # MAGIC **3.** Point the pipeline's source at the full volume rather than your single uploaded file:
 # MAGIC ```
-# MAGIC /Volumes/<catalog>/coffee_maintenance/fault_reports/
+# MAGIC /Volumes/sunny_bay_roastery/coffee_maintenance/fault_reports/
 # MAGIC ```
 # MAGIC
 # MAGIC **4.** Skim the generated code. Two things worth noticing:
@@ -163,8 +170,9 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 9
 # MAGIC %sql
-# MAGIC SELECT * FROM <catalog>.coffee_maintenance.fault_reports_structured
+# MAGIC SELECT * FROM sunny_bay_roastery.coffee_maintenance.fault_reports_structured
 # MAGIC ORDER BY report_date DESC
 
 # COMMAND ----------
@@ -209,6 +217,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 13
 # MAGIC %md
 # MAGIC ### Step 4: Add the extracted reports to the Maintenance Genie
 # MAGIC
@@ -222,7 +231,7 @@
 # MAGIC
 # MAGIC **2.** **Add** the table you just built:
 # MAGIC ```
-# MAGIC <catalog>.coffee_maintenance.fault_reports_structured
+# MAGIC sunny_bay_roastery.coffee_maintenance.fault_reports_structured
 # MAGIC ```
 # MAGIC
 # MAGIC **3.** Update the agent's description to mention it (so it routes report questions here):
@@ -242,6 +251,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 14
 # MAGIC %md
 # MAGIC ### Bonus: Build Marc's dispatch plan — a preview of Lab 3 (optional)
 # MAGIC
@@ -266,6 +276,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 16
 # MAGIC %md
 # MAGIC **1.** Open **Genie Code** (the in-product assistant) in the workspace, over the repo you cloned in
 # MAGIC setup — the same place you'll use it in Lab 3.
@@ -286,6 +297,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 17
 # MAGIC %md
 # MAGIC ### 💡 Key takeaways
 # MAGIC
@@ -357,6 +369,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 21
 # MAGIC %md
 # MAGIC ### What Happens Next?
 # MAGIC
