@@ -80,8 +80,8 @@ The bootstrap creates:
 - `fault_reports_structured` table — the Lakeflow pipeline runs `ai_parse_document()`
   + `ai_extract()` across all 10 PDFs (used in Lab 2)
 - `create_service_order` UC function
-- **`sunny-bay-roastery-lakebase`** — a pre-provisioned **Lakebase** instance (`CU_1`) that
-  Lab 3's agent binds to by name for durable short-term memory
+- **Lakebase** (autoscaling Postgres) for Lab 3's durable short-term memory — each participant
+  uses their **own** project, set up by the `add-lakebase-short-term-memory` skill (no shared instance)
 
 ---
 
