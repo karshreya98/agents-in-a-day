@@ -1,6 +1,6 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # 🗣️ Lab 1 — Sara · Genie One
+# MAGIC # 🗣️ Lab 1 — Genie One
 # MAGIC
 # MAGIC **Persona: Sara** &nbsp;·&nbsp; **No code required** &nbsp;·&nbsp; Genie One + Genie agents
 # MAGIC
@@ -35,6 +35,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 4
 # MAGIC %md
 # MAGIC ### Introduction
 # MAGIC
@@ -60,6 +61,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 5
 # MAGIC %md
 # MAGIC ### Step 1: Build the Maintenance Genie agent
 # MAGIC
@@ -70,17 +72,18 @@
 # MAGIC
 # MAGIC **2.** Click **New** (or **+ New Genie space**).
 # MAGIC
-# MAGIC **3.** When prompted for data, add these three tables from your catalog's
-# MAGIC `coffee_maintenance` schema:
+# MAGIC **3.** When prompted for data, add these three tables from the shared `sunny_bay_roastery` catalog's `coffee_maintenance` schema:
 # MAGIC ```
-# MAGIC <catalog>.coffee_maintenance.machines
-# MAGIC <catalog>.coffee_maintenance.fault_events
-# MAGIC <catalog>.coffee_maintenance.service_orders
+# MAGIC sunny_bay_roastery.coffee_maintenance.machines
+# MAGIC sunny_bay_roastery.coffee_maintenance.fault_events
+# MAGIC sunny_bay_roastery.coffee_maintenance.service_orders
 # MAGIC ```
-# MAGIC > 📝 &nbsp;Replace `<catalog>` with the catalog name you used in Lab 0 (e.g.
-# MAGIC > `sunny_bay_roastery`).
+# MAGIC > 📝 &nbsp;Use the shared `sunny_bay_roastery` catalog for all labs. If you need to create
+# MAGIC > your own objects, create a dedicated schema in this catalog (e.g.
+# MAGIC > `sunny_bay_roastery.<your_name>`).
 # MAGIC
-# MAGIC **4.** Name the space **`Sunny Bay Maintenance Genie`** and give it a description:
+# MAGIC **4.** Name the space **`Sunny Bay Maintenance Genie - <your name>`** (e.g.
+# MAGIC `Sunny Bay Maintenance Genie - Sara`) so each participant has their own, and give it a description:
 # MAGIC ```
 # MAGIC Natural-language Q&A over Sunny Bay espresso machine maintenance: machine registry, fault event history, and service orders. Use for questions about a machine's faults, fault codes, locations, and service history. Covers machines CBM-001 to CBM-012, fault codes such as E-07 pressure faults, the 12 Sunny Bay locations including Mission District, and open or completed service orders.
 # MAGIC ```
@@ -97,7 +100,7 @@
 # MAGIC > agent composes — building it once here means it's ready when you get there.
 # MAGIC
 # MAGIC > 📝 &nbsp;**You already have a second agent — the setup job pre-built a `Sunny Bay Sales Genie`**
-# MAGIC > over the governed sales **metric view** (`<catalog>.gold.sm_fact_coffee_sales_genie`),
+# MAGIC > over the governed sales **metric view** (`sunny_bay_roastery.gold.sm_fact_coffee_sales_genie`),
 # MAGIC > exposing measures like gross revenue, profit, and units sold sliced by store, product,
 # MAGIC > and date. You don't build it — you'll just talk to it through Genie One in Step 3.
 # MAGIC
@@ -166,6 +169,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 9
 # MAGIC %md
 # MAGIC ### Step 3: Talk to your Genie agents through Genie One
 # MAGIC
@@ -174,8 +178,14 @@
 # MAGIC *and* the pre-built **Sunny Bay Sales Genie**. Sara doesn't pick a table or an agent; she
 # MAGIC just asks, and Genie One routes to the right one.
 # MAGIC
-# MAGIC **1.** Open the **kebab menu** (the ⋮ / grid "waffle" icon in the top navigation bar) and
+# MAGIC **1.** Open the **grid menu** (the **⋮⋮⋮** icon in the top navigation bar — three columns of dots) and
 # MAGIC select **Genie One**.
+# MAGIC
+# MAGIC <img src="../artifacts/Lab%201/one.png" width="620" style="border-radius:8px" alt="Grid menu in the top navigation bar with Genie One highlighted">
+# MAGIC
+# MAGIC You'll land on the Genie One page:
+# MAGIC
+# MAGIC <img src="../artifacts/Lab%201/one_page.png" width="620" style="border-radius:8px" alt="The Genie One page — a single chat interface that routes to your Genie agents">
 # MAGIC
 # MAGIC **2.** Ask Sara's manager questions — a mix of **maintenance** and **sales**. Genie One
 # MAGIC routes each to the right Genie agent:
@@ -251,6 +261,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 12
 # MAGIC %md
 # MAGIC ### Step 4: Connect you.com for live web knowledge
 # MAGIC
@@ -258,62 +269,46 @@
 # MAGIC manufacturer recommends. An external **MCP service** (you.com), registered in the Unity
 # MAGIC AI Gateway, fixes that.
 # MAGIC
-# MAGIC **Step 4a — Get your you.com API key**
+# MAGIC > 📝 &nbsp;**Built-in web search (Beta).** Databricks now also offers a built-in web search in
+# MAGIC > **Genie Code** that works without any MCP setup — see
+# MAGIC > [Search the web](https://docs.databricks.com/aws/en/genie-code/web-search). We use the
+# MAGIC > **you.com MCP service** here because it registers a **governed, reusable AI block** in the
+# MAGIC > AI Gateway — the pattern Lab 4 builds on — and makes the web tool available to Genie One
+# MAGIC > and any future agent.
 # MAGIC
-# MAGIC **1.** Open a new browser tab and go to [https://you.com](https://you.com).
+# MAGIC **Step 4a — Confirm the you.com MCP service exists**
 # MAGIC
-# MAGIC **2.** Click **Sign up** — you can use Google or GitHub. The free tier is sufficient.
+# MAGIC The setup job should have already registered the **`you_web_search_mcp`** MCP service
+# MAGIC (backed by the **`youcom_http_secondary`** connection). Confirm it's there:
 # MAGIC
-# MAGIC **3.** After signing in, go to [https://you.com/settings/api](https://you.com/settings/api).
+# MAGIC Sidebar → **AI Gateway → MCPs** → look for **`you_web_search_mcp`**.
 # MAGIC
-# MAGIC **4.** Click **Create API key** → copy the key (it looks like `yk_...`).
-# MAGIC
-# MAGIC > 💡 &nbsp;No credit card required. The free plan gives 100 web-search calls/day — more
-# MAGIC > than enough for this workshop. You keep this key after the session.
-# MAGIC
-# MAGIC **Step 4b — Check whether the you.com connection already exists**
-# MAGIC
-# MAGIC In the workspace sidebar, open **Catalog** → **Connections** and look for a **you.com** HTTP connection (e.g. `youcom_http`).
-# MAGIC
-# MAGIC - **It's there** → skip to **Step 4c**. Someone already created it.
-# MAGIC - **It's not there** → do **Step 4b-1** below to create it yourself.
+# MAGIC - **Found it** → skip straight to **Step 4c**.
+# MAGIC - **Not there** → follow **Step 4b** below to create it.
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 13
 # MAGIC %md
-# MAGIC **Step 4b-1 — Register the you.com connection in Unity Catalog**
+# MAGIC **Step 4b — *(For reference)* How the you.com MCP service was created**
 # MAGIC
-# MAGIC First create the Unity Catalog **HTTP connection**, then register the MCP service on top of it.
+# MAGIC > You do **not** need to create anything here — the setup job already registered
+# MAGIC > `you_web_search_mcp` and its underlying `youcom_http_secondary` connection. This section
+# MAGIC > explains how it was done, in case you ever need to recreate it on your own workspace.
 # MAGIC
-# MAGIC **1.** Go to **Catalog** → **Connections** → **Create connection**.
+# MAGIC The MCP service was created via **AI Gateway → MCPs → Create MCP Service** with an
+# MAGIC HTTP connection pointing at `https://api.you.com:443/mcp` (Bearer token auth, you.com API
+# MAGIC key).
 # MAGIC
-# MAGIC **2.** Select **HTTP** as the connection type.
-# MAGIC
-# MAGIC **3.** Name it `youcom_http`, set the authentication type to **Bearer token**, paste the key from Step 4a and
-# MAGIC use these settings:
-# MAGIC
-# MAGIC | Field | Value |
-# MAGIC |---|---|
-# MAGIC | Connection type | HTTP |
-# MAGIC | URL | `https://api.you.com:443` |
-# MAGIC | Base path | `/mcp` |
-# MAGIC | Is mcp connection | `true` |
-# MAGIC | Auth scheme | `bearer` |
-# MAGIC | Host | `https://api.you.com` |
-# MAGIC | Port | `443` |
-# MAGIC
-# MAGIC > ⚠️ &nbsp;**Important** — **Create this connection at the metastore level, not inside a catalog or schema.**
-# MAGIC > It is a metastore-scoped object: create it once and every workspace on the metastore
-# MAGIC > can use it. Don't repeat it per workspace or per participant.
-# MAGIC >
-# MAGIC > You need `CREATE CONNECTION` to do this. If the option is greyed out, you don't have
-# MAGIC > the privilege — ask your facilitator or a metastore admin to create it.
-# MAGIC
-# MAGIC <img src="../artifacts/Lab%201/lab_1_step_4_create_mcp_connection.png" width="620" style="border-radius:8px" alt="Set up connection: name youcom_http, type HTTP, created at the metastore level, Bearer token auth">
+# MAGIC > ⚠️ &nbsp;**Key detail — metastore-level connection.** The underlying HTTP connection
+# MAGIC > (`youcom_http_secondary`) must be created at the **metastore level**, not inside a
+# MAGIC > catalog/schema. MCP services require a metastore-level connection to be visible across
+# MAGIC > the workspace. If you ever recreate this, choose **Metastore** as the connection scope
+# MAGIC > during creation.
 # MAGIC
 # MAGIC **Step 4c — Ask enriched questions**
 # MAGIC
-# MAGIC In Genie One, enable the you.com connection you created `Customizations > Connections > Toggle youcom_http`.
+# MAGIC In Genie One, enable the you.com MCP service: **Customizations → Connections** → toggle **`you_web_search_mcp`** on.
 # MAGIC
 # MAGIC > ⚠️ &nbsp;**On your own workspace** — connectors in Genie One are a **Beta**. If you don't see the
 # MAGIC > **Customizations > Connections** tab, a **workspace admin** must enable **"Third Party Connectors
@@ -337,6 +332,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 14
 # MAGIC %md
 # MAGIC ### Step 5: Turn Sara's weekly check into a skill — and schedule it (optional)
 # MAGIC
@@ -352,7 +348,13 @@
 # MAGIC with GSuite and MS365. For this Lab, we will use Gmail.
 # MAGIC
 # MAGIC > ⚠️ &nbsp;**Important** — **Enable the connector: click the `+` below the text box and toggle on Gmail.**
-# MAGIC > You can connect any Gmail account, personal or provided by the instructor. The agent will only create a draft there.
+# MAGIC > Use the shared workshop Gmail account below, or your own personal Gmail. The agent will
+# MAGIC > only create a draft — it won't send anything.
+# MAGIC >
+# MAGIC > | | |
+# MAGIC > |---|---|
+# MAGIC > | **Email** | `sunnybayroastery@gmail.com` |
+# MAGIC > | **Password** | `sunnybayroastery_dbx` |
 # MAGIC
 # MAGIC > 📝 &nbsp;**Skills and scheduled tasks are personal to you.** A skill you create lives in your own
 # MAGIC > Genie One — it isn't shared with the workspace. In the near future, skills will be shareable
@@ -395,7 +397,7 @@
 # MAGIC
 # MAGIC At the end of the skill execution, a new draft will be written in Gmail.
 # MAGIC
-# MAGIC **Step 5d — Schedule it as a standing briefing**
+# MAGIC **Step 5c — Schedule it as a standing briefing**
 # MAGIC
 # MAGIC Now make it run itself. The fastest way is to just ask in chat:
 # MAGIC ```
@@ -435,6 +437,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 15
 # MAGIC %md
 # MAGIC ### Bridge to Marc's Arc
 # MAGIC
@@ -449,7 +452,8 @@
 # MAGIC Sara queried knows it. The question is whether Marc has something that turns it into a
 # MAGIC *decision and an action*.
 # MAGIC
-# MAGIC **Over Labs 2–3 you build that.**
+# MAGIC **Over Labs 2–3 you build that — Lab 2 adds document intelligence, Lab 3 builds
+# MAGIC and deploys the custom agent. Lab 4 governs the AI building blocks underneath.**
 
 # COMMAND ----------
 
