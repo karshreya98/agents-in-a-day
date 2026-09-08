@@ -194,11 +194,12 @@
 # MAGIC ### Task 3 — Add short-term memory with Lakebase, using Genie Code
 # MAGIC
 # MAGIC You'll add durable short-term memory backed by **Lakebase** (Databricks' managed Postgres). You won't
-# MAGIC write any code — **Genie Code** (the in-product assistant) follows the skill, which sets up **your own**
-# MAGIC Lakebase project and wires it in. Then you attach that project to the app and redeploy.
+# MAGIC write any code — **Genie Code** (the in-product assistant) follows the skill: it wires the code and
+# MAGIC **suggests a Lakebase project name for you**. You then create that project in the UI, attach it to the
+# MAGIC app, and redeploy.
 # MAGIC
-# MAGIC Do these four steps **in order** — the attach (step 2) must happen **before** the redeploy (step 3),
-# MAGIC because the app connects to Lakebase the moment it starts.
+# MAGIC Do the steps **in order** — create the project and attach it **before** you redeploy, because the app
+# MAGIC connects to Lakebase the moment it starts.
 
 # COMMAND ----------
 
@@ -221,10 +222,29 @@
 
 # MAGIC %md
 # MAGIC
-# MAGIC Genie Code loads the **`add-lakebase-short-term-memory`** skill and follows it: it sets up **your own**
-# MAGIC autoscaling Lakebase project, points `app.yaml` at it, and wires the Lakebase checkpointer into
+# MAGIC Genie Code loads the **`add-lakebase-short-term-memory`** skill and follows it: it points `app.yaml`
+# MAGIC at **your own** autoscaling Lakebase project and wires the Lakebase checkpointer into
 # MAGIC **`start_server.py`** (connecting by `project`/`branch`). It does **not** touch the graph or the
-# MAGIC approval gate. **The skill prints your project's name — note it; you need it in Step 2.**
+# MAGIC approval gate.
+# MAGIC
+# MAGIC Creating a Lakebase project from the CLI is blocked in the workshop, so the skill can't create it for
+# MAGIC you — instead it **suggests a project name** (e.g. `lakebase-<your-username>`). **Note that name** — you
+# MAGIC create the project with it next, and pick it again when you attach the resource.
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC #### Step 1b — Create the Lakebase project the skill named *(in the UI)*
+# MAGIC
+# MAGIC Switch to the **Lakebase** experience (product switcher, top-right of the top bar), then
+# MAGIC **Projects → New project**. Set **Display name** to the exact name the skill gave you
+# MAGIC (e.g. `lakebase-<your-username>`), leave **Postgres 17** and the defaults, and click **Create**. It
+# MAGIC provisions a `production` branch and a `databricks_postgres` database — all the app needs.
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC <img src="../artifacts/Lab%203/lab_3_task_3_create_lakebase_project.png" width="720" style="border-radius:8px" alt="Lakebase Create project dialog — Display name set to the project name the skill suggested">
 
 # COMMAND ----------
 

@@ -35,30 +35,30 @@ approval — from the in-memory `MemorySaver()` to **Lakebase** so it survives a
 
 ---
 
-## Step 1 — Create the participant's own Lakebase project
+## Step 1 — Pick the participant's project name (they create it in the UI)
 
-Pick a name unique to this participant so nobody collides. Derive it from their username:
+Derive a name unique to this participant from their username, so nobody collides:
 
 ```bash
 USER_NAME=$(databricks current-user me --profile "$PROFILE" | jq -r '.userName' | cut -d@ -f1 | tr '.[:upper:]' '-[:lower:]')
-PROJECT="lakebase-${USER_NAME}"          # e.g. lakebase-marc-shreya
-databricks postgres create-project "$PROJECT" \
-  --json '{"spec": {"display_name": "'"$PROJECT"'"}}' --profile "$PROFILE"
+PROJECT="lakebase-${USER_NAME}"          # e.g. lakebase-karshreya96
+echo "Suggested Lakebase project name: $PROJECT"
 ```
 
-This auto-provisions a `production` branch, a `primary` endpoint, and the default
-`databricks_postgres` database. Confirm it is `READY`:
+> **Do NOT rely on `databricks postgres create-project` — it is blocked for participants in this
+> workshop.** Attempting it fails, so the skill's job is to **suggest** the name (above) and use it
+> in the edits below, then **tell the participant to create the project themselves in the UI**:
+>
+> **Lakebase (product switcher, top-right) → Projects → New project → Display name = `<PROJECT>`
+> → Postgres 17, defaults → Create.**
+>
+> That provisions a `production` branch and a `databricks_postgres` database — all the app needs.
+> Surface the exact `<PROJECT>` name to the participant so they create it and pick it again when
+> attaching the resource (Step 4).
 
-```bash
-databricks postgres list-branches "projects/${PROJECT}" --profile "$PROFILE"
-```
-
-> **No CLI available?** Create it in the UI instead: **Lakebase → Projects → Create project**,
-> name it `lakebase-<username>`, and note the project name. Everything below only needs the name.
-
-> **Autoscaling, not Provisioned.** A project you create today is *autoscaling*. Its connection
+> **Autoscaling, not Provisioned.** A project created this way is *autoscaling*. Its connection
 > form is `project` + `branch` — **never** `instance_name=` (that resolves only legacy Provisioned
-> instances and will fail with `Unable to resolve Lakebase provisioned instance`).
+> instances and fails with `Unable to resolve Lakebase provisioned instance`).
 
 ## Step 2 — Edit `app.yaml` (point the app at this project)
 
