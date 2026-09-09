@@ -19,14 +19,11 @@ resources:
       # Points at the folder holding app.yaml (this bundle root). app.yaml drives the
       # command + env, so there is no `config` block here to drift out of sync.
       source_code_path: ./
-      # Lakebase instance (created by the workshop bundle) — Lab 3's durable short-term
-      # memory. Pre-declared so the only change Lab 3 needs is the start_server lifespan.
-      resources:
-        - name: 'lakebase'
-          database:
-            instance_name: "sunny-bay-roastery-lakebase"
-            database_name: "databricks_postgres"
-            permission: 'CAN_CONNECT_AND_CREATE'
+      # Lakebase is intentionally NOT wired here. In Lab 3 each participant attaches their OWN
+      # autoscaling Lakebase project to the app via the UI (Edit → App resources), per the
+      # add-lakebase-short-term-memory skill. We declare no Lakebase resource so the bundle never
+      # points at a shared or nonexistent instance. (A `resources:` block here would apply only via
+      # `databricks bundle deploy` anyway — not the UI Deploy participants use.)
 
 targets:
   dev:

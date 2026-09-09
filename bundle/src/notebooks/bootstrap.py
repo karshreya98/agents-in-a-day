@@ -5,9 +5,9 @@
 # MAGIC Run this **once** to stand up the whole workshop. It:
 # MAGIC 1. **Creates the catalog** (default `sunny_bay_roastery`) — or reuses it if it
 # MAGIC    already exists / an admin pre-created it.
-# MAGIC 2. **Deploys the bundle** — the setup job, both Lakeflow pipelines, and the
-# MAGIC    **`sunny-bay-roastery-lakebase`** Lakebase instance that Lab 3's agent uses for durable
-# MAGIC    short-term memory.
+# MAGIC 2. **Deploys the bundle** — the setup job and both Lakeflow pipelines. (Lab 3's Lakebase is
+# MAGIC    **not** created here — each participant creates their own project in Lab 3 via the
+# MAGIC    `add-lakebase-short-term-memory` skill.)
 # MAGIC 3. **Runs the setup job** end-to-end (maintenance tables, sales star schema +
 # MAGIC    metric view, pre-built Sales Genie, dashboard, and the fault-report PDFs +
 # MAGIC    `fault_reports_structured`).
@@ -178,14 +178,14 @@ for _skill in _skills:
 # COMMAND ----------
 
 # MAGIC %md ## 5. Deploy the bundle
-# MAGIC Creates the setup job, both Lakeflow pipelines, and the **Lakebase instance**
-# MAGIC (`sunny-bay-roastery-lakebase`) that Lab 3 uses for durable short-term memory. Passes the
-# MAGIC catalog you chose above so the pipelines target the catalog we just created.
+# MAGIC Creates the setup job and both Lakeflow pipelines. Passes the catalog you chose above so the
+# MAGIC pipelines target the catalog we just created. (Lab 3's Lakebase is not created here — each
+# MAGIC participant creates their own project in Lab 3, per the `add-lakebase-short-term-memory` skill.)
 
 # COMMAND ----------
 
 run_cli(["bundle", "deploy", "-t", target, "--var", f"catalog={catalog}", "--force-lock"])
-print("✅ Bundle deployed (including the sunny-bay-roastery-lakebase Lakebase instance).")
+print("✅ Bundle deployed (setup job + Lakeflow pipelines).")
 
 # COMMAND ----------
 

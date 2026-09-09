@@ -193,12 +193,13 @@
 # MAGIC %md
 # MAGIC ### Task 3 — Add short-term memory with Lakebase, using Genie Code
 # MAGIC
-# MAGIC A **Lakebase** instance (Databricks' managed Postgres) named **`sunny-bay-roastery-lakebase`** has been
-# MAGIC **pre-created for you**. You won't write any code — you'll let **Genie Code** (the in-product
-# MAGIC assistant) wire it in, then attach the instance to the app and redeploy.
+# MAGIC You'll add durable short-term memory backed by **Lakebase** (Databricks' managed Postgres). You won't
+# MAGIC write any code — **Genie Code** (the in-product assistant) follows the skill: it wires the code and
+# MAGIC **suggests a Lakebase project name for you**. You then create that project in the UI, attach it to the
+# MAGIC app, and redeploy.
 # MAGIC
-# MAGIC Do these four steps **in order** — the attach (step 2) must happen **before** the redeploy (step 3),
-# MAGIC because the app connects to Lakebase the moment it starts.
+# MAGIC Do the steps **in order** — create the project and attach it **before** you redeploy, because the app
+# MAGIC connects to Lakebase the moment it starts.
 
 # COMMAND ----------
 
@@ -209,8 +210,7 @@
 # MAGIC the skill is named, type **`@`** and pick **`add-lakebase-short-term-memory`** from the **Skills** menu
 # MAGIC that pops up — selecting it attaches the skill so Genie Code follows it (without it, it may not find the skill):
 # MAGIC
-# MAGIC > *"Add short-term memory to this app using our Lakebase instance `sunny-bay-roastery-lakebase`,
-# MAGIC > following the `@add-lakebase-short-term-memory` skill."*
+# MAGIC > *"Run the `@add-lakebase-short-term-memory` skill."*
 # MAGIC
 
 # COMMAND ----------
@@ -222,11 +222,29 @@
 
 # MAGIC %md
 # MAGIC
-# MAGIC Genie Code loads the **`add-lakebase-short-term-memory`** skill and makes the one change it needs —
-# MAGIC wiring the Lakebase checkpointer into **`start_server.py`**. The `databricks-langchain[memory]`
-# MAGIC dependency and the Lakebase app resource are already declared in the repo, so that's the **only file
-# MAGIC it edits**; it doesn't touch the graph or the approval gate. Confirm the change landed only in
-# MAGIC `start_server.py`.
+# MAGIC Genie Code loads the **`add-lakebase-short-term-memory`** skill and follows it: it points `app.yaml`
+# MAGIC at **your own** autoscaling Lakebase project and wires the Lakebase checkpointer into
+# MAGIC **`start_server.py`** (connecting by `project`/`branch`). It does **not** touch the graph or the
+# MAGIC approval gate.
+# MAGIC
+# MAGIC Creating a Lakebase project from the CLI is blocked in the workshop, so the skill can't create it for
+# MAGIC you — instead it **suggests a project name** (e.g. `lakebase-<your-username>`). **Note that name** — you
+# MAGIC create the project with it next, and pick it again when you attach the resource.
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC #### Step 1b — Create the Lakebase project the skill named *(in the UI)*
+# MAGIC
+# MAGIC Switch to the **Lakebase** experience (product switcher, top-right of the top bar), then
+# MAGIC **Projects → New project**. Set **Display name** to the exact name the skill gave you
+# MAGIC (e.g. `lakebase-<your-username>`), leave **Postgres 17** and the defaults, and click **Create**. It
+# MAGIC provisions a `production` branch and a `databricks_postgres` database — all the app needs.
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC <img src="../artifacts/Lab%203/lab_3_task_3_create_lakebase_project.png" width="720" style="border-radius:8px" alt="Lakebase Create project dialog — Display name set to the project name the skill suggested">
 
 # COMMAND ----------
 
@@ -238,7 +256,7 @@
 # MAGIC
 # MAGIC **1.** Under **Type**, select **Database** (this is the Lakebase resource type).
 # MAGIC
-# MAGIC **2.** In the dropdown that appears underneath, pick **`sunny-bay-roastery-lakebase`**.
+# MAGIC **2.** In the dropdown that appears underneath, pick **your own project** (the one the skill set up in Step 1).
 # MAGIC
 # MAGIC **3.** Set the permission to **`CAN_CONNECT_AND_CREATE`** → **Save**.
 # MAGIC
@@ -292,8 +310,8 @@
 # MAGIC #### Step 5 — See it recorded in Lakebase
 # MAGIC
 # MAGIC Switch to the **Lakebase** experience from the **product switcher** (the menu on the **right side of
-# MAGIC the top bar** — Lakebase is a separate experience, not under *Compute*), then open **Database instances
-# MAGIC → `sunny-bay-roastery-lakebase`**. In the Lakebase view, click **SQL Editor** in the left nav, make
+# MAGIC the top bar** — Lakebase is a separate experience, not under *Compute*), then open **Projects
+# MAGIC → your own project**. In the Lakebase view, click **SQL Editor** in the left nav, make
 # MAGIC sure the database dropdown shows **`databricks_postgres`**, then run the query below (it reads the
 # MAGIC checkpoint table the app created in the `agent_memory` schema):
 

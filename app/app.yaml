@@ -26,3 +26,11 @@ env:
   # is Lab 4 (AI Gateway and Write-back).
   - name: AGENT_DRY_RUN
     value: "1"
+  # Lab 3 · Task 3 — durable short-term memory. Point the app at THIS participant's own
+  # autoscaling Lakebase project (created in the add-lakebase-short-term-memory skill).
+  # Autoscaling projects connect by project + branch (never instance_name). start_server.py
+  # reads these; app.yaml ships on the UI Deploy, so no bundle deploy is needed.
+  - name: LAKEBASE_AUTOSCALING_PROJECT
+    value: "lakebase-<username>"     # e.g. lakebase-marc-shreya — your project from Step 1
+  - name: LAKEBASE_AUTOSCALING_BRANCH
+    value: "production"
