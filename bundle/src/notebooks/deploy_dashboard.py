@@ -24,6 +24,10 @@ gold_schema = dbutils.widgets.get("gold_schema")
 
 dbutils.widgets.text("warehouse_id", "")
 warehouse_id = dbutils.widgets.get("warehouse_id")
+params = globals().get("_bootstrap_parameters", {})
+catalog = params.get("catalog", catalog)
+gold_schema = params.get("gold_schema", gold_schema)
+warehouse_id = params.get("warehouse_id", warehouse_id)
 
 # COMMAND ----------
 
