@@ -31,6 +31,6 @@ env:
   # Autoscaling projects connect by project + branch (never instance_name). start_server.py
   # reads these; app.yaml ships on the UI Deploy, so no bundle deploy is needed.
   - name: LAKEBASE_AUTOSCALING_PROJECT
-    value: "lakebase-<username>"     # e.g. lakebase-marc-shreya — your project from Step 1
+    value: "sunny-bay-roastery-lakebase"
   - name: LAKEBASE_AUTOSCALING_BRANCH
     value: "production"

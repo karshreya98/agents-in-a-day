@@ -134,13 +134,19 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 11
 # MAGIC %md
 # MAGIC
 # MAGIC **3.** **Deploy it**: open the app → **Deploy** → set the source path to the `app/` folder →
 # MAGIC **Deploy**, and wait for **Running**.
 # MAGIC
-# MAGIC The app ships in **sample-data mode**, so it deploys with **no resources to attach**. Open the app URL
-# MAGIC and try it — it's a chat cockpit:
+# MAGIC The app ships in **sample-data mode**, so it deploys with **no resources to attach**.
+# MAGIC
+# MAGIC > ⚠️ &nbsp;**Give it a minute.** The app may show **Running** before it's fully ready to
+# MAGIC > serve requests. If the URL returns an error right after deploy, wait 1–2 minutes and
+# MAGIC > refresh — the backend is still starting up.
+# MAGIC
+# MAGIC Open the app URL and try it — it's a chat cockpit:
 
 # COMMAND ----------
 
@@ -220,6 +226,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 19
 # MAGIC %md
 # MAGIC
 # MAGIC Genie Code loads the **`add-lakebase-short-term-memory`** skill and follows it: it points `app.yaml`
@@ -227,9 +234,16 @@
 # MAGIC **`start_server.py`** (connecting by `project`/`branch`). It does **not** touch the graph or the
 # MAGIC approval gate.
 # MAGIC
+# MAGIC The skill also **removes `AGENT_DRY_RUN`** from `app.yaml` — that flag kept the app in sample-data
+# MAGIC mode and skipped Lakebase entirely. With your own project wired in, dry-run must be off.
+# MAGIC
 # MAGIC Creating a Lakebase project from the CLI is blocked in the workshop, so the skill can't create it for
 # MAGIC you — instead it **suggests a project name** (e.g. `lakebase-<your-username>`). **Note that name** — you
 # MAGIC create the project with it next, and pick it again when you attach the resource.
+# MAGIC
+# MAGIC > ⚠️ &nbsp;**Verify after the skill runs.** Open `app.yaml` and confirm: `AGENT_DRY_RUN` is
+# MAGIC > removed (or commented out), and `LAKEBASE_AUTOSCALING_PROJECT` is set to the project
+# MAGIC > name the skill suggested. If either is wrong, fix it by hand before redeploying.
 
 # COMMAND ----------
 
@@ -270,6 +284,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 24
 # MAGIC %md
 # MAGIC
 # MAGIC This grants the app's **service principal** access to the database — the one thing the code change
@@ -278,6 +293,16 @@
 # MAGIC > ⚠️ &nbsp;**Important**
 # MAGIC > - **Attach before you redeploy.** The app opens a Lakebase connection at startup, so the resource has to be attached first. If you redeploy without it, the app **crashes on startup** (`App crashed` on the app page).
 # MAGIC > - **The permission must be `CAN_CONNECT_AND_CREATE`, not `CAN_CONNECT`.** On first start the app creates its own `agent_memory` schema and the checkpoint tables inside it. With only `CAN_CONNECT` it can't create the schema and crashes with *`permission denied for schema public`*.
+# MAGIC > - **Use your OWN Lakebase project.** If two apps share the same project, the second app
+# MAGIC >   crashes because the first app's service principal owns the `drizzle`, `ai_chatbot`, and
+# MAGIC >   `agent_memory` schemas. Creating your own project (Step 1b) avoids this entirely.
+# MAGIC
+# MAGIC > 📝 &nbsp;**Facilitator note — shared-project setup.** If the pre-deployed `marc-dispatch-agent`
+# MAGIC > and a demo app share the same Lakebase project, you must grant the demo app's SP access to
+# MAGIC > the existing schemas. Get the SP client ID from `apps get <name> --output JSON`
+# MAGIC > (`service_principal_client_id`), then run `GRANT ALL ON SCHEMA drizzle / ai_chatbot /
+# MAGIC > agent_memory TO "<sp-client-id>"` (plus tables and sequences) in the Lakebase SQL Editor.
+# MAGIC > The `add-lakebase-short-term-memory` skill has the full SQL under "If it still crashes."
 
 # COMMAND ----------
 

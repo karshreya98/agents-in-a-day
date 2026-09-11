@@ -134,7 +134,9 @@
 # MAGIC **1.** Click **Use Agent** (upper-right) and choose **Create a Lakeflow pipeline**.
 # MAGIC
 # MAGIC **2.** Databricks generates a **Lakeflow Spark Declarative Pipeline** that writes the
-# MAGIC extracted fields into a **streaming table** and keeps it up to date on a schedule.
+# MAGIC extracted fields into a **streaming table** and keeps it up to date on a schedule. Set the
+# MAGIC **target schema** to your dedicated schema (e.g. `sunny_bay_roastery.<your_name>`) so you
+# MAGIC have write access and don't collide with other participants.
 # MAGIC
 # MAGIC **3.** Point the pipeline's source at the full volume rather than your single uploaded file:
 # MAGIC ```
@@ -226,13 +228,17 @@
 # MAGIC *contents* are structured too, add them so the agent can answer about what the reports
 # MAGIC actually say.
 # MAGIC
-# MAGIC **1.** Open **Genie** → your **Sunny Bay Maintenance Genie** agent → **Settings** (data /
-# MAGIC tables).
+# MAGIC **1.** Open **Genie** → your **Sunny Bay Maintenance Genie - <your name>** agent →
+# MAGIC **Settings** (data / tables).
 # MAGIC
-# MAGIC **2.** **Add** the table you just built:
+# MAGIC **2.** **Add** the prebuilt table (the one the Lab 0 setup job created):
 # MAGIC ```
 # MAGIC sunny_bay_roastery.coffee_maintenance.fault_reports_structured
 # MAGIC ```
+# MAGIC
+# MAGIC > 📝 &nbsp;**Note** — The pipeline you built in Step 2 may have generated a table with a
+# MAGIC > different name (e.g. based on the agent name you chose). You can add your own table too,
+# MAGIC > but `fault_reports_structured` is the canonical one the rest of the workshop references.
 # MAGIC
 # MAGIC **3.** Update the agent's description to mention it (so it routes report questions here):
 # MAGIC ```
