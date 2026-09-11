@@ -1,3 +1,5 @@
+import os
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -15,6 +17,36 @@ agent_server = AgentServer("ResponsesAgent", enable_chat_proxy=True)
 app = agent_server.app  # noqa: F841
 setup_mlflow_git_based_version_tracking()
 
+# ── Lakebase-backed short-term memory ─────────────────────────────
+from databricks_langchain import AsyncCheckpointSaver
+
+from agent_server import dispatch
+
+_original_lifespan = app.router.lifespan_context
+
+
+@asynccontextmanager
+async def _lifespan(app):
+    # Local/dev or sample-data mode (AGENT_DRY_RUN): keep the in-memory MemorySaver.
+    if not os.getenv("DATABRICKS_APP_NAME") or os.getenv("AGENT_DRY_RUN"):
+        async with _original_lifespan(app):
+            yield
+        return
+    # Deployed (not dry-run): durable short-term memory on autoscaling Lakebase.
+    async with AsyncCheckpointSaver(
+        project=os.environ["LAKEBASE_AUTOSCALING_PROJECT"],
+        branch=os.getenv("LAKEBASE_AUTOSCALING_BRANCH", "production"),
+        schema="agent_memory",   # REQUIRED — the app SP can't write to `public`
+    ) as checkpointer:
+        await checkpointer.setup()                           # REQUIRED — creates the tables
+        dispatch.GRAPH = dispatch.build_graph(checkpointer)  # rebind graph to Lakebase memory
+        async with _original_lifespan(app):
+            yield
+
+
+app.router.lifespan_context = _lifespan
+
 
 def main():
     agent_server.run(app_import_string="agent_server.start_server:app")
+

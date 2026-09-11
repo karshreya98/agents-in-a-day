@@ -3,7 +3,7 @@
 # MAGIC %md
 # MAGIC # 🔒 Lab 4 — Unity Gateway and Write-back
 # MAGIC
-# MAGIC **Persona: Tim (Platform IT)** &nbsp;·&nbsp; **AI Gateway · service policies · MCP · Playground**
+# MAGIC **Persona: Tim (Platform IT)** &nbsp;·&nbsp; **Unity Gateway · service policies · MCP · Playground**
 # MAGIC
 # MAGIC Stand up governed, reusable AI building blocks — a policy-governed model service and an approval-gated
 # MAGIC web-search tool — so every next Sunny Bay use case inherits governance by default.
@@ -12,12 +12,13 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 2
 # MAGIC %md
 # MAGIC ### 🎯 Learning Objectives
 # MAGIC
 # MAGIC By the end of this lab, you will be able to:
 # MAGIC
-# MAGIC - See the **AI Gateway** as the control plane for **governed, reusable AI building blocks**.
+# MAGIC - See the **Unity Gateway** as the control plane for **governed, reusable AI building blocks**.
 # MAGIC - Create a governed **model service** — **contextual service policies** (a built-in content guardrail + a custom function), **traffic routing / fallback**, **usage + inference logging** — and **secure it** with access control in Unity Catalog.
 # MAGIC - **Register and secure a governed you.com MCP service** so sensitive actions require **approval (ASK)**.
 # MAGIC - **Test both blocks in the AI Playground.**
@@ -39,7 +40,7 @@
 # MAGIC endpoint** and one **safe web-search tool** that *every* new use case reuses — with guardrails, rate
 # MAGIC limits, approvals, and logging built in, so each new agent inherits governance for free.
 # MAGIC
-# MAGIC The **AI Gateway** is how you build those blocks. It's Databricks' governance layer for the runtime
+# MAGIC The **Unity Gateway** is how you build those blocks. It's Databricks' governance layer for the runtime
 # MAGIC interactions between models, agents, MCP servers, and tools — access control, **contextual service
 # MAGIC policies**, traffic management, and monitoring, in one place.
 # MAGIC
@@ -72,9 +73,9 @@
 # MAGIC
 # MAGIC <img src="../artifacts/Lab%204/image.png" width="620" style="border-radius:8px" alt="Model Service creation form with an empty schema dropdown because no schema exists yet">
 # MAGIC
-# MAGIC #### Step 1 — Create the model service (in the AI Gateway)
+# MAGIC #### Step 1 — Create the model service (in the Unity Gateway)
 # MAGIC
-# MAGIC **1.** Sidebar → **AI Gateway → Models** tab → click **+ Model** (top right) to open **Create Model
+# MAGIC **1.** Sidebar → **Unity Gateway → Models** tab → click **+ Model** (top right) to open **Create Model
 # MAGIC Service**.
 
 # COMMAND ----------
@@ -103,11 +104,11 @@
 
 # DBTITLE 1,Cell 8
 # MAGIC %md
-# MAGIC **4.** Because it's a UC securable, you can open the model service **two ways** — from **AI Gateway →
+# MAGIC **4.** Because it's a UC securable, you can open the model service **two ways** — from **Unity Gateway →
 # MAGIC Models** (the gateway view) or from **Catalog Explorer** (`sunny_bay_roastery → <your_schema> →
 # MAGIC Services → sunny-bay-governed-llm`, the UC view). It's the same object; you'll toggle between the two
 # MAGIC views through this lab. Either way, open its **Permissions** tab and grant your workshop users or group
-# MAGIC **Can Query** — grant / revoke centrally, the same as any UC object. Teams get to *use* it, only Tim
+# MAGIC **Execute** — grant / revoke centrally, the same as any UC object. Teams get to *use* it, only Tim
 # MAGIC manages it.
 
 # COMMAND ----------
@@ -134,6 +135,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 12
 # MAGIC %md
 # MAGIC #### Step 3 — Set up contextual service policies
 # MAGIC
@@ -147,10 +149,17 @@
 # MAGIC requests and responses and blocks harmful content.
 # MAGIC
 # MAGIC **b) Custom guardrail.** Name it `block-codename`, set **Guardrail type → Custom**, choose **Custom
-# MAGIC function**, and point it at the pre-created SQL function `block_confidential_codename` — a `CASE`
-# MAGIC expression that **denies** any request mentioning your confidential project codeword (here, *"project
-# MAGIC aurora"*). That's the company-specific rule every team inherits. *(A custom guardrail can also be an
-# MAGIC **LLM-as-a-judge** instead of a SQL function.)*
+# MAGIC function**, and write a custom rule. The simplest approach is an **LLM-as-a-judge** — a small model reads each
+# MAGIC request and decides. Set the **Action** to **Block**, pick an **Evaluator model service** (e.g.
+# MAGIC `system.ai.gemma-3-12b`), and give it a plain-language classifier **Prompt**:
+# MAGIC
+# MAGIC > *You are a content classifier. Block any request that mentions confidential project
+# MAGIC > codewords such as "project aurora". Allow everything else.*
+# MAGIC
+# MAGIC > 📝 &nbsp;**Note** — A custom guardrail can also be a **SQL function** instead of LLM-as-a-judge.
+# MAGIC > If your workspace has a pre-created function like `block_confidential_codename`, you can
+# MAGIC > point the policy at it directly. Either approach works — the point is that teams inherit
+# MAGIC > the rule automatically.
 
 # COMMAND ----------
 
@@ -191,7 +200,7 @@
 # MAGIC ### Task 2: Build & secure the you.com MCP service
 # MAGIC
 # MAGIC Tim's second reusable block is the **web-search tool**. In Lab 1 you confirmed (or created) the
-# MAGIC **`you_web_search_mcp`** MCP service in the AI Gateway. That service wraps the raw you.com
+# MAGIC **`you_web_search_mcp`** MCP service in the Unity Gateway. That service wraps the raw you.com
 # MAGIC credentials — teams never touch them directly. Tim now adds **governance**: access control and a
 # MAGIC policy. Same pattern as Task 1, but here the interesting policy is **ASK**: some actions should pause
 # MAGIC for a human rather than be hard-allowed or hard-blocked.
@@ -199,7 +208,17 @@
 # MAGIC #### Step 1 — Grant access to the MCP service
 # MAGIC
 # MAGIC The MCP service is already a **Unity Catalog object** — you confirmed (or created) it in Lab 1. Open it from
-# MAGIC **AI Gateway → MCPs → `you_web_search_mcp`**.
+# MAGIC **Unity Gateway → MCPs → `you_web_search_mcp`**.
+# MAGIC
+# MAGIC > 📝 &nbsp;**Note** — If you don't see `you_web_search_mcp` in the MCPs list, look for
+# MAGIC > `web_search` or the `youcom_http_secondary` connection directly. The exact name depends
+# MAGIC > on how the setup job registered it. The governance steps below apply to whichever MCP
+# MAGIC > service is backed by the you.com connection.
+# MAGIC
+# MAGIC > ⚠️ &nbsp;**Permissions** — You may not have permission to grant access or add policies to
+# MAGIC > the MCP service if it was created by the setup job under a different owner. If the
+# MAGIC > **Permissions** or **Policies** tabs are greyed out, ask your facilitator to grant you
+# MAGIC > ownership or follow along as they demo this step.
 
 # COMMAND ----------
 
@@ -305,15 +324,20 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 26
 # MAGIC %md
 # MAGIC ### Task 3: Monitor in the usage dashboard
 # MAGIC
 # MAGIC Every call you just made is logged — this is Tim's audit trail across all the reusable
 # MAGIC blocks.
 # MAGIC
-# MAGIC **1.** In **AI Gateway**, open the **Govern** menu (top right) → **Usage Dashboard**. You'll see
+# MAGIC **1.** In **Unity Gateway**, open the **Govern** menu (top right) → **Usage Dashboard**. You'll see
 # MAGIC request counts, tokens, latency, and per-user attribution across your governed blocks —
 # MAGIC including the requests that were **blocked** by a service policy.
+# MAGIC
+# MAGIC > ⚠️ &nbsp;**Note** — The usage dashboard may require **admin access** to view. If you see a
+# MAGIC > permission error, your facilitator can project it for the group, or you can query the
+# MAGIC > underlying system table directly (see the SQL query below).
 
 # COMMAND ----------
 
@@ -348,7 +372,7 @@
 # MAGIC The same governed endpoint can back your developers' **AI coding assistants**, with no API
 # MAGIC keys and full audit — so "vibe coding" happens through *your* models and *your* guardrails.
 # MAGIC
-# MAGIC **1.** Install `ucode` (Databricks' Unity AI Gateway launcher):
+# MAGIC **1.** Install `ucode` (Databricks' Unity Gateway launcher):
 # MAGIC ```bash
 # MAGIC uv tool install git+https://github.com/databricks/ucode
 # MAGIC ```
@@ -414,7 +438,7 @@
 # MAGIC **What you take home:**
 # MAGIC
 # MAGIC - The Genie agents and the custom agent — point them at your own data next week.
-# MAGIC - The **AI Gateway blocks pattern** — govern models and tools once, reuse everywhere, on
+# MAGIC - The **Unity Gateway blocks pattern** — govern models and tools once, reuse everywhere, on
 # MAGIC   *your* terms.
 # MAGIC - *(If you do the deep dive)* the MLflow trace + Review App loop — how to harden any agent
 # MAGIC   with expert feedback.

@@ -70,7 +70,7 @@
 # MAGIC
 # MAGIC **1.** In the workspace left sidebar, click **Genie**.
 # MAGIC
-# MAGIC **2.** Click **New** (or **+ New Genie space**).
+# MAGIC **2.** Click **New** (or **+ New Genie Agent**).
 # MAGIC
 # MAGIC **3.** When prompted for data, add these three tables from the shared `sunny_bay_roastery` catalog's `coffee_maintenance` schema:
 # MAGIC ```
@@ -82,7 +82,7 @@
 # MAGIC > your own objects, create a dedicated schema in this catalog (e.g.
 # MAGIC > `sunny_bay_roastery.<your_name>`).
 # MAGIC
-# MAGIC **4.** Name the space **`Sunny Bay Maintenance Genie - <your name>`** (e.g.
+# MAGIC **4.** Name the Genie Agent **`Sunny Bay Maintenance Genie - <your name>`** (e.g.
 # MAGIC `Sunny Bay Maintenance Genie - Sara`) so each participant has their own, and give it a description:
 # MAGIC ```
 # MAGIC Natural-language Q&A over Sunny Bay espresso machine maintenance: machine registry, fault event history, and service orders. Use for questions about a machine's faults, fault codes, locations, and service history. Covers machines CBM-001 to CBM-012, fault codes such as E-07 pressure faults, the 12 Sunny Bay locations including Mission District, and open or completed service orders.
@@ -93,8 +93,6 @@
 # MAGIC > the words "service order" — so questions phrased in the user's own language
 # MAGIC > still match. A thin description is the most common reason Genie One skips an
 # MAGIC > agent (see the callout in Step 3).
-# MAGIC
-# MAGIC **5.** Click **Save**.
 # MAGIC
 # MAGIC > 💡 &nbsp;You'll reuse this exact Genie agent in **Lab 3** as one of the tools Marc's custom
 # MAGIC > agent composes — building it once here means it's ready when you get there.
@@ -110,10 +108,13 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 6
 # MAGIC %md
 # MAGIC ### Step 2: Ask maintenance questions in the Genie agent
 # MAGIC
-# MAGIC **1.** In the Genie agent you just built, start a conversation and try:
+# MAGIC **1.** In the Genie agent you just built, make sure you're in **chat mode** (use the mode
+# MAGIC selector in the conversation box — it may default to agent mode). Then start a conversation
+# MAGIC and try:
 # MAGIC ```
 # MAGIC Which machines have logged E-07 pressure faults?
 # MAGIC ```
@@ -124,8 +125,7 @@
 # MAGIC Which machines are due for service?
 # MAGIC ```
 # MAGIC
-# MAGIC **2.** Make sure you're in **chat mode** (use the mode selector in the conversation box —
-# MAGIC the two modes are explained just below). In chat mode, click **Show code** beneath any
+# MAGIC **2.** In chat mode, click **Show code** beneath any
 # MAGIC answer to see the SQL Genie generated — no one wrote it by hand. *(Agent mode doesn't
 # MAGIC expose the SQL this way.)*
 # MAGIC
@@ -267,13 +267,13 @@
 # MAGIC
 # MAGIC The telemetry tells Sara *what* is happening. It cannot tell her *why*, or what the
 # MAGIC manufacturer recommends. An external **MCP service** (you.com), registered in the Unity
-# MAGIC AI Gateway, fixes that.
+# MAGIC Unity Gateway, fixes that.
 # MAGIC
 # MAGIC > 📝 &nbsp;**Built-in web search (Beta).** Databricks now also offers a built-in web search in
 # MAGIC > **Genie Code** that works without any MCP setup — see
 # MAGIC > [Search the web](https://docs.databricks.com/aws/en/genie-code/web-search). We use the
 # MAGIC > **you.com MCP service** here because it registers a **governed, reusable AI block** in the
-# MAGIC > AI Gateway — the pattern Lab 4 builds on — and makes the web tool available to Genie One
+# MAGIC > Unity Gateway — the pattern Lab 4 builds on — and makes the web tool available to Genie One
 # MAGIC > and any future agent.
 # MAGIC
 # MAGIC **Step 4a — Confirm the you.com MCP service exists**
@@ -281,7 +281,7 @@
 # MAGIC The setup job should have already registered the **`you_web_search_mcp`** MCP service
 # MAGIC (backed by the **`youcom_http_secondary`** connection). Confirm it's there:
 # MAGIC
-# MAGIC Sidebar → **AI Gateway → MCPs** → look for **`you_web_search_mcp`**.
+# MAGIC Sidebar → **Unity Gateway → MCPs** → look for **`you_web_search_mcp`**.
 # MAGIC
 # MAGIC - **Found it** → skip straight to **Step 4c**.
 # MAGIC - **Not there** → follow **Step 4b** below to create it.
@@ -296,7 +296,7 @@
 # MAGIC > `you_web_search_mcp` and its underlying `youcom_http_secondary` connection. This section
 # MAGIC > explains how it was done, in case you ever need to recreate it on your own workspace.
 # MAGIC
-# MAGIC The MCP service was created via **AI Gateway → MCPs → Create MCP Service** with an
+# MAGIC The MCP service was created via **Unity Gateway → MCPs → Create MCP Service** with an
 # MAGIC HTTP connection pointing at `https://api.you.com:443/mcp` (Bearer token auth, you.com API
 # MAGIC key).
 # MAGIC
@@ -308,10 +308,10 @@
 # MAGIC
 # MAGIC **Step 4c — Ask enriched questions**
 # MAGIC
-# MAGIC In Genie One, enable the you.com MCP service: **Customizations → Connections** → toggle **`you_web_search_mcp`** on.
+# MAGIC In Genie One, enable the you.com MCP service: **Customizations → Connectors** → toggle **`you_web_search_mcp`** on.
 # MAGIC
 # MAGIC > ⚠️ &nbsp;**On your own workspace** — connectors in Genie One are a **Beta**. If you don't see the
-# MAGIC > **Customizations > Connections** tab, a **workspace admin** must enable **"Third Party Connectors
+# MAGIC > **Customizations > Connectors** tab, a **workspace admin** must enable **"Third Party Connectors
 # MAGIC > for Agents"** on the **Previews** page first. See
 # MAGIC > [Connect to external tools and sources](https://docs.databricks.com/aws/en/genie-one/external-sources).
 # MAGIC
@@ -319,12 +319,12 @@
 # MAGIC
 # MAGIC You can now ask questions that combine your governed data with the web:
 # MAGIC ```
-# MAGIC What does Siemens recommend when a repeated E-07 pressure error appears on
-# MAGIC their commercial coffee machines?
+# MAGIC What does the manufacturer recommend when a repeated E-07 pressure error
+# MAGIC appears on a commercial espresso machine?
 # MAGIC ```
 # MAGIC ```
-# MAGIC Are there any known service bulletins for pressure faults on Nespresso Pro
-# MAGIC commercial machines?
+# MAGIC Are there any known service bulletins for pressure faults on commercial
+# MAGIC espresso machines?
 # MAGIC ```
 # MAGIC
 # MAGIC > 📝 &nbsp;Internal maintenance data and live web knowledge in the same conversation. Unity
