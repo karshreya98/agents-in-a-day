@@ -14,8 +14,12 @@
 
 # COMMAND ----------
 
-import dlt
-from pyspark.sql import functions as F
+from pyspark import pipelines as dp
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path.cwd().parent))
+from fault_report_transforms import parse_reports, extract_reports
 
 CATALOG = spark.conf.get("pipeline.catalog", "sunny_bay_roastery")
 SCHEMA  = spark.conf.get("pipeline.target_schema", "coffee_maintenance")
@@ -24,72 +28,24 @@ VOLUME  = spark.conf.get("pipeline.volume_path",
 
 # ── Bronze: raw text files ───────────────────────────────────────────────────
 
-@dlt.table(
+@dp.table(
     name="fault_reports_raw",
     comment="Raw text parsed from fault report PDFs in the UC Volume (streaming, auto-loader)",
     table_properties={"quality": "bronze"},
 )
 def fault_reports_raw():
-    return (
-        spark.readStream
-        .format("cloudFiles")
-        .option("cloudFiles.format", "binaryFile")
-        .option("pathGlobFilter", "*.pdf")
-        .option("cloudFiles.schemaLocation", f"{VOLUME}/_schema")
-        .load(VOLUME)
-        .withColumn("parsed", F.expr("ai_parse_document(content)"))
-        .withColumn(
-            "raw_text",
-            F.expr(
-                """
-                array_join(
-                    transform(
-                        try_cast(parsed:document:elements AS ARRAY<STRING>),
-                        x -> from_json(x, 'STRUCT<content: STRING>').content
-                    ),
-                    '\n'
-                )
-                """
-            ),
-        )
-        .select(
-            F.col("_metadata.file_name").alias("source_file"),
-            F.col("raw_text"),
-            F.current_timestamp().alias("ingested_at"),
-        )
-    )
+    files = (spark.readStream.format("cloudFiles")
+             .option("cloudFiles.format", "binaryFile")
+             .option("pathGlobFilter", "*.pdf")
+             .option("cloudFiles.schemaLocation", f"{VOLUME}/_schema")
+             .load(VOLUME))
+    return parse_reports(files)
 
 
-# ── Gold: structured extraction ──────────────────────────────────────────────
-
-@dlt.table(
+@dp.table(
     name="fault_reports_structured",
-    comment="Structured fault report fields extracted by ai_extract — source for Marc's custom agent",
+    comment="Structured fault report fields extracted by ai_extract",
     table_properties={"quality": "gold"},
 )
 def fault_reports_structured():
-    raw = dlt.read_stream("fault_reports_raw")
-    extracted = raw.withColumn(
-        "fields",
-        F.expr("""
-            ai_extract(
-                raw_text,
-                array(
-                    'machine_id', 'machine_model', 'fault_code',
-                    'issue_description', 'location_name',
-                    'contact_name', 'report_date'
-                )
-            )
-        """),
-    )
-    return extracted.select(
-        "source_file",
-        F.col("fields.machine_id").alias("machine_id"),
-        F.col("fields.machine_model").alias("machine_model"),
-        F.col("fields.fault_code").alias("fault_code"),
-        F.col("fields.issue_description").alias("issue_description"),
-        F.col("fields.location_name").alias("location_name"),
-        F.col("fields.contact_name").alias("contact_name"),
-        F.col("fields.report_date").alias("report_date"),
-        F.col("ingested_at").alias("extracted_at"),
-    )
+    return extract_reports(spark.readStream.table("fault_reports_raw"))

@@ -2,9 +2,8 @@
 # MAGIC %md
 # MAGIC # 🛠️ Agents in a Day — Setup
 # MAGIC
-# MAGIC This notebook builds the **maintenance** side of the workshop. It runs as one
-# MAGIC task in the **"Agents in a Day - Setup"** job; sibling tasks in the same job
-# MAGIC generate the **sales** star schema, the metric view, the pre-built Sales Genie,
+# MAGIC This notebook builds the **maintenance** side of the workshop. The bootstrap includes it
+# MAGIC with `%run` on the same compute, then builds the **sales** star schema, the metric view, the pre-built Sales Genie,
 # MAGIC and the sales dashboard. No other workshop to install first.
 # MAGIC
 # MAGIC This notebook creates:
@@ -26,7 +25,9 @@
 
 dbutils.widgets.text("catalog", "")  # ← set this (or pass --var catalog=... via the bundle)
 
-catalog = dbutils.widgets.get("catalog").strip()
+catalog = globals().get("_bootstrap_parameters", {}).get(
+    "catalog", dbutils.widgets.get("catalog").strip()
+)
 
 if not catalog:
     raise ValueError(
@@ -221,7 +222,7 @@ pdfs = sorted(glob.glob(f"{SRC_DIR}/*.pdf"))
 if not pdfs:
     raise FileNotFoundError(
         f"No fault report PDFs found in {SRC_DIR}. "
-        "Re-deploy the bundle so bundle/src/data/fault_reports/*.pdf is synced."
+        "Check that the Git Folder includes bundle/src/data/fault_reports/*.pdf."
     )
 
 for src in pdfs:
@@ -291,11 +292,11 @@ print(f"  📝 Service orders: {catalog}.{MAINT}.service_orders       (empty  - 
 print(f"  📂 Fault reports : /Volumes/{catalog}/{MAINT}/fault_reports   (10 files)")
 print(f"  🔩 UC function   : {catalog}.{MAINT}.create_service_order")
 print()
-print("Built by sibling tasks in the same setup job:")
-print(f"  💰 Sales schema  : {catalog}.{GOLD}.fact_coffee_sales + dim_* (generate_data + sales pipeline)")
+print("Built by the remaining bootstrap steps:")
+print(f"  💰 Sales schema  : {catalog}.{GOLD}.fact_coffee_sales + dim_* (generate_data + build_sales_tables)")
 print(f"  📐 Metric view   : {catalog}.{GOLD}.sm_fact_coffee_sales_genie")
 print(f"  🧞 Sales Genie   : \"Sunny Bay Sales Genie\" (over the metric view)")
 print(f"  📊 Dashboard     : \"[Final] Sunny Bay Roastery - Sales Report\"")
-print(f"  🗂️  fault_reports_structured : built by the Lakeflow pipeline task (used from Lab 2)")
+print(f"  🗂️  fault_reports_structured : built by build_fault_reports (used from Lab 2)")
 print()
 print("Next: open  labs/Lab 1  -  Sara's arc  and follow along!")

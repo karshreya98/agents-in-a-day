@@ -48,7 +48,7 @@
 # MAGIC kind you'll build in Lab 3) — includes an **Information Extraction** agent that runs both
 # MAGIC functions for you: you describe the fields you want in plain English, check the results
 # MAGIC against the source PDFs, then turn the whole thing into a pipeline in one click. The
-# MAGIC Lab 0 setup job already built the equivalent pipeline by hand, and you'll compare
+# MAGIC bootstrap notebook already ran the equivalent functions in a batch, and you'll compare
 # MAGIC against it at the end.
 
 # COMMAND ----------
@@ -160,13 +160,13 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### Step 3: Compare against the prebuilt pipeline
+# MAGIC ### Step 3: Compare against the prebuilt batch output
 # MAGIC
-# MAGIC You just built a pipeline from the UI. The Lab 0 setup job shipped one too — the same
-# MAGIC two functions across all 10 reports, written by hand as a **Lakeflow Spark Declarative
-# MAGIC Pipeline**. Comparing them shows you what the UI generated for you.
+# MAGIC You just built a pipeline from the UI. The bootstrap ran the same two functions
+# MAGIC across all 10 reports as a **batch on its own notebook compute**. Comparing the
+# MAGIC outputs shows how both approaches turn PDFs into structured tables.
 # MAGIC
-# MAGIC **1.** Query the prebuilt pipeline's output table:
+# MAGIC **1.** Query the bootstrap's output table:
 
 # COMMAND ----------
 
@@ -181,8 +181,8 @@
 # MAGIC **2.** Compare a row here against the same report in your own agent's output. Same fields,
 # MAGIC same values — you just got there without writing the SQL.
 # MAGIC
-# MAGIC > 📝 &nbsp;**Note** — **How the prebuilt pipeline works.** The same two functions, wired into a streaming
-# MAGIC > medallion flow:
+# MAGIC > 📝 &nbsp;**Note** — **How the batch setup works.** The same two functions run sequentially,
+# MAGIC > saving parsed text before extracting fields:
 
 # COMMAND ----------
 
@@ -197,23 +197,23 @@
 # MAGIC   <div style="flex:1;min-width:190px;border:1px solid #E3D6C2;border-top:3px solid #B07A3C;border-radius:12px;padding:14px 16px;background:#fff">
 # MAGIC     <div style="font:600 11px ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase;color:#B07A3C">Bronze</div>
 # MAGIC     <div style="font:600 15px ui-monospace,monospace;margin:6px 0 3px;color:#1f2937">fault_reports_raw</div>
-# MAGIC     <div style="font-size:13px;color:#6b7280">Auto Loader + ai_parse_document()</div>
+# MAGIC     <div style="font-size:13px;color:#6b7280">Batch read + ai_parse_document()</div>
 # MAGIC   </div>
 # MAGIC   <div style="align-self:center;font-size:24px;color:#C77D2A;font-weight:700">→</div>
 # MAGIC   <div style="flex:1;min-width:190px;border:1px solid #E3D6C2;border-top:3px solid #C77D2A;border-radius:12px;padding:14px 16px;background:#fff">
 # MAGIC     <div style="font:600 11px ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase;color:#C77D2A">Gold</div>
 # MAGIC     <div style="font:600 15px ui-monospace,monospace;margin:6px 0 3px;color:#1f2937">fault_reports_structured</div>
-# MAGIC     <div style="font-size:13px;color:#6b7280">ai_extract() applied automatically</div>
+# MAGIC     <div style="font-size:13px;color:#6b7280">ai_extract() in the notebook</div>
 # MAGIC   </div>
 # MAGIC </div>
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC > 📝 &nbsp;Find it in your workspace under **Jobs & Pipelines** → **Agents in a Day - Fault
-# MAGIC > Report Pipeline**. When a new field report lands in the Volume, it is
-# MAGIC > parsed, extracted, and appended to `fault_reports_structured` on the next run — no
-# MAGIC > manual step.
+# MAGIC > 📝 &nbsp;Open **bundle/src/notebooks/build_fault_reports** to see the batch setup.
+# MAGIC > After adding or changing PDFs in the Volume, set its `catalog` widget and run it
+# MAGIC > again. It replaces `fault_reports_raw` and `fault_reports_structured` with the
+# MAGIC > current reports, using only the notebook compute.
 
 # COMMAND ----------
 
@@ -263,7 +263,7 @@
 # MAGIC
 # MAGIC The workshop repo ships a **`dispatch-plan` skill** that encodes a scoring policy in the same
 # MAGIC spirit as Marc's Lab 3 agent — unresolved faults weighed against the revenue at risk (Lab 3
-# MAGIC tunes its own numbers in `app/agent_server/dispatch.py`). The Lab 0 setup job already
+# MAGIC tunes its own numbers in `app/agent_server/dispatch.py`). The bootstrap notebook already
 # MAGIC **installed this skill into your Genie Code**, so you can pick it straight from the skills menu:
 
 # COMMAND ----------
@@ -282,7 +282,7 @@
 # MAGIC setup — the same place you'll use it in Lab 3.
 # MAGIC
 # MAGIC **2.** In the chat box, type **`@`** — a **Skills** menu pops up. Select **`dispatch-plan`** from the
-# MAGIC list and send it. That's the whole prompt — the skill the setup job installed carries the scoring
+# MAGIC list and send it. That's the whole prompt — the skill the bootstrap installed carries the scoring
 # MAGIC policy, so there's no long instruction to write.
 # MAGIC
 # MAGIC **3.** Genie Code discovers the table shapes, applies the scoring policy, and returns a **ranked
@@ -301,17 +301,17 @@
 # MAGIC %md
 # MAGIC ### 💡 Key takeaways
 # MAGIC
-# MAGIC | | What you built in the UI (Steps 1–2) | The prebuilt pipeline (Step 3) |
+# MAGIC | | What you built in the UI (Steps 1–2) | The batch setup (Step 3) |
 # MAGIC |---|---|---|
 # MAGIC | **Schema** | Described in plain English, generated for you | Written by hand in SQL |
 # MAGIC | **Functions** | `ai_extract()` + `ai_parse_document()` under the hood | The same two functions, called directly |
 # MAGIC | **Output** | A streaming table from your generated pipeline | `fault_reports_structured` Delta table |
-# MAGIC | **Trigger** | Scheduled by the generated pipeline | Auto-triggered on new file arrival |
-# MAGIC | **Code you wrote** | **None** | The whole pipeline |
+# MAGIC | **Trigger** | Scheduled by the generated pipeline | Rerun `build_fault_reports` after changing PDFs |
+# MAGIC | **Code you wrote** | **None** | Provided with the workshop |
 # MAGIC
 # MAGIC Marc's custom agent (Lab 3) queries `fault_reports_structured` through the Maintenance
-# MAGIC Genie. When a new field report lands in the Volume, it's extracted automatically and the
-# MAGIC agent can act on it without any manual step.
+# MAGIC Genie. After adding a field report to the Volume, rerun `build_fault_reports` so
+# MAGIC the agent can query the updated table.
 
 # COMMAND ----------
 
@@ -351,7 +351,7 @@
 # MAGIC       </div>
 # MAGIC       <div style="display:flex;gap:10px;background:#F0FAF4;border-radius:9px;padding:10px 12px;margin-top:8px"><span style="color:#2F9E68;font-weight:800">✓</span><div><div style="font:600 14px system-ui;color:#1f2937">Aggregate queries</div><div style="font-size:13px;color:#5b6470"><code>GROUP BY</code>, joins, counts over <i>all</i> reports.</div></div></div>
 # MAGIC       <div style="display:flex;gap:10px;background:#F0FAF4;border-radius:9px;padding:10px 12px;margin-top:8px"><span style="color:#2F9E68;font-weight:800">✓</span><div><div style="font:600 14px system-ui;color:#1f2937">Reliable across the whole set</div><div style="font-size:13px;color:#5b6470">No per-question file cap.</div></div></div>
-# MAGIC       <div style="display:flex;gap:10px;background:#F0FAF4;border-radius:9px;padding:10px 12px;margin-top:8px"><span style="color:#2F9E68;font-weight:800">✓</span><div><div style="font:600 14px system-ui;color:#1f2937">Parses once per file</div><div style="font-size:13px;color:#5b6470">As fresh as the last pipeline run.</div></div></div>
+# MAGIC       <div style="display:flex;gap:10px;background:#F0FAF4;border-radius:9px;padding:10px 12px;margin-top:8px"><span style="color:#2F9E68;font-weight:800">✓</span><div><div style="font:600 14px system-ui;color:#1f2937">Parses once per file</div><div style="font-size:13px;color:#5b6470">As fresh as the last extraction run.</div></div></div>
 # MAGIC     </div>
 # MAGIC   </div>
 # MAGIC </div>

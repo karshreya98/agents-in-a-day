@@ -22,9 +22,9 @@ infrastructure to provision.
 ## Prerequisites
 
 - A Databricks workspace with **Unity Catalog** and **serverless compute** enabled, and a
-  running serverless **SQL warehouse**. The bundle looks this warehouse up by name —
-  it defaults to **"Serverless Starter Warehouse"** (present on Free Edition). On a shared
-  workspace with a different name, update the `warehouse_id` lookup in `bundle/databricks.yml`.
+  serverless **SQL warehouse** for Genie and the dashboard. Setup looks up
+  **"Serverless Starter Warehouse"** (present on Free Edition), or you can set the
+  bootstrap notebook's `warehouse_id` widget. Setup does not start the warehouse.
 - A region that supports **AI Functions** (`ai_parse_document`, `ai_extract`), **Agent
   Bricks** (Lab 2), **Databricks Apps** + a **Foundation Model serving endpoint** (Lab 3),
   and — for Lab 4 — the **Unity AI Gateway (Beta)**.
@@ -63,22 +63,32 @@ infrastructure to provision.
    > own — set the **`catalog`** widget at the top before running (default
    > `sunny_bay_roastery`). Nothing to pre-create: the notebook makes the catalog for you.
 
-2. Click **Run all** (serverless — no cluster to pick). It creates the catalog, deploys
-   the bundle, then runs the **"Agents in a Day - Setup"** job end-to-end. Wait for the
-   final cell to finish (~15–20 min); the last line prints **"🎉 All set."**
+2. Click **Run all** (serverless — no cluster to pick). It creates the catalog and runs
+   each setup step sequentially on the **same notebook compute**, using `%run`.
+   No CLI installation, job run, or Lakeflow pipeline is needed. Wait for the
+   final cell to finish; the last line prints **"🎉 All set."**
 
+
+> [!NOTE]
+> If you previously ran the pipeline-based setup, choose a fresh catalog. The bootstrap
+> detects streaming tables and materialized views and leaves them intact. Ordinary
+> Delta tables created by the new setup can be rebuilt by rerunning it; existing
+> `service_orders` are preserved. Do not run the optional legacy pipelines against
+> the same catalog as the notebook setup.
 
 The bootstrap creates:
+
 - `coffee_maintenance` schema with `machines`, `fault_events`, `service_orders`, and
   `location_managers` tables (the roster maps each location to its manager, used by Lab 3)
 - `gold` sales star schema — `fact_coffee_sales` + `dim_store`/`dim_product`/`dim_customer`/`dim_date`
-  (generated + transformed by the sales pipeline, history from 2010)
+  (generated + transformed in the notebook, history from 2010)
 - `gold.sm_fact_coffee_sales_genie` — a governed **metric view** over the star schema
 - **Sunny Bay Sales Genie** — pre-built over the metric view (Labs 1 & 3)
 - **[Final] Sunny Bay Roastery - Sales Report** — an AI/BI dashboard over the metric view
 - 10 fault report PDFs in a UC Volume
-- `fault_reports_structured` table — the Lakeflow pipeline runs `ai_parse_document()`
-  + `ai_extract()` across all 10 PDFs (used in Lab 2)
+- `fault_reports_structured` table — the notebook runs `ai_parse_document()`
+  + `ai_extract()` across all 10 PDFs (used in Lab 2). Run `build_fault_reports` again
+  to process added or changed PDFs.
 - `create_service_order` UC function
 - **Lakebase** (autoscaling Postgres) for Lab 3's durable short-term memory — each participant
   uses their **own** project, set up by the `add-lakebase-short-term-memory` skill (no shared instance)
@@ -100,15 +110,17 @@ agents-in-a-day/
 ├── bundle/
 │   ├── databricks.yml          ← Default catalog name (bootstrap can override it)
 │   ├── resources/
-│   │   ├── job.yml             ← Setup job (maintenance + sales tasks)
-│   │   ├── pipeline.yml        ← Lakeflow pipeline (parses + extracts all PDFs)
-│   │   └── sales_pipeline.pipeline.yml ← Sales medallion pipeline (silver + gold)
+│   │   ├── job.yml             ← Optional legacy setup job (not used by bootstrap)
+│   │   ├── pipeline.yml        ← Optional legacy PDF pipeline
+│   │   └── sales_pipeline.pipeline.yml ← Optional legacy sales pipeline
 │   └── src/
 │       ├── data/               ← fault_reports/ PDFs + sales data-gen modules
 │       ├── dashboards/         ← [Final] Sunny Bay sales dashboard (.lvdash.json)
 │       ├── notebooks/
-│       │   ├── bootstrap.py             ← ⭐ Run this: creates catalog, deploys, runs setup
-│       │   ├── Lab 0 - Setup.py         ← Maintenance setup (run by the setup job)
+│       │   ├── bootstrap.py             ← ⭐ Run this: runs all setup on its own compute
+│       │   ├── Lab 0 - Setup.py         ← Maintenance setup (included by bootstrap)
+│       │   ├── build_sales_tables.py    ← Batch silver/gold Delta tables
+│       │   ├── build_fault_reports.py   ← Batch PDF parsing + extraction
 │       │   ├── generate_data.ipynb      ← Generates the sales star schema
 │       │   ├── deploy_metric_view.ipynb ← Builds the sales metric view
 │       │   ├── deploy_genie_space.ipynb ← Pre-builds the Sales Genie
