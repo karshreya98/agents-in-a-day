@@ -88,7 +88,6 @@ Lab 0 creates:
 - `fault_reports_structured` table — the notebook runs `ai_parse_document()`
   + `ai_extract()` across all 10 PDFs (used in Lab 2). Run `labs/setup/notebooks/build_fault_reports` again
   to process added or changed PDFs.
-- `create_service_order` UC function
 - **Lakebase** (autoscaling Postgres) for Lab 3's durable short-term memory — each participant
   uses their **own** project, set up by the `add-lakebase-short-term-memory` skill (no shared instance)
 

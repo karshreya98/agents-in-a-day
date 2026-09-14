@@ -1,13 +1,15 @@
 """Tools the dispatch agent composes.
 
 A custom agent wires a *wider* palette of tools than best-effort routing exposes — two
-Genie spaces, a live web MCP, **and** a Unity Catalog function (write-back), plus plain
-Python. Each tool has a live path (real Databricks calls) and a dry-run path (canned
-Sunny Bay data) so the app runs offline for tests and demos.
+Genie spaces, a live web MCP, **and** a Unity Catalog write-back (the guarded
+`create_service_order` tool), plus plain Python. Each tool has a live path (real
+Databricks calls) and a dry-run path (canned Sunny Bay data) so the app runs offline
+for tests and demos.
 """
 from __future__ import annotations
 
 import json
+import random
 from typing import Any
 
 from . import config
@@ -97,23 +99,44 @@ def get_location_roster() -> dict[str, dict[str, str]]:
 @_trace(span_type="TOOL")
 def create_service_order(machine_id: str, fault_code: str, part_id: str,
                          technician_notes: str) -> dict[str, Any]:
-    """Unity Catalog write-back function `create_service_order(machine_id, fault_code,
-    part_id, technician_notes)`. THIS is the accountable action — the agent gates it
-    behind a human approval before it is ever called."""
+    """Unity Catalog write-back: insert a row into `service_orders` with a parameterized
+    `INSERT` through the SQL warehouse (`WorkspaceClient.statement_execution`). THIS is
+    the accountable action — the agent gates it behind a human approval before it is
+    ever called. The order ID is generated here and returned **only after** the INSERT
+    reports success; a failed write raises, so the agent can never claim an order it
+    didn't create."""
     if config.DRY_RUN:
         return {"order_id": f"SO-DRYRUN-{machine_id}", "status": "created",
                 "machine_id": machine_id, "part_id": part_id}
     w = config.get_workspace_client()
+    order_id = f"SO-{random.randint(10000, 99999)}"
+    # Typed parameters (not plain dicts) — newer databricks-sdk versions require
+    # parameter objects on `execute_statement`; the class was renamed along the way.
+    try:
+        from databricks.sdk.service.sql import StatementParameterListItem as _Param
+    except ImportError:  # older SDK name
+        from databricks.sdk.service.sql import StatementParameter as _Param
     stmt = w.statement_execution.execute_statement(
         warehouse_id=_warehouse_id(w),
-        statement=(f"SELECT `{config.CATALOG}`.coffee_maintenance.create_service_order("
-                   f":m, :f, :p, :n) AS order_id"),
-        parameters=[{"name": "m", "value": machine_id},
-                    {"name": "f", "value": fault_code},
-                    {"name": "p", "value": part_id},
-                    {"name": "n", "value": technician_notes}],
+        statement=(f"INSERT INTO {config.CATALOG}.coffee_maintenance.service_orders "
+                   "(order_id, machine_id, created_ts, fault_code, part_id, "
+                   "technician_notes, status) VALUES "
+                   "(:order_id, :machine_id, current_timestamp(), :fault_code, "
+                   ":part_id, :technician_notes, 'pending')"),
+        parameters=[_Param(name="order_id", value=order_id),
+                    _Param(name="machine_id", value=machine_id),
+                    _Param(name="fault_code", value=fault_code),
+                    _Param(name="part_id", value=part_id),
+                    _Param(name="technician_notes", value=technician_notes)],
     )
-    order_id = stmt.result.data_array[0][0] if stmt.result and stmt.result.data_array else None
+    # The statement's terminal state lives at stmt.status.state (a StatementState enum).
+    state = getattr(getattr(stmt, "status", None), "state", None)
+    state_name = getattr(state, "value", None) or getattr(state, "name", None) or str(state)
+    if state_name != "SUCCEEDED":
+        err = getattr(getattr(stmt, "status", None), "error", None)
+        raise RuntimeError(
+            f"service-order write-back failed for {machine_id}: statement state "
+            f"{state_name!r}" + (f" — {err.message}" if err else ""))
     return {"order_id": order_id, "status": "created", "machine_id": machine_id,
             "part_id": part_id}
 
