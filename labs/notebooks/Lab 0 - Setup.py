@@ -395,3 +395,35 @@ print(f"\n✅ {len(pdfs)} fault report PDFs → {VOLUME_PATH}")
 # COMMAND ----------
 
 print(f"🎉 All set. Everything is in catalog `{catalog}`. Head to Lab 1.")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC **Release the compute**
+# MAGIC
+# MAGIC Setup is done, so free the compute this notebook used. On **Free Edition** the
+# MAGIC notebook runs on **serverless** compute: there is no cluster to terminate and it
+# MAGIC stops on its own after a short idle period, so this cell just confirms that. If you
+# MAGIC run Lab 0 on a classic cluster (a paid workspace), the cell terminates that cluster.
+
+# COMMAND ----------
+
+# Terminate the compute this notebook ran on. Classic all-purpose clusters are stopped
+# through the Clusters API; serverless notebook compute (the Free Edition default) has
+# no cluster to terminate and stops automatically after a short idle period.
+_cluster_id = None
+try:
+    _cluster_id = spark.conf.get("spark.databricks.clusterUsageTags.clusterId")
+except Exception:
+    _cluster_id = None
+
+if _cluster_id:
+    try:
+        w.clusters.delete(_cluster_id)  # request termination
+        print(f"✅ Termination requested for compute {_cluster_id}. You can close this notebook.")
+    except Exception as e:
+        print(f"ℹ️  This compute can't be terminated from code ({type(e).__name__}); "
+              "it stops automatically after a short idle period.")
+else:
+    print("ℹ️  Serverless compute — nothing to terminate; it stops automatically after a "
+          "short idle period. You can close this notebook.")
