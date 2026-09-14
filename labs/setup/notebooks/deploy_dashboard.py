@@ -106,6 +106,14 @@ else:
     dashboard_id = resp.get("dashboard_id")
     operation = "created"
 
-print(f"✅ Dashboard {operation}: {DISPLAY_NAME}")
+# Publish the draft so the link below opens a usable dashboard. Keep each
+# viewer's own permissions; do not embed the publisher's credentials.
+w.api_client.do(
+    "POST",
+    f"/api/2.0/lakeview/dashboards/{dashboard_id}/published",
+    body={"warehouse_id": warehouse_id, "embed_credentials": False},
+)
+
+print(f"✅ Dashboard {operation} and published: {DISPLAY_NAME}")
 print(f"   dashboard_id: {dashboard_id}")
 print(f"   open it at: {w.config.host}/dashboardsv3/{dashboard_id}/published")
