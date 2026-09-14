@@ -52,7 +52,7 @@
 # MAGIC
 # MAGIC You build **one** Genie agent here — a **Maintenance Genie** (the one Sara, and later
 # MAGIC Marc's custom agent in Lab 3, needs for machine faults) — over the maintenance tables the
-# MAGIC bootstrap seeded. The bootstrap also **pre-built a Sales Genie** (Sunny Bay coffee sales
+# MAGIC Lab 0 seeded. Lab 0 also **pre-built a Sales Genie** (Sunny Bay coffee sales
 # MAGIC by store), so you end up with two agents in the workspace and talk to *both* through
 # MAGIC Genie One, which routes each question to the right agent.
 # MAGIC
@@ -65,7 +65,7 @@
 # MAGIC %md
 # MAGIC ### Step 1: Build the Maintenance Genie agent
 # MAGIC
-# MAGIC The bootstrap already created the core maintenance tables. Now you'll put a Genie
+# MAGIC Lab 0 already created the core maintenance tables. Now you'll put a Genie
 # MAGIC agent in front of them.
 # MAGIC
 # MAGIC **1.** In the workspace left sidebar, click **Genie**.
@@ -99,7 +99,7 @@
 # MAGIC > 💡 &nbsp;You'll reuse this exact Genie agent in **Lab 3** as one of the tools Marc's custom
 # MAGIC > agent composes — building it once here means it's ready when you get there.
 # MAGIC
-# MAGIC > 📝 &nbsp;**You already have a second agent — the bootstrap pre-built a `Sunny Bay Sales Genie`**
+# MAGIC > 📝 &nbsp;**You already have a second agent — Lab 0 pre-built a `Sunny Bay Sales Genie`**
 # MAGIC > over the governed sales **metric view** (`sunny_bay_roastery.gold.sm_fact_coffee_sales_genie`),
 # MAGIC > exposing measures like gross revenue, profit, and units sold sliced by store, product,
 # MAGIC > and date. You don't build it — you'll just talk to it through Genie One in Step 3.

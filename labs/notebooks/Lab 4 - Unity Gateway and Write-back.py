@@ -431,7 +431,7 @@
 # MAGIC - Build the *next* Sunny Bay use case (a returns bot, an invoice reader) on top of the two
 # MAGIC   governed blocks you just created — it inherits the guardrails automatically.
 # MAGIC - Drop a new PDF into `/Volumes/sunny_bay_roastery/coffee_maintenance/fault_reports/` and rerun
-# MAGIC   `bundle/src/notebooks/build_fault_reports` to update `fault_reports_structured`.
+# MAGIC   `labs/setup/notebooks/build_fault_reports` to update `fault_reports_structured`.
 # MAGIC
 # MAGIC > 💡 &nbsp;**Tip** — Ask your facilitator about follow-up deep-dive sessions on **Agent Bricks**,
 # MAGIC > **Lakebase**, and **Databricks Apps**.

@@ -8,11 +8,11 @@
 from pathlib import Path
 import sys
 
-sys.path.insert(0, str(Path.cwd().parent))
+sys.path.insert(0, str(globals().get("_setup_root", Path.cwd().parent)))
 from fault_report_transforms import parse_reports, extract_reports
 
 dbutils.widgets.text("catalog", "sunny_bay_roastery")
-catalog = globals().get("_bootstrap_parameters", {}).get(
+catalog = globals().get("_setup_parameters", {}).get(
     "catalog", dbutils.widgets.get("catalog")
 )
 report_schema = f"`{catalog}`.coffee_maintenance"

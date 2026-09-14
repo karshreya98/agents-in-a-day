@@ -1,4 +1,4 @@
-"""Shared batch/streaming fault-report projections."""
+"""Batch fault-report parsing and extraction."""
 
 from pyspark.sql import functions as F
 

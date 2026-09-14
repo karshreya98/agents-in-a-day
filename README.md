@@ -24,12 +24,12 @@ infrastructure to provision.
 - A Databricks workspace with **Unity Catalog** and **serverless compute** enabled, and a
   serverless **SQL warehouse** for Genie and the dashboard. Setup looks up
   **"Serverless Starter Warehouse"** (present on Free Edition), or you can set the
-  bootstrap notebook's `warehouse_id` widget. Setup does not start the warehouse.
+  Lab 0 setup notebook's `warehouse_id` widget. Setup does not start the warehouse.
 - A region that supports **AI Functions** (`ai_parse_document`, `ai_extract`), **Agent
   Bricks** (Lab 2), **Databricks Apps** + a **Foundation Model serving endpoint** (Lab 3),
   and — for Lab 4 — the **Unity AI Gateway (Beta)**.
 - Permission to **create a Unity Catalog catalog** (or an existing catalog you can write
-  to). The bootstrap notebook creates the catalog for you — default `sunny_bay_roastery` —
+  to). The Lab 0 setup notebook creates the catalog for you — default `sunny_bay_roastery` —
   and seeds all the data, so there's no other workshop to install. If catalog creation is
   restricted on your workspace, set the notebook's `catalog` widget to one an admin already
   made (it falls back to using the existing catalog).
@@ -55,9 +55,9 @@ infrastructure to provision.
 
 ---
 
-### Step 2 — Run the bootstrap notebook
+### Step 2 — Run the Lab 0 setup notebook
 
-1. Open `bundle/src/notebooks/bootstrap` in the workspace.
+1. Open `labs/notebooks/Lab 0 - Setup` in the workspace.
 
    > To use a different catalog — e.g. on a shared workshop where everyone needs their
    > own — set the **`catalog`** widget at the top before running (default
@@ -70,13 +70,12 @@ infrastructure to provision.
 
 
 > [!NOTE]
-> If you previously ran the pipeline-based setup, choose a fresh catalog. The bootstrap
+> If you previously ran the pipeline-based setup, choose a fresh catalog. Lab 0
 > detects streaming tables and materialized views and leaves them intact. Ordinary
 > Delta tables created by the new setup can be rebuilt by rerunning it; existing
-> `service_orders` are preserved. Do not run the optional legacy pipelines against
-> the same catalog as the notebook setup.
+> `service_orders` are preserved. The old job and pipeline deployment code has been removed.
 
-The bootstrap creates:
+Lab 0 creates:
 
 - `coffee_maintenance` schema with `machines`, `fault_events`, `service_orders`, and
   `location_managers` tables (the roster maps each location to its manager, used by Lab 3)
@@ -87,7 +86,7 @@ The bootstrap creates:
 - **[Final] Sunny Bay Roastery - Sales Report** — an AI/BI dashboard over the metric view
 - 10 fault report PDFs in a UC Volume
 - `fault_reports_structured` table — the notebook runs `ai_parse_document()`
-  + `ai_extract()` across all 10 PDFs (used in Lab 2). Run `build_fault_reports` again
+  + `ai_extract()` across all 10 PDFs (used in Lab 2). Run `labs/setup/notebooks/build_fault_reports` again
   to process added or changed PDFs.
 - `create_service_order` UC function
 - **Lakebase** (autoscaling Postgres) for Lab 3's durable short-term memory — each participant
@@ -97,9 +96,9 @@ The bootstrap creates:
 
 ## Workshop Labs
 
-All labs are **Databricks notebooks** in **`labs/notebooks/`** — import that folder into
-your workspace (or open it from the cloned Git folder) and start with **Lab 1**, then work
-through Lab 2 → 3 → 4. (See the *What you'll build* table above for the arc.)
+All labs are **Databricks notebooks** in **`labs/notebooks/`**. Open the cloned Git
+Folder and run **Lab 0 - Setup** first, then work through Labs 1 → 2 → 3 → 4.
+Keep `labs/setup/` alongside `labs/notebooks/`; Lab 0 needs those supporting files. (See the *What you'll build* table above for the arc.)
 
 ---
 
@@ -107,28 +106,6 @@ through Lab 2 → 3 → 4. (See the *What you'll build* table above for the arc.
 
 ```
 agents-in-a-day/
-├── bundle/
-│   ├── databricks.yml          ← Default catalog name (bootstrap can override it)
-│   ├── resources/
-│   │   ├── job.yml             ← Optional legacy setup job (not used by bootstrap)
-│   │   ├── pipeline.yml        ← Optional legacy PDF pipeline
-│   │   └── sales_pipeline.pipeline.yml ← Optional legacy sales pipeline
-│   └── src/
-│       ├── data/               ← fault_reports/ PDFs + sales data-gen modules
-│       ├── dashboards/         ← [Final] Sunny Bay sales dashboard (.lvdash.json)
-│       ├── notebooks/
-│       │   ├── bootstrap.py             ← ⭐ Run this: runs all setup on its own compute
-│       │   ├── Lab 0 - Setup.py         ← Maintenance setup (included by bootstrap)
-│       │   ├── build_sales_tables.py    ← Batch silver/gold Delta tables
-│       │   ├── build_fault_reports.py   ← Batch PDF parsing + extraction
-│       │   ├── generate_data.ipynb      ← Generates the sales star schema
-│       │   ├── deploy_metric_view.ipynb ← Builds the sales metric view
-│       │   ├── deploy_genie_space.ipynb ← Pre-builds the Sales Genie
-│       │   └── deploy_dashboard.py      ← Publishes the sales dashboard
-│       └── transformations/
-│           ├── fault_report_pipeline.py ← ai_parse_document + ai_extract
-│           ├── silver/         ← sales silver transforms (dims + fact)
-│           └── gold/           ← sales gold transforms (dims + fact)
 ├── app/                        ← Lab 3: Marc's agent on the agent-langgraph template
 │   ├── app.yaml                ← Databricks App config (Genie space IDs, serving endpoint)
 │   ├── agent_server/
@@ -139,11 +116,19 @@ agents-in-a-day/
 │   ├── scripts/                ← template quickstart / start-app / deploy helpers
 │   └── tests/                  ← offline dry-run smoke tests (AGENT_DRY_RUN=1)
 ├── labs/
-│   ├── notebooks/                ← the four labs as Databricks notebooks (import these)
-│   │   ├── Lab 1 - Sara - Genie One.py
+│   ├── setup/                    ← Lab 0 helpers and assets (keep alongside notebooks/)
+│   │   ├── notebooks/            ← sales generation, table builds, Genie and dashboard setup
+│   │   ├── data/                 ← sales helpers and fault-report PDFs
+│   │   ├── dashboards/           ← sales dashboard template
+│   │   ├── transformations/      ← batch silver/gold SQL
+│   │   ├── batch_setup.py        ← loads sales SQL in dependency order
+│   │   └── fault_report_transforms.py ← PDF parsing and extraction
+│   ├── notebooks/                ← setup + four workshop labs
+│   │   ├── Lab 0 - Setup.py      ← ⭐ Run this first
+│   │   ├── Lab 1 - Genie One.py
 │   │   ├── Lab 2 - Document Intelligence.py
 │   │   ├── Lab 3 - Build the Custom Agent.py
-│   │   └── Lab 4 - AI Gateway and Write-back.py
+│   │   └── Lab 4 - Unity Gateway and Write-back.py
 │   ├── artifacts/                ← per-lab screenshots (referenced by the notebooks)
 │   └── Deep Dives/               ← optional deep dives (e.g. Observability & Feedback)
 └── README.md

@@ -48,7 +48,7 @@
 # MAGIC kind you'll build in Lab 3) — includes an **Information Extraction** agent that runs both
 # MAGIC functions for you: you describe the fields you want in plain English, check the results
 # MAGIC against the source PDFs, then turn the whole thing into a pipeline in one click. The
-# MAGIC bootstrap notebook already ran the equivalent functions in a batch, and you'll compare
+# MAGIC Lab 0 setup notebook already ran the equivalent functions in a batch, and you'll compare
 # MAGIC against it at the end.
 
 # COMMAND ----------
@@ -162,11 +162,11 @@
 # MAGIC %md
 # MAGIC ### Step 3: Compare against the prebuilt batch output
 # MAGIC
-# MAGIC You just built a pipeline from the UI. The bootstrap ran the same two functions
+# MAGIC You just built a pipeline from the UI. Lab 0 ran the same two functions
 # MAGIC across all 10 reports as a **batch on its own notebook compute**. Comparing the
 # MAGIC outputs shows how both approaches turn PDFs into structured tables.
 # MAGIC
-# MAGIC **1.** Query the bootstrap's output table:
+# MAGIC **1.** Query Lab 0's output table:
 
 # COMMAND ----------
 
@@ -210,7 +210,7 @@
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC > 📝 &nbsp;Open **bundle/src/notebooks/build_fault_reports** to see the batch setup.
+# MAGIC > 📝 &nbsp;Open **labs/setup/notebooks/build_fault_reports** to see the batch setup.
 # MAGIC > After adding or changing PDFs in the Volume, set its `catalog` widget and run it
 # MAGIC > again. It replaces `fault_reports_raw` and `fault_reports_structured` with the
 # MAGIC > current reports, using only the notebook compute.
@@ -263,7 +263,7 @@
 # MAGIC
 # MAGIC The workshop repo ships a **`dispatch-plan` skill** that encodes a scoring policy in the same
 # MAGIC spirit as Marc's Lab 3 agent — unresolved faults weighed against the revenue at risk (Lab 3
-# MAGIC tunes its own numbers in `app/agent_server/dispatch.py`). The bootstrap notebook already
+# MAGIC tunes its own numbers in `app/agent_server/dispatch.py`). The Lab 0 setup notebook already
 # MAGIC **installed this skill into your Genie Code**, so you can pick it straight from the skills menu:
 
 # COMMAND ----------
@@ -282,7 +282,7 @@
 # MAGIC setup — the same place you'll use it in Lab 3.
 # MAGIC
 # MAGIC **2.** In the chat box, type **`@`** — a **Skills** menu pops up. Select **`dispatch-plan`** from the
-# MAGIC list and send it. That's the whole prompt — the skill the bootstrap installed carries the scoring
+# MAGIC list and send it. That's the whole prompt — the skill Lab 0 installed carries the scoring
 # MAGIC policy, so there's no long instruction to write.
 # MAGIC
 # MAGIC **3.** Genie Code discovers the table shapes, applies the scoring policy, and returns a **ranked
