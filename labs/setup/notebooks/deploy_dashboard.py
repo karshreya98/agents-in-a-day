@@ -5,14 +5,8 @@
 # MAGIC Publishes DAID's **[Final] Sunny Bay Roastery - Sales Report** AI/BI dashboard
 # MAGIC into this workspace, pointed at the metric view built by `deploy_metric_view`.
 # MAGIC
-# MAGIC Why this is a notebook task and not a plain DABs `dashboards:` resource: the
-# MAGIC dashboard's only dataset binds to the **metric view** via `asset_name`, and DABs'
-# MAGIC `dataset_catalog`/`dataset_schema` fields are **not** applied to `asset_name`
-# MAGIC datasets (only to inline-SQL `queryLines`). So the asset name must be fully
-# MAGIC qualified with the *runtime* catalog — which only the setup job knows. We read the
-# MAGIC templated JSON, substitute `__CATALOG__`/`__GOLD_SCHEMA__`, and create/update the
-# MAGIC dashboard via the Lakeview REST API (low-level `api_client.do` so it works across
-# MAGIC databricks-sdk versions, matching `deploy_genie_space`).
+# MAGIC Reads the dashboard template, substitutes the selected catalog and schema,
+# MAGIC and creates or updates the dashboard through the Lakeview API.
 
 # COMMAND ----------
 
@@ -24,6 +18,10 @@ gold_schema = dbutils.widgets.get("gold_schema")
 
 dbutils.widgets.text("warehouse_id", "")
 warehouse_id = dbutils.widgets.get("warehouse_id")
+params = globals().get("_setup_parameters", {})
+catalog = params.get("catalog", catalog)
+gold_schema = params.get("gold_schema", gold_schema)
+warehouse_id = params.get("warehouse_id", warehouse_id)
 
 # COMMAND ----------
 
@@ -36,9 +34,9 @@ w = WorkspaceClient()
 
 DISPLAY_NAME = "[Final] Sunny Bay Roastery - Sales Report"
 
-# The dashboard JSON is a sibling of this notebook's folder (bundle/src/dashboards).
-# generate_data.ipynb relies on the same Path.cwd() == notebook-dir behavior.
-dashboard_path = (Path.cwd().parent / "dashboards" / "dashboard_final.lvdash.json").resolve()
+# The dashboard JSON is a sibling of this notebook's folder (labs/setup/dashboards).
+# Lab 0 supplies _setup_root when including this notebook with %run.
+dashboard_path = (globals().get("_setup_root", Path.cwd().parent) / "dashboards" / "dashboard_final.lvdash.json").resolve()
 raw = dashboard_path.read_text(encoding="utf-8")
 
 # Substitute the catalog/schema placeholders. __PREFIX__ was already stripped when the
@@ -56,7 +54,7 @@ if leftover:
     raise ValueError(f"Unsubstituted placeholders remain in dashboard JSON: {leftover}")
 
 # Deploy into the running user's workspace home so it lands somewhere they can find and
-# does not depend on bundle-specific paths.
+# does not depend on the repository location.
 me = w.current_user.me().user_name
 parent_path = f"/Workspace/Users/{me}/agents-in-a-day"
 w.workspace.mkdirs(parent_path)
@@ -108,6 +106,14 @@ else:
     dashboard_id = resp.get("dashboard_id")
     operation = "created"
 
-print(f"✅ Dashboard {operation}: {DISPLAY_NAME}")
+# Publish the draft so the link below opens a usable dashboard. Keep each
+# viewer's own permissions; do not embed the publisher's credentials.
+w.api_client.do(
+    "POST",
+    f"/api/2.0/lakeview/dashboards/{dashboard_id}/published",
+    body={"warehouse_id": warehouse_id, "embed_credentials": False},
+)
+
+print(f"✅ Dashboard {operation} and published: {DISPLAY_NAME}")
 print(f"   dashboard_id: {dashboard_id}")
 print(f"   open it at: {w.config.host}/dashboardsv3/{dashboard_id}/published")

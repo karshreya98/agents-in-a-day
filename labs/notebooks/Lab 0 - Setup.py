@@ -1,38 +1,138 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # 🛠️ Agents in a Day — Setup
+# MAGIC # 🛠️ Lab 0 — Workshop Setup
 # MAGIC
-# MAGIC This notebook builds the **maintenance** side of the workshop. It runs as one
-# MAGIC task in the **"Agents in a Day - Setup"** job; sibling tasks in the same job
-# MAGIC generate the **sales** star schema, the metric view, the pre-built Sales Genie,
-# MAGIC and the sales dashboard. No other workshop to install first.
+# MAGIC ## Learning Objectives
 # MAGIC
-# MAGIC This notebook creates:
-# MAGIC - `coffee_maintenance` schema — `machines`, `fault_events`, `service_orders` tables
-# MAGIC - Fault report PDFs in a UC Volume
-# MAGIC - `create_service_order` UC function (Lab 5)
+# MAGIC - Create the catalog, maintenance tables, and sales tables for the workshop.
+# MAGIC - Prepare the Sales Genie, dashboard, and structured fault reports.
+# MAGIC - Run setup on one serverless notebook compute session.
 # MAGIC
-# MAGIC > ✏️ **Only one thing to configure:** the `catalog` widget. When run as a job it's
-# MAGIC > passed in from `databricks.yml`; set it to a catalog you can write to.
-
-# COMMAND ----------
-# MAGIC %md
-# MAGIC ## ⚙️ Configuration
+# MAGIC ## Introduction
 # MAGIC
-# MAGIC When run as a job, `catalog` is passed in from `databricks.yml`. When run
-# MAGIC interactively, set the `catalog` widget above (or edit the default below).
+# MAGIC Run all cells on **serverless notebook compute**. Setup runs sequentially in
+# MAGIC this notebook's Spark session: maintenance tables, sales tables, the metric
+# MAGIC view, Sales Genie, dashboard, and parsed fault reports. No setup job or
+# MAGIC Lakeflow pipeline is deployed or started, and no CLI installation is needed.
+# MAGIC
+# MAGIC The SQL warehouse is only linked to Genie and the dashboard for later use.
+# MAGIC Lab 3's Lakebase project is created by each participant during Lab 3.
 
 # COMMAND ----------
 
-dbutils.widgets.text("catalog", "")  # ← set this (or pass --var catalog=... via the bundle)
-
+dbutils.widgets.text("catalog", "sunny_bay_roastery")
+dbutils.widgets.text("warehouse_id", "")
 catalog = dbutils.widgets.get("catalog").strip()
+if not catalog or not all(c.isalnum() or c == "_" for c in catalog):
+    raise ValueError("Set catalog to a name containing only letters, numbers, and underscores.")
 
-if not catalog:
-    raise ValueError(
-        "No catalog set. Type a catalog you can write to into the \"catalog\" widget "
-        "at the top of the notebook (or pass --var catalog=... via the bundle)."
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC **Step 1: Check configuration and create the catalog**
+# MAGIC
+# MAGIC 1. Run the following cells and wait for them to finish.
+
+# COMMAND ----------
+
+from pathlib import Path
+from databricks.sdk import WorkspaceClient
+
+# Resolve supporting assets once; included notebooks share this path and Spark session.
+repo_root = Path.cwd().parent.parent
+_setup_root = repo_root / "labs" / "setup"
+if not (_setup_root / "data" / "fault_reports").is_dir():
+    raise RuntimeError(
+        "Open labs/notebooks/Lab 0 - Setup inside the cloned Git Folder. "
+        "The notebook needs the supporting files in labs/setup."
     )
+
+w = WorkspaceClient()
+warehouse_id = dbutils.widgets.get("warehouse_id").strip()
+if not warehouse_id:
+    matches = [wh.id for wh in w.warehouses.list()
+               if wh.name == "Serverless Starter Warehouse"]
+    if len(matches) != 1:
+        raise ValueError("Set warehouse_id to a SQL warehouse you can use for Genie and the dashboard.")
+    warehouse_id = matches[0]
+else:
+    w.warehouses.get(warehouse_id)
+
+# Create the catalog before any of the included notebooks writes to it.
+# CREATE CATALOG works on Free Edition (SQL path); if creation is restricted (locked-down
+# workspace where an admin pre-provisions catalogs), fall back to USE. Only fail if the
+# catalog can neither be created nor accessed.
+try:
+    spark.sql(f"CREATE CATALOG IF NOT EXISTS `{catalog}`")
+    print(f"✅ Catalog ready (created or already existed): {catalog}")
+except Exception as create_err:
+    try:
+        spark.sql(f"USE CATALOG `{catalog}`")
+        print(f"✅ Catalog `{catalog}` already exists and is usable "
+              f"(creation was restricted, using the existing one).")
+    except Exception as use_err:
+        raise RuntimeError(
+            f"Cannot create or access catalog `{catalog}`.\n"
+            f"  - creation failed: {create_err}\n"
+            f"  - access failed:   {use_err}\n"
+            "Ask an admin to create it (or grant you CREATE CATALOG), or set the "
+            "'catalog' widget to a catalog you can write to."
+        ) from use_err
+
+# Before writing anything, reject tables owned by the older Lakeflow setup.
+# They cannot be replaced by ordinary Delta writes. Leave them intact.
+legacy_tables = spark.sql(f"""
+    SELECT table_schema, table_name FROM `{catalog}`.information_schema.tables
+    WHERE table_schema IN ('silver', 'gold', 'coffee_maintenance')
+      AND table_type IN ('STREAMING_TABLE', 'MATERIALIZED_VIEW')
+""").collect()
+if legacy_tables:
+    raise RuntimeError(
+        "This catalog contains tables managed by the previous pipeline setup. "
+        "Choose a new catalog in the catalog widget and Run All. Existing data is preserved. "
+        f"Pipeline tables: {[r.table_schema + '.' + r.table_name for r in legacy_tables]}"
+    )
+
+# %run shares Python state. Keep explicit parameters separate from child widgets,
+# whose defaults are used by Databricks when running an included notebook.
+_setup_parameters = {"catalog": catalog, "gold_schema": "gold",
+                         "warehouse_id": warehouse_id, "prefix": ""}
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC **Step 2: Install the Genie Code skills**
+# MAGIC
+# MAGIC 1. Run the following cells and wait for them to finish.
+
+# COMMAND ----------
+
+# Non-fatal: if this can't write, the labs tell you how to add the skills by hand.
+import pathlib
+import shutil
+
+_user = spark.sql("SELECT current_user()").first()[0]
+_skills = ["dispatch-plan", "add-lakebase-short-term-memory"]
+for _skill in _skills:
+    _src = repo_root / "app" / ".claude" / "skills" / _skill / "SKILL.md"
+    _dst = pathlib.Path(f"/Workspace/Users/{_user}/.assistant/skills/{_skill}")
+    try:
+        _dst.mkdir(parents=True, exist_ok=True)
+        shutil.copy(_src, _dst / "SKILL.md")
+        print(f"✅ Installed Genie Code skill '{_skill}' at {_dst}")
+    except Exception as e:
+        print(f"⚠️  Could not install the Genie Code skill '{_skill}': {e}\n"
+              f"    Open Genie Code → Settings → 'Open skills folder' and copy "
+              f"app/.claude/skills/{_skill}/SKILL.md into it manually.")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC **Step 3: Create the maintenance tables and copy the fault report PDFs**
+# MAGIC
+# MAGIC 1. Run the following cells and wait for them to finish.
+
+# COMMAND ----------
 
 # ── Derived names (do not edit) ─────────────────────────────────────────────
 GOLD  = "gold"
@@ -44,7 +144,7 @@ print(f"maint   : {catalog}.{MAINT}")
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## ☕ Step 1 — Create `coffee_maintenance` schema
+# MAGIC **Create `coffee_maintenance` schema**
 
 # COMMAND ----------
 
@@ -53,7 +153,7 @@ print(f"✅ Schema ready: {catalog}.{MAINT}")
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## 🔧 Step 2 — Machines table (12 Sunny Bay espresso machines)
+# MAGIC **Machines table (12 Sunny Bay espresso machines)**
 
 # COMMAND ----------
 
@@ -92,7 +192,7 @@ print(f"✅ Machines: {count} rows → {catalog}.{MAINT}.machines")
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## 👥 Step 2b — Location managers roster
+# MAGIC **Location managers roster**
 # MAGIC
 # MAGIC Marc is a **manager** over 12 location managers. His custom agent (Lab 3) maps a
 # MAGIC flagged machine → its location → the manager to notify, so it can draft an addressed
@@ -131,7 +231,7 @@ print(f"✅ Location managers: {count} rows → {catalog}.{MAINT}.location_manag
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## ⚡ Step 3 — Fault events table (telemetry history)
+# MAGIC **Fault events table (telemetry history)**
 
 # COMMAND ----------
 
@@ -172,7 +272,7 @@ print(f"✅ Fault events: {count} rows → {catalog}.{MAINT}.fault_events")
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## 📝 Step 4 — Service orders table (Lab 5 write-back target)
+# MAGIC **Service orders table (Lab 3 write-back target)**
 
 # COMMAND ----------
 
@@ -195,9 +295,9 @@ print(f"   → {catalog}.{MAINT}.service_orders")
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## 📂 Step 5 — Fault reports Volume + upload PDFs
+# MAGIC **Fault reports Volume + upload PDFs**
 # MAGIC
-# MAGIC The 10 fault-report PDFs ship with this repo (`bundle/src/data/fault_reports/`)
+# MAGIC The 10 fault-report PDFs ship with this repo (`labs/setup/data/fault_reports/`)
 # MAGIC and were deployed to your workspace alongside this notebook. This step just
 # MAGIC copies them into the Unity Catalog Volume — no PDF generation, no extra
 # MAGIC libraries, no kernel restart.
@@ -210,18 +310,13 @@ spark.sql(f"CREATE VOLUME IF NOT EXISTS `{catalog}`.`{MAINT}`.`fault_reports`")
 VOLUME_PATH = f"/Volumes/{catalog}/{MAINT}/fault_reports"
 print(f"✅ Volume ready: {VOLUME_PATH}")
 
-# Source PDFs sit next to this notebook in the deployed bundle:
-#   .../src/notebooks/Lab 0 - Setup.py  ->  .../src/data/fault_reports/*.pdf
-NOTEBOOK_DIR = os.path.dirname(
-    dbutils.notebook.entry_point.getDbutils().notebook().getContext().notebookPath().get()
-)
-SRC_DIR = os.path.normpath(f"/Workspace{NOTEBOOK_DIR}/../data/fault_reports")
+SRC_DIR = str(_setup_root / "data" / "fault_reports")
 
 pdfs = sorted(glob.glob(f"{SRC_DIR}/*.pdf"))
 if not pdfs:
     raise FileNotFoundError(
         f"No fault report PDFs found in {SRC_DIR}. "
-        "Re-deploy the bundle so bundle/src/data/fault_reports/*.pdf is synced."
+        "Check that the Git Folder includes labs/setup/data/fault_reports/*.pdf."
     )
 
 for src in pdfs:
@@ -233,7 +328,7 @@ print(f"\n✅ {len(pdfs)} fault report PDFs → {VOLUME_PATH}")
 
 # COMMAND ----------
 # MAGIC %md
-# MAGIC ## 🔩 Step 6 — Register `create_service_order` UC function (Lab 3)
+# MAGIC **Register `create_service_order` UC function (Lab 3)**
 
 # COMMAND ----------
 
@@ -275,27 +370,60 @@ $$
 print(f"✅ UC function registered: {catalog}.{MAINT}.create_service_order")
 
 # COMMAND ----------
+
 # MAGIC %md
-# MAGIC ## ✅ Setup complete!
+# MAGIC **Step 4: Generate sales data and build the silver and gold tables**
+# MAGIC
+# MAGIC 1. Run the following cells and wait for them to finish.
 
 # COMMAND ----------
 
-print("=" * 65)
-print("✅  SETUP COMPLETE  -  you are ready for Agents in a Day!")
-print("=" * 65)
-print()
-print("Maintenance assets (this notebook):")
-print(f"  🔧 Machines      : {catalog}.{MAINT}.machines             (12 rows)")
-print(f"  ⚡ Fault events  : {catalog}.{MAINT}.fault_events         (12 rows)")
-print(f"  📝 Service orders: {catalog}.{MAINT}.service_orders       (empty  -  Lab 5)")
-print(f"  📂 Fault reports : /Volumes/{catalog}/{MAINT}/fault_reports   (10 files)")
-print(f"  🔩 UC function   : {catalog}.{MAINT}.create_service_order")
-print()
-print("Built by sibling tasks in the same setup job:")
-print(f"  💰 Sales schema  : {catalog}.{GOLD}.fact_coffee_sales + dim_* (generate_data + sales pipeline)")
-print(f"  📐 Metric view   : {catalog}.{GOLD}.sm_fact_coffee_sales_genie")
-print(f"  🧞 Sales Genie   : \"Sunny Bay Sales Genie\" (over the metric view)")
-print(f"  📊 Dashboard     : \"[Final] Sunny Bay Roastery - Sales Report\"")
-print(f"  🗂️  fault_reports_structured : built by the Lakeflow pipeline task (used from Lab 2)")
-print()
-print("Next: open  labs/Lab 1  -  Sara's arc  and follow along!")
+# MAGIC %run ../setup/notebooks/generate_data
+
+# COMMAND ----------
+
+# MAGIC %run ../setup/notebooks/build_sales_tables
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC **Step 5: Create the metric view, Sales Genie, and dashboard**
+# MAGIC
+# MAGIC 1. Run the following cells and wait for them to finish.
+
+# COMMAND ----------
+
+# MAGIC %run ../setup/notebooks/deploy_metric_view
+
+# COMMAND ----------
+
+# MAGIC %run ../setup/notebooks/deploy_genie_space
+
+# COMMAND ----------
+
+# MAGIC %run ../setup/notebooks/deploy_dashboard
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC **Step 6: Parse and extract the fault reports**
+# MAGIC
+# MAGIC 1. Run the following cells and wait for them to finish.
+# MAGIC
+# MAGIC This batch reads all workshop PDFs and replaces the two output tables.
+# MAGIC To process added or changed PDFs later, run `build_fault_reports` again.
+
+# COMMAND ----------
+
+# MAGIC %run ../setup/notebooks/build_fault_reports
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## What Happens Next
+# MAGIC
+# MAGIC Setup is complete. Open Lab 1 to start working with the Genie agents.
+
+# COMMAND ----------
+
+print(f"🎉 All set. Everything is in catalog `{catalog}`. Head to Lab 1.")
