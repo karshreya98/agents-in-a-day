@@ -12,15 +12,14 @@ human-in-the-loop approval gate** — the point of Lab 3.
 
 ```
 assess → score → approval_gate ⇄ execute
- Genies   Python   (interrupt)    create_service_order (write-back)
+ Genies   Python   (interrupt)    create_service_order (UC fn)
 ```
 
 - `agent_server/dispatch.py` — the LangGraph `StateGraph`: nodes, edges, the approval
   `interrupt`, the deterministic scoring policy (`FAULT_WEIGHT` / `REVENUE_WEIGHT` — the
   **Lab 3 · Task 2** edit point), and the chat-formatting helpers.
-- `agent_server/tools.py` — the tool palette: two Genie spaces, the guarded
-  `create_service_order` write-back (a parameterized `INSERT` through the SQL warehouse
-  — not a UC function), the `location_managers` roster.
+- `agent_server/tools.py` — the tool palette: two Genie spaces, the `create_service_order`
+  UC function, the `location_managers` roster.
 - `agent_server/agent.py` — the template's `@invoke()` / `@stream()` handlers, routing each
   message (plan / explain / qa / approve) and keying the graph thread by conversation id so
   the approval gate persists across turns.

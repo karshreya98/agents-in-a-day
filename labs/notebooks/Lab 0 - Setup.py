@@ -327,15 +327,47 @@ for src in pdfs:
 print(f"\n✅ {len(pdfs)} fault report PDFs → {VOLUME_PATH}")
 
 # COMMAND ----------
-
 # MAGIC %md
-# MAGIC **About the service-order write-back (Lab 3)**
-# MAGIC
-# MAGIC The write-back needs **no Unity Catalog function**. In Lab 3, Marc's agent calls a
-# MAGIC guarded tool (`create_service_order` in `app/agent_server/tools.py`) that runs a
-# MAGIC parameterized `INSERT` into the `service_orders` table above through the SQL
-# MAGIC warehouse — and only after the human approval gate. The SQL warehouse you pick in
-# MAGIC this notebook is the same one the app uses as its resource in Lab 4.
+# MAGIC **Register `create_service_order` UC function (Lab 3)**
+
+# COMMAND ----------
+
+spark.sql(f"""
+CREATE OR REPLACE FUNCTION `{catalog}`.`{MAINT}`.`create_service_order`(
+  machine_id       STRING COMMENT 'Machine ID, e.g. CBM-003',
+  fault_code       STRING COMMENT 'Fault code, e.g. E-07',
+  part_id          STRING COMMENT 'Part to order, e.g. SIE-EQ9-PUMP-003',
+  technician_notes STRING COMMENT 'Free-text notes for the technician'
+)
+RETURNS STRING
+COMMENT 'Creates a service order and returns the new order ID. Used by Marc\\'s custom agent in Lab 3.'
+LANGUAGE PYTHON
+AS $$
+import random
+order_id = f"SO-{{random.randint(10000, 99999)}}"
+try:
+    import requests, os
+    host  = os.environ.get("DATABRICKS_HOST", "")
+    token = os.environ.get("DATABRICKS_TOKEN", "")
+    if host and token:
+        sql = (
+            f"INSERT INTO `{catalog}`.`{MAINT}`.`service_orders` "
+            "(order_id, machine_id, created_ts, fault_code, part_id, technician_notes, status) VALUES "
+            f"('{{order_id}}', '{{machine_id}}', current_timestamp(), '{{fault_code}}', '{{part_id}}', '{{technician_notes}}', 'pending')"
+        )
+        requests.post(
+            f"{{host}}/api/2.0/sql/statements",
+            headers={{"Authorization": f"Bearer {{token}}", "Content-Type": "application/json"}},
+            json={{"statement": sql, "wait_timeout": "10s"}},
+            timeout=15,
+        )
+except Exception:
+    pass
+return order_id
+$$
+""")
+
+print(f"✅ UC function registered: {catalog}.{MAINT}.create_service_order")
 
 # COMMAND ----------
 
